@@ -4,11 +4,12 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { useTheme } from '../hooks/useTheme';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../store';
-import { setAuth } from '../store/authSlice';
+import { setAuth, logout } from '../store/authSlice';
 import { addNotification } from '../store/notificationSlice';
 import { fetchUnreadCount } from '../store/notificationSlice';
 import { getToken, getUser } from '../services/storage';
 import { connectSocket, getSocket } from '../services/socket';
+import { setUnauthorizedHandler } from '../services/api';
 import { Loading } from '../components/common/Loading';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { UserTypeScreen } from '../screens/auth/UserTypeScreen';
@@ -28,6 +29,7 @@ export function RootNavigator() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    setUnauthorizedHandler(() => dispatch(logout()));
     (async () => {
       const [token, savedUser] = await Promise.all([getToken(), getUser()]);
       if (token && savedUser) {

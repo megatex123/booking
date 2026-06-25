@@ -16,12 +16,16 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+let _unauthorizedHandler: (() => void) | null = null;
+export const setUnauthorizedHandler = (fn: () => void) => { _unauthorizedHandler = fn; };
+
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     if (err.response?.status === 401) {
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
+      _unauthorizedHandler?.();
     }
     return Promise.reject(err);
   }
