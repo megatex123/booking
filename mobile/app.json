@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Bengkil Lah",
+    "slug": "bengkil-lah",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A73E8"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bengkillah.booking",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to find nearby workshops.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to find nearby workshops."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#1A73E8"
+      },
+      "package": "com.bengkillah.booking",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "plugins": [
+      "expo-location",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.bengkillah"
+        }
+      ]
+    ],
+    "scheme": "bengkillah",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./src/assets/icon.png"
+    }
+  }
+}

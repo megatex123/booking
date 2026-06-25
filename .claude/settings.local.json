@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python3 -m py_compile main.py core/config.py core/database.py core/security.py core/socket_manager.py middleware/auth.py models/user.py models/workshop.py models/booking.py models/chat.py models/review.py routers/auth.py routers/users.py routers/workshops.py routers/bookings.py routers/chat.py routers/reviews.py routers/payments.py)",
+      "Bash(python3 -c \"from main import socket_app; print\\('App loaded OK'\\)\")",
+      "Read(//usr/local/bin/**)",
+      "Read(//usr/lib/**)",
+      "Bash(which pacman *)",
+      "Read(//var/data/**)",
+      "Bash(curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh)",
+      "Bash(bash)",
+      "Read(//home/penyahpepijat/**)",
+      "Read(//usr/bin/**)",
+      "Bash(systemctl status *)",
+      "Bash(ldd --version)",
+      "Bash(ls -lh /tmp/mongo.tgz)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

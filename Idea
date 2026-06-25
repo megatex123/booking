@@ -1,0 +1,62 @@
+Based on the current stack and what's already built, here are the most impactful additions grouped by priority:
+
+High Impact (Revenue / Retention)
+(/)1. Smart Service Reminders
+Auto-notify customers when their next service is due based on next_service_months already stored per booking. SMS or in-app push: "Your Perodua Bezza is due for an oil change — book now."
+
+(/)2. Loyalty Points System
+Customers earn points per booking (e.g. 1pt per RM1 spent). Redeem as discount on next booking. Keeps customers on-platform instead of calling the workshop directly.
+
+(/)3. Workshop Promotions & Flash Deals
+Vendors can create time-limited offers ("Free tyre rotation with any oil change today"). Appears as a badge on the workshop card in the explore screen.
+
+(/)4. Digital Invoice / PDF Report
+After service completion, generate a branded PDF invoice with service done, products used, next service date, and workshop stamp. Customers can share with insurance or employer.
+
+User Experience Wins
+(/)5. Price Comparison
+When browsing, let customers add 2–3 workshops to a compare view — side-by-side services and prices. Big trust builder for new users.
+
+(/)6. Favourite Workshops
+Heart icon on workshop cards. Saved list shows up at the top of the Home/Explore screen for repeat customers.
+
+(/)7. Real-time Queue / Wait Time
+Each workshop sets their current bay load. Customers see "Est. wait: 45 min" before booking. Already have bay/station management — just surface the data.
+
+8. AI Service Advisor (simple)
+Customer describes the symptom ("my car vibrates when braking"), a simple keyword-to-service mapper (or Claude API call) suggests which services to book. Reduces friction for non-technical users.
+
+Workshop Vendor Tools
+(/)9. Staff / Mechanic Management
+Add mechanics under a workshop account. Assign specific bookings to specific mechanics. Track individual workload and performance.
+
+(/)10. Auto Inventory Reorder Alert
+When a product quantity drops below a threshold the vendor sets, trigger a notification: "Engine oil (Castrol 5W-30) running low — 2 units left."
+
+(/)11. Customer CRM View
+Per workshop, show a list of their past customers with full service history, vehicle info, total spent, and last visit date. Helps vendors do outreach.
+
+(/)12. Revenue & Analytics Dashboard
+Monthly revenue chart, peak booking hours heatmap, top services by revenue, repeat vs. new customer ratio. The pitch deck has the projections — put them in the real product too.
+
+Platform / Business Layer
+(/)13. Referral System
+Customer gets a unique code. When a friend books using the code, both get a discount. Low-cost organic growth for a local market.
+
+(/)14. Fleet / Corporate Accounts
+Companies register a corporate account, add multiple vehicles and drivers. Monthly billing instead of per-booking payment. High LTV customers.
+
+(/)15. Insurance Claim Integration
+For panel workshops, let customers submit a booking as an insurance claim directly through the app. Big differentiator in the Malaysian market where Takaful/Etiqa panels are common.
+
+16. WhatsApp Status Updates
+When booking status changes (confirmed, started, completed), send a WhatsApp message via the WhatsApp Business API. Most Malaysians check WhatsApp more than any app.
+
+Quick Wins (Low Effort, High Visibility)
+Workshop photo gallery — vendors upload shop photos, lifts, equipment
+Service duration estimate — "This service takes ~1.5 hours" shown at booking time
+Booking for others — book a service for a family member's car without it being their account
+Dark/light mode — toggle in settings
+Multi-language — Bahasa Malaysia + English, given the target market
+The top 3 I'd prioritize first: Smart Reminders (retention is cheaper than acquisition), Digital Invoice (builds trust and enables B2B), and WhatsApp integration (meets Malaysian users where they already are).
+
