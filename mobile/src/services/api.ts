@@ -18,7 +18,11 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
+    if (err.response?.status === 401) {
+      await AsyncStorage.removeItem('access_token');
+      await AsyncStorage.removeItem('user');
+    }
     return Promise.reject(err);
   }
 );

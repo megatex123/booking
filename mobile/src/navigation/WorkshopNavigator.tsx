@@ -3,7 +3,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { DashboardScreen } from '../screens/workshop/DashboardScreen';
-import { WorkshopBookingDetailScreen } from '../screens/workshop/WorkshopBookingDetailScreen';
+// Lazy-loaded to break circular module dep that causes TDZ crash on Firefox
+let _wbds: React.ComponentType<any> | null = null;
+const WorkshopBookingDetailScreen: React.ComponentType<any> = (props) => {
+  if (!_wbds) {
+    _wbds = require('../screens/workshop/WorkshopBookingDetailScreen').WorkshopBookingDetailScreen;
+  }
+  return React.createElement(_wbds!, props);
+};
 import { ServiceManagementScreen } from '../screens/workshop/ServiceManagementScreen';
 import { WorkshopBookingsScreen } from '../screens/workshop/WorkshopBookingsScreen';
 import { WorkshopProfileScreen } from '../screens/workshop/WorkshopProfileScreen';
