@@ -63,19 +63,15 @@ export const BookingSuccessScreen: React.FC<Props> = ({ navigation, route }) => 
   );
 };
 
-const Row = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
-  <View style={rowStyles.row}>
-    <Text style={rowStyles.label}>{label}</Text>
-    <Text style={[rowStyles.value, highlight && rowStyles.highlight]}>{value}</Text>
-  </View>
-);
-
-const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider },
-  label: { ...Typography.bodySmall, color: colors.textSecondary },
-  value: { ...Typography.bodySmall, color: colors.text, fontWeight: '500', maxWidth: '60%', textAlign: 'right' },
-  highlight: { color: colors.primary, fontWeight: '700' },
-});
+const Row = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+      <Text style={{ ...Typography.bodySmall, color: colors.textSecondary }}>{label}</Text>
+      <Text style={{ ...Typography.bodySmall, color: highlight ? colors.primary : colors.text, fontWeight: highlight ? '700' : '500', maxWidth: '60%', textAlign: 'right' }}>{value}</Text>
+    </View>
+  );
+};
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({

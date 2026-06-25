@@ -185,50 +185,52 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const BookingRequestCard = ({ booking, onPress }: { booking: Booking; onPress: () => void }) => (
-  <TouchableOpacity style={bStyles.card} onPress={onPress} activeOpacity={0.85}>
-    <View style={bStyles.header}>
-      <Text style={bStyles.customer}>{booking.customer_name}</Text>
-      <StatusBadge status={booking.status} />
-    </View>
-    <Text style={bStyles.services} numberOfLines={1}>
-      {booking.services.map((s: any) => s.name).join(', ')}
-    </Text>
-    <View style={bStyles.footer}>
-      <View style={bStyles.metaItem}>
-        <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
-        <Text style={bStyles.meta}>{formatDate(booking.scheduled_date)} · {formatTime(booking.scheduled_time)}</Text>
+const BookingRequestCard = ({ booking, onPress }: { booking: Booking; onPress: () => void }) => {
+  const { colors } = useTheme();
+  const bStyles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.md,
+      marginBottom: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 1,
+    },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    customer: { ...Typography.body, fontWeight: '600', color: colors.text },
+    services: { ...Typography.caption, color: colors.textSecondary, marginBottom: 8 },
+    footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    meta: { ...Typography.caption, color: colors.textSecondary },
+    price: { ...Typography.body, fontWeight: '700', color: colors.primary },
+  }), [colors]);
+  return (
+    <TouchableOpacity style={bStyles.card} onPress={onPress} activeOpacity={0.85}>
+      <View style={bStyles.header}>
+        <Text style={bStyles.customer}>{booking.customer_name}</Text>
+        <StatusBadge status={booking.status} />
       </View>
-      <Text style={bStyles.price}>{formatPrice(booking.total_price)}</Text>
-    </View>
-    <View style={bStyles.vehicleRow}>
-      <Ionicons name="car-outline" size={12} color={colors.textSecondary} />
-      <Text style={bStyles.meta}>{booking.vehicle_brand} {booking.vehicle_name} ({booking.vehicle_plate})</Text>
-    </View>
-  </TouchableOpacity>
-);
-
-const bStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  customer: { ...Typography.body, fontWeight: '600', color: colors.text },
-  services: { ...Typography.caption, color: colors.textSecondary, marginBottom: 8 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  meta: { ...Typography.caption, color: colors.textSecondary },
-  price: { ...Typography.body, fontWeight: '700', color: colors.primary },
-});
+      <Text style={bStyles.services} numberOfLines={1}>
+        {booking.services.map((s: any) => s.name).join(', ')}
+      </Text>
+      <View style={bStyles.footer}>
+        <View style={bStyles.metaItem}>
+          <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
+          <Text style={bStyles.meta}>{formatDate(booking.scheduled_date)} · {formatTime(booking.scheduled_time)}</Text>
+        </View>
+        <Text style={bStyles.price}>{formatPrice(booking.total_price)}</Text>
+      </View>
+      <View style={bStyles.vehicleRow}>
+        <Ionicons name="car-outline" size={12} color={colors.textSecondary} />
+        <Text style={bStyles.meta}>{booking.vehicle_brand} {booking.vehicle_name} ({booking.vehicle_plate})</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({

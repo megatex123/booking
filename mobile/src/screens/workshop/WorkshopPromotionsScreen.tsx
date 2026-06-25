@@ -198,6 +198,8 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const PromoCard: React.FC<{ promo: Promo; onEdit: () => void; onToggle: () => void; onDelete: () => void }> = ({ promo, onEdit, onToggle, onDelete }) => {
+  const { colors } = useTheme();
+  const cardStyles = useMemo(() => makePromoCardStyles(colors), [colors]);
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   return (
     <View style={[cardStyles.card, (promo.is_expired || !promo.is_active) && cardStyles.cardDim]}>
@@ -281,19 +283,21 @@ function makeStyles(colors: AppTheme) {
   });
 }
 
-const cardStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.md, marginBottom: 12,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  cardDim: { opacity: 0.65 },
-  top: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
-  title: { ...Typography.body, fontWeight: '700', color: colors.text, flex: 1 },
-  desc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18, marginBottom: 8 },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  expiry: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
-  expiryText: { ...Typography.caption, color: colors.textSecondary },
-  actions: { flexDirection: 'row', gap: 4 },
-  actionBtn: { padding: 6 },
-});
+function makePromoCardStyles(colors: AppTheme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+      padding: Spacing.md, marginBottom: 12,
+      borderWidth: 1, borderColor: colors.border,
+    },
+    cardDim: { opacity: 0.65 },
+    top: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+    title: { ...Typography.body, fontWeight: '700', color: colors.text, flex: 1 },
+    desc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18, marginBottom: 8 },
+    footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    expiry: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
+    expiryText: { ...Typography.caption, color: colors.textSecondary },
+    actions: { flexDirection: 'row', gap: 4 },
+    actionBtn: { padding: 6 },
+  });
+}
