@@ -8,6 +8,7 @@ const nativeOnlyMocks = {
   'react-native-maps': path.resolve(__dirname, 'src/mocks/react-native-maps.js'),
   '@stripe/stripe-react-native': path.resolve(__dirname, 'src/mocks/stripe-react-native.js'),
   'expo-location': path.resolve(__dirname, 'src/mocks/expo-location.js'),
+  'expo-image-picker': path.resolve(__dirname, 'src/mocks/expo-image-picker.js'),
 };
 
 const originalResolveRequest = config.resolver.resolveRequest;
