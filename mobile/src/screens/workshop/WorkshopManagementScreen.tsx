@@ -66,7 +66,7 @@ const SECTIONS = [
   },
 ];
 
-export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => () => {
+export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (

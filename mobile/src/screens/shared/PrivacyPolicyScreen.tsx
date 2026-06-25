@@ -46,7 +46,7 @@ const SECTIONS = [
   },
 ];
 
-export const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => () => {
+export const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
