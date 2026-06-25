@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo} from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Alert, Platform, TextInput, Image, ActivityIndicator, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -1061,20 +1061,20 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
               </TouchableOpacity>
             </View>
             {(['submitted', 'processing', 'approved', 'rejected'] as const).map((status) => {
-              const colors: Record<string, string> = { submitted: '#0EA5E9', processing: colors.warning, approved: colors.success, rejected: colors.danger };
+              const statusColors: Record<string, string> = { submitted: '#0EA5E9', processing: colors.warning, approved: colors.success, rejected: colors.danger };
               const labels: Record<string, string> = { submitted: 'Submitted', processing: 'In Processing', approved: 'Approved', rejected: 'Rejected' };
               const current = (booking as any)?.claim_status === status;
               return (
                 <TouchableOpacity
                   key={status}
-                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 10, marginBottom: 10, backgroundColor: current ? colors[status] + '15' : colors.background, borderWidth: current ? 2 : 1, borderColor: current ? colors[status] : colors.border }}
+                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 10, marginBottom: 10, backgroundColor: current ? statusColors[status] + '15' : colors.background, borderWidth: current ? 2 : 1, borderColor: current ? statusColors[status] : colors.border }}
                   onPress={() => handleUpdateClaimStatus(status)}
                   disabled={updatingClaimStatus || current}
                 >
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors[status], marginRight: 12 }} />
-                  <Text style={{ ...Typography.body, color: current ? colors[status] : colors.text, fontWeight: current ? '700' : '400', flex: 1 }}>{labels[status]}</Text>
-                  {current && <Ionicons name="checkmark-circle" size={20} color={colors[status]} />}
-                  {updatingClaimStatus && !current && <ActivityIndicator size="small" color={colors[status]} />}
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: statusColors[status], marginRight: 12 }} />
+                  <Text style={{ ...Typography.body, color: current ? statusColors[status] : colors.text, fontWeight: current ? '700' : '400', flex: 1 }}>{labels[status]}</Text>
+                  {current && <Ionicons name="checkmark-circle" size={20} color={statusColors[status]} />}
+                  {updatingClaimStatus && !current && <ActivityIndicator size="small" color={statusColors[status]} />}
                 </TouchableOpacity>
               );
             })}
