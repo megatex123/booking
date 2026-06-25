@@ -21,18 +21,21 @@ interface Review {
 
 interface Props { navigation: any }
 
-const Stars = ({ rating }: { rating: number }) => (
-  <View style={styles.stars}>
-    {[1, 2, 3, 4, 5].map((i) => (
-      <Ionicons
-        key={i}
-        name={i <= rating ? 'star' : 'star-outline'}
-        size={14}
-        color={i <= rating ? '#FBBC04' : colors.border}
-      />
-    ))}
-  </View>
-);
+const Stars = ({ rating }: { rating: number }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', gap: 2, marginTop: 4 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Ionicons
+          key={i}
+          name={i <= rating ? 'star' : 'star-outline'}
+          size={14}
+          color={i <= rating ? '#FBBC04' : colors.border}
+        />
+      ))}
+    </View>
+  );
+};
 
 const formatDate = (iso: string) => {
   if (!iso) return '';

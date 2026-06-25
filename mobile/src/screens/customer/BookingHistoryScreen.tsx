@@ -26,10 +26,10 @@ const FILTERS = [
 ] as const;
 
 const STATS = [
-  { key: 'pending',     label: 'Pending',  icon: 'time',         color: Statuscolors.pending },
-  { key: 'in_progress', label: 'Active',   icon: 'construct',    color: Statuscolors.in_progress },
-  { key: 'completed',   label: 'Done',     icon: 'ribbon',       color: Statuscolors.completed },
-  { key: 'rejected',    label: 'Rejected', icon: 'close-circle', color: Statuscolors.rejected },
+  { key: 'pending',     label: 'Pending',  icon: 'time',         color: StatusColors.pending },
+  { key: 'in_progress', label: 'Active',   icon: 'construct',    color: StatusColors.in_progress },
+  { key: 'completed',   label: 'Done',     icon: 'ribbon',       color: StatusColors.completed },
+  { key: 'rejected',    label: 'Rejected', icon: 'close-circle', color: StatusColors.rejected },
 ];
 
 export const BookingHistoryScreen: React.FC<Props> = ({ navigation }) => {

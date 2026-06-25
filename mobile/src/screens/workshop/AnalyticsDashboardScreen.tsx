@@ -64,20 +64,28 @@ const formatRM = (value: number): string =>
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <View style={styles.card}>{children}</View>
-);
+const SectionCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return <View style={styles.card}>{children}</View>;
+};
 
-const SectionHeader: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.sectionSubtitle}>{subtitle}</Text>
-  </View>
-);
+const SectionHeader: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+    </View>
+  );
+};
 
-const EmptyNote: React.FC<{ text: string }> = ({ text }) => (
-  <Text style={styles.emptyNote}>{text}</Text>
-);
+const EmptyNote: React.FC<{ text: string }> = ({ text }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return <Text style={styles.emptyNote}>{text}</Text>;
+};
 
 // ---------------------------------------------------------------------------
 // Monthly Revenue Chart
@@ -87,6 +95,8 @@ const RevenueChart: React.FC<{ data: MonthlyRevenue[]; months: MonthsOption }> =
   data,
   months,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const maxRevenue = Math.max(...data.map((d) => d.revenue), 1);
   const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
   const allZero = totalRevenue === 0;
@@ -134,6 +144,8 @@ const DISPLAY_HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7..20
 const PeakHoursChart: React.FC<{ peakHours: Record<string, number> }> = ({
   peakHours,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const counts = DISPLAY_HOURS.map((h) => peakHours[String(h)] ?? 0);
   const maxCount = Math.max(...counts, 1);
   const allZero = counts.every((c) => c === 0);
@@ -195,6 +207,8 @@ const PeakHoursChart: React.FC<{ peakHours: Record<string, number> }> = ({
 // ---------------------------------------------------------------------------
 
 const TopServicesSection: React.FC<{ services: TopService[] }> = ({ services }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const maxRevenue = services.length > 0 ? services[0].revenue : 1;
 
   return (
@@ -238,6 +252,8 @@ const TopServicesSection: React.FC<{ services: TopService[] }> = ({ services }) 
 // ---------------------------------------------------------------------------
 
 const CustomerStatsSection: React.FC<{ stats: CustomerStats }> = ({ stats }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const repeatPct = Math.round(stats.repeat_rate * 100);
   const newPct = 100 - repeatPct;
 

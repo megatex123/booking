@@ -66,11 +66,11 @@ function formatShortDate(iso: string): string {
   return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function urgencyColor(dueDate: Date): string {
+function urgencyColor(dueDate: Date, colors: AppTheme): string {
   const now = new Date();
   const daysLeft = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (daysLeft < 0) return colors.danger;
-  if (daysLeft < 30) return '#F59E0B'; // warning amber
+  if (daysLeft < 30) return '#F59E0B';
   return colors.success;
 }
 
@@ -137,10 +137,10 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
 
         {/* Next service due card */}
         {nextServiceInfo && (
-          <View style={[styles.nextServiceCard, { borderColor: urgencyColor(nextServiceInfo.dueDate) + '60' }]}>
+          <View style={[styles.nextServiceCard, { borderColor: urgencyColor(nextServiceInfo.dueDate, colors) + '60' }]}>
             <View style={styles.nextServiceHeader}>
-              <Ionicons name="alarm-outline" size={18} color={urgencyColor(nextServiceInfo.dueDate)} />
-              <Text style={[styles.nextServiceTitle, { color: urgencyColor(nextServiceInfo.dueDate) }]}>
+              <Ionicons name="alarm-outline" size={18} color={urgencyColor(nextServiceInfo.dueDate, colors)} />
+              <Text style={[styles.nextServiceTitle, { color: urgencyColor(nextServiceInfo.dueDate, colors) }]}>
                 Next Service Due
               </Text>
             </View>

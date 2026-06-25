@@ -9,20 +9,20 @@ import { fetchNotifications, markRead, markAllRead } from '../../store/notificat
 
 interface Props { navigation: any }
 
-const TYPE_ICON: Record<string, { icon: string; color: string }> = {
-  new_booking:         { icon: 'calendar',              color: colors.primary },
-  booking_confirmed:   { icon: 'checkmark-circle',      color: colors.success },
-  booking_rejected:    { icon: 'close-circle',          color: colors.error },
-  booking_in_progress: { icon: 'construct',             color: colors.warning },
-  booking_completed:   { icon: 'checkmark-done-circle', color: colors.success },
-  booking_cancelled:   { icon: 'ban',                   color: colors.error },
-  new_message:         { icon: 'chatbubble',            color: colors.secondary },
-  service_reminder:     { icon: 'car-sport',             color: '#F59E0B' },
-  low_stock:            { icon: 'warning-outline',        color: '#EF4444' },
-  referral_reward:      { icon: 'gift',                  color: '#8B5CF6' },
-  loyalty_reward:       { icon: 'star',                  color: '#F59E0B' },
-  insurance_claim:      { icon: 'shield-checkmark',      color: '#0EA5E9' },
-  insurance_claim_update: { icon: 'shield-checkmark',   color: '#0EA5E9' },
+const TYPE_ICON_STATIC: Record<string, { icon: string; colorKey?: string; color?: string }> = {
+  new_booking:            { icon: 'calendar',              colorKey: 'primary' },
+  booking_confirmed:      { icon: 'checkmark-circle',      colorKey: 'success' },
+  booking_rejected:       { icon: 'close-circle',          colorKey: 'danger' },
+  booking_in_progress:    { icon: 'construct',             colorKey: 'warning' },
+  booking_completed:      { icon: 'checkmark-done-circle', colorKey: 'success' },
+  booking_cancelled:      { icon: 'ban',                   colorKey: 'danger' },
+  new_message:            { icon: 'chatbubble',            colorKey: 'secondary' },
+  service_reminder:       { icon: 'car-sport',             color: '#F59E0B' },
+  low_stock:              { icon: 'warning-outline',       color: '#EF4444' },
+  referral_reward:        { icon: 'gift',                  color: '#8B5CF6' },
+  loyalty_reward:         { icon: 'star',                  color: '#F59E0B' },
+  insurance_claim:        { icon: 'shield-checkmark',      color: '#0EA5E9' },
+  insurance_claim_update: { icon: 'shield-checkmark',      color: '#0EA5E9' },
 };
 
 function timeAgo(iso: string): string {
@@ -70,7 +70,9 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   }, [dispatch]);
 
   const renderItem = ({ item }: { item: any }) => {
-    const { icon, color } = TYPE_ICON[item.type] || { icon: 'notifications', color: colors.primary };
+    const entry = TYPE_ICON_STATIC[item.type];
+    const icon = entry?.icon ?? 'notifications';
+    const color = entry ? (entry.color ?? (colors as any)[entry.colorKey!] ?? colors.primary) : colors.primary;
     const isReminder = item.type === 'service_reminder';
     return (
       <TouchableOpacity

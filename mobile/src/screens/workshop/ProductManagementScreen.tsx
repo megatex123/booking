@@ -42,7 +42,7 @@ const UNITS = ['pcs', 'litre', 'kg', 'set', 'bottle', 'box'];
 
 const CAT_COLORS: Record<string, string> = {
   lubricant: '#1565C0', filter: '#6A1B9A', brake: '#B71C1C',
-  tyre: '#E65100', electrical: '#F9A825', body: '#2E7D32', other: colors.textSecondary,
+  tyre: '#E65100', electrical: '#F9A825', body: '#2E7D32', other: '#9CA3AF',
 };
 
 const EMPTY_FORM = { name: '', brand: '', category: 'lubricant', price: '', quantity: '', unit: 'pcs', description: '', service_tags: [] as string[], reorder_threshold: '' };
@@ -320,18 +320,22 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const Field = ({ label, value, onChange, placeholder, keyboardType, multiline }: any) => (
-  <View style={{ marginBottom: 14 }}>
-    <Text style={styles.fieldLabel}>{label}</Text>
-    <TextInput
-      value={value} onChangeText={onChange} placeholder={placeholder}
-      placeholderTextColor={colors.textLight}
-      keyboardType={keyboardType || 'default'} multiline={multiline}
-      numberOfLines={multiline ? 3 : 1}
-      style={[styles.input, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
-    />
-  </View>
-);
+const Field = ({ label, value, onChange, placeholder, keyboardType, multiline }: any) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        value={value} onChangeText={onChange} placeholder={placeholder}
+        placeholderTextColor={colors.textLight}
+        keyboardType={keyboardType || 'default'} multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        style={[styles.input, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
+      />
+    </View>
+  );
+};
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({

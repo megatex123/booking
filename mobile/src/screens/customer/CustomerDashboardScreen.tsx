@@ -378,7 +378,7 @@ function makeStyles(colors: AppTheme) {
   },
   notifBadge: {
     position: 'absolute', top: -2, right: -2,
-    backgroundColor: colors.error, borderRadius: 8,
+    backgroundColor: colors.danger, borderRadius: 8,
     minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 3,
   },

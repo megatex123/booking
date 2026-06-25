@@ -348,21 +348,25 @@ const Field = ({
   placeholder?: string;
   keyboardType?: string;
   multiline?: boolean;
-}) => (
-  <View style={{ marginBottom: 14 }}>
-    <Text style={styles.fieldLabel}>{label}</Text>
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder={placeholder}
-      placeholderTextColor={colors.textLight}
-      keyboardType={(keyboardType as any) || 'default'}
-      multiline={multiline}
-      numberOfLines={multiline ? 3 : 1}
-      style={[styles.input, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
-    />
-  </View>
-);
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textLight}
+        keyboardType={(keyboardType as any) || 'default'}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        style={[styles.input, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
+      />
+    </View>
+  );
+};
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({

@@ -206,9 +206,10 @@ export const CompareScreen: React.FC<Props> = ({ navigation }) => {
 /* ── Small presenter components ────────────────────────────────────────── */
 
 function SectionLabel({ label }: { label: string }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.sectionBar}>
-      <Text style={styles.sectionBarText}>{label}</Text>
+    <View style={{ backgroundColor: colors.primary + '12', paddingHorizontal: 12, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.primary + '20' }}>
+      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.primary, letterSpacing: 0.8 }}>{label}</Text>
     </View>
   );
 }
@@ -221,6 +222,8 @@ function DataRow({
   alt?: boolean;
   highlight?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.row, alt && styles.rowAlt]}>
       <Text style={[styles.labelCell, highlight && styles.labelHighlight]}>{label}</Text>
@@ -248,7 +251,7 @@ function makeStyles(colors: AppTheme) {
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { ...Typography.h3, color: colors.text },
   clearBtn: { paddingHorizontal: 8 },
-  clearBtnText: { ...Typography.bodySmall, color: colors.error, fontWeight: '600' },
+  clearBtnText: { ...Typography.bodySmall, color: colors.danger, fontWeight: '600' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: 12 },
   emptyTitle: { ...Typography.h3, color: colors.text },
@@ -323,11 +326,11 @@ function makeStyles(colors: AppTheme) {
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  statusPillClosed: { backgroundColor: colors.error + '15' },
+  statusPillClosed: { backgroundColor: colors.danger + '15' },
   statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
-  statusDotClosed: { backgroundColor: colors.error },
+  statusDotClosed: { backgroundColor: colors.danger },
   statusPillText: { fontSize: 10, fontWeight: '600', color: colors.success },
-  statusPillTextClosed: { color: colors.error },
+  statusPillTextClosed: { color: colors.danger },
 
   sectionBar: {
     backgroundColor: colors.primary + '12',
