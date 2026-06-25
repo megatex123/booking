@@ -54,6 +54,14 @@ def prod(name, brand, cat, price, qty, unit, desc="", tags=None):
     }
 
 
+def mech(name, phone, specialty, active=True):
+    return {
+        "_id": oid(), "name": name, "phone": phone,
+        "specialty": specialty, "is_active": active,
+        "created_at": NOW.isoformat(),
+    }
+
+
 async def seed():
     client = AsyncIOMotorClient(MONGO_URL)
     db = client[DB_NAME]
@@ -178,6 +186,11 @@ async def seed():
                 prod("R134a Refrigerant Gas", "Chemours", "electrical", 55.0, 12, "pcs", "AC refill canister", ["Air-Con Service"]),
                 prod("AC Cabin Filter", "Denso", "filter", 35.0, 15, "pcs", "Activated carbon cabin filter", ["Air-Con Service"]),
             ],
+            "mechanics": [
+                mech("Hafiz bin Salleh",      "+60112345671", "Engine & General Service"),
+                mech("Ridhwan Azri",           "+60112345672", "Brakes & Tyres"),
+                mech("Muthu Krishnan",         "+60112345673", "Air-Con & Electrical"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -210,6 +223,11 @@ async def seed():
                 prod("Transmission Fluid ATF", "Valvoline", "lubricant", 32.0, 10, "litre", "Auto transmission fluid, 1L", ["Full Car Service"]),
                 prod("Coolant (Premixed)", "Prestone", "other", 22.0, 15, "litre", "50/50 premixed, 1L", ["Full Car Service"]),
             ],
+            "mechanics": [
+                mech("Kenneth Lim Wei Jian",  "+60167654321", "Full Service & Diagnostics"),
+                mech("Shahril Nizam",          "+60167654322", "Tyres & Alignment"),
+                mech("Suresh Selvam",          "+60167654323", "Electrical & Battery"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -237,6 +255,10 @@ async def seed():
                 prod("Prestone Coolant Green", "Prestone", "other", 20.0, 20, "litre", "Premixed, 1L", ["Coolant Flush & Refill"]),
                 prod("Windshield Washer Fluid", "Rain-X", "other", 12.0, 30, "litre", "All-season, 1L", ["Scheduled 5,000km Service"]),
             ],
+            "mechanics": [
+                mech("Zulkifli Hamdan",        "+60121122331", "Express Service & Oil Change"),
+                mech("Tan Boon Huat",           "+60121122332", "Inspection & Fluids"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -263,6 +285,10 @@ async def seed():
                 prod("Oil Filter — Proton/Perodua", "Champion", "filter", 12.0, 30, "pcs", "OEM-compatible", ["Engine Oil Change"]),
                 prod("BG Fuel System Cleaner", "BG", "other", 85.0, 15, "pcs", "Professional fuel injector cleaner", ["Fuel System Cleaning"]),
                 prod("Gates Serpentine Belt", "Gates", "mechanical", 65.0, 12, "pcs", "Accessory drive belt", ["Preventive Maintenance Package"]),
+            ],
+            "mechanics": [
+                mech("Amirul Faiz",            "+60132233441", "Preventive Maintenance"),
+                mech("Ramesh Kumar",            "+60132233442", "Timing Belt & Engine"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -294,6 +320,11 @@ async def seed():
                 prod("LUK Clutch Kit", "LUK", "mechanical", 420.0, 4, "set", "OEM-grade clutch kit", ["Clutch Replacement"]),
                 prod("Engine Assembly Lube", "Permatex", "lubricant", 28.0, 15, "pcs", "Engine assembly lube, 4oz", ["Engine Full Rebuild", "Engine Overhaul (Partial)"]),
             ],
+            "mechanics": [
+                mech("Azman bin Yusof",        "+60111122331", "Engine Overhaul & Rebuild"),
+                mech("Hasrul Nizam",            "+60111122332", "Engine Diagnostics & Repair"),
+                mech("Faizal Kamarudin",        "+60111122333", "Clutch & Drivetrain"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -323,6 +354,10 @@ async def seed():
                 prod("GKN CV Joint (inner)", "GKN", "mechanical", 180.0, 8, "pcs", "Inner CV joint, universal fit", ["CV Joint & Driveshaft Replacement"]),
                 prod("CV Boot Kit", "Firstline", "mechanical", 45.0, 15, "set", "CV boot + clamps + grease", ["CV Joint & Driveshaft Replacement"]),
                 prod("Differential Bearing Set", "SKF", "mechanical", 120.0, 6, "set", "Differential bearing and seal kit", ["Differential Rebuild"]),
+            ],
+            "mechanics": [
+                mech("Hairul Anuar",           "+60122233441", "Auto Transmission & Gearbox"),
+                mech("Cindy Ong Siew Lin",     "+60122233442", "CV Joint & Differential"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -355,6 +390,10 @@ async def seed():
                 prod("Philips LED Headlight H4", "Philips", "electrical", 120.0, 10, "pcs", "6000K LED replacement pair", ["Car Lighting Upgrade"]),
                 prod("Wire Harness Tape (self-amalgamating)", "Tesa", "electrical", 15.0, 30, "pcs", "Self-amalgamating insulation tape", ["Wiring Harness Repair"]),
             ],
+            "mechanics": [
+                mech("Azri bin Rahman",        "+60133344551", "Battery & Alternator"),
+                mech("Sandra Lim Hui Ying",    "+60133344552", "Wiring & Fault Diagnosis"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -384,6 +423,10 @@ async def seed():
                 prod("AC Evaporator Cleaner Spray", "3M", "electrical", 45.0, 20, "pcs", "Foam cleaner for evaporator coils", ["A/C Evaporator Cleaning"]),
                 prod("AC Cabin Filter — Carbon", "Mann", "filter", 40.0, 15, "pcs", "Activated carbon cabin filter", ["A/C Full Service", "A/C Evaporator Cleaning"]),
             ],
+            "mechanics": [
+                mech("Hafidz Azrul",           "+60144455661", "ECU Tuning & Diagnostics"),
+                mech("Suraya Malik",            "+60144455662", "Air-Con & Refrigerant Systems"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -411,6 +454,11 @@ async def seed():
                 prod("Sikkens Autoclear LV Clearcoat", "Sikkens", "body", 95.0, 10, "litre", "Premium clearcoat, 1L", ["Full Body Respray", "Bumper Repair & Paint"]),
                 prod("Body Filler (Putty)", "3M", "body", 38.0, 15, "kg", "Lightweight polyester filler, 1kg", ["Dent Removal (small)", "Bumper Repair & Paint", "Panel Beating"]),
                 prod("Sandpaper Set (80–2000 grit)", "3M", "body", 45.0, 25, "set", "Wet/dry assorted pack", ["Full Body Respray", "Bumper Repair & Paint"]),
+            ],
+            "mechanics": [
+                mech("Razif bin Othman",       "+60134455661", "Panel Beating & Dent Repair"),
+                mech("Nurul Ain Hanisah",      "+60134455662", "Spray Painting & Finishing"),
+                mech("Wong Chee Keong",        "+60134455663", "Bumper Repair & Prep"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -441,6 +489,10 @@ async def seed():
                 prod("3M Avery Dennison Wrap Film — Gloss White", "Avery", "body", 260.0, 10, "metre", "1.52m wide gloss white vinyl", ["Full Vehicle Wrap", "Partial Wrap / Accent"]),
                 prod("Urethane Glass Adhesive", "Sika", "body", 55.0, 15, "pcs", "High-strength windscreen bonding adhesive", ["Windscreen Replacement (OEM)", "Windscreen Replacement (Aftermarket)"]),
             ],
+            "mechanics": [
+                mech("Eric Lau Weng Fatt",     "+60155566771", "Windscreen & Glass Fitting"),
+                mech("Norzahra binti Bakar",   "+60155566772", "Vinyl Wrap & Film"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -467,6 +519,10 @@ async def seed():
                 prod("U-POL Raptor Texture Coat", "U-POL", "body", 85.0, 8, "pcs", "Tough textured under-body coating, aerosol", ["Rust Treatment & Repair"]),
                 prod("Rust Converter", "Jenolite", "body", 45.0, 12, "litre", "Converts rust to stable black primer, 500ml", ["Rust Treatment & Repair"]),
                 prod("Masking Film + Tape Kit", "3M", "body", 22.0, 30, "set", "Pre-taped masking film 1.8m x 20m", ["Single Panel Respray", "Half Body Respray", "Full Body Respray (Premium)"]),
+            ],
+            "mechanics": [
+                mech("Marcus Teo Jun Hao",     "+60166677881", "Spray Painting & Colour Match"),
+                mech("Farhana binti Idris",    "+60166677882", "Panel Prep & Rust Treatment"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -499,6 +555,11 @@ async def seed():
                 prod("Valve Stem (rubber)", "OEM", "other", 2.0, 100, "pcs", "Standard rubber valve stem", ["Tyre Fitting & Balancing (per tyre)", "Tyre Replacement Package (4 tyres)"]),
                 prod("Nitrogen Gas (per set)", "Industrial", "other", 5.0, 50, "set", "Pure nitrogen fill, 4 tyres", ["Nitrogen Inflation (4 tyres)"]),
             ],
+            "mechanics": [
+                mech("Afiq Syazwan Zainol",    "+60177788991", "Tyre Fitting & Balancing"),
+                mech("Jenny Teoh Mei Lin",     "+60177788992", "Alignment & Rotation"),
+                mech("Ramesh Pillai",          "+60177788993", "Tyre Sales & Puncture Repair"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -525,6 +586,10 @@ async def seed():
                 prod("Rim Primer Spray", "Rust-Oleum", "other", 25.0, 20, "pcs", "Self-etching primer for alloy", ["Rim Refurbishment (per rim)"]),
                 prod("Tyre Mounting Lubricant", "Beadson", "other", 18.0, 20, "litre", "Tyre bead mounting paste, 1kg", ["Tyre Fitting & Balancing"]),
                 prod("Wheel Weight — Stick-On (mixed)", "Hofmann", "other", 15.0, 30, "set", "Assorted adhesive wheel weights, 100g set", ["Tyre Fitting & Balancing"]),
+            ],
+            "mechanics": [
+                mech("Hazwan Rosli",           "+60188899002", "Rim Straightening & CNC"),
+                mech("Alicia Chai Pei Shan",   "+60188899003", "Powder Coating & Finishing"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -557,6 +622,10 @@ async def seed():
                 prod("Caliper Repair Kit", "OEM", "brake", 45.0, 12, "set", "Piston seal + dust boot kit", ["Brake Caliper Service"]),
                 prod("Brake Cleaner Spray", "CRC", "brake", 18.0, 30, "pcs", "500ml aerosol brake cleaner", ["Brake Pad Replacement (front)", "Brake Pad Replacement (rear)", "Full Brake Overhaul"]),
             ],
+            "mechanics": [
+                mech("Faruq Izwan",            "+60199900113", "Brake Pads & Discs"),
+                mech("Lim Siew Meng",          "+60199900114", "Caliper Service & Fluid"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -585,6 +654,10 @@ async def seed():
                 prod("SuperPro Polyurethane Bush Kit", "SuperPro", "suspension", 120.0, 8, "set", "Poly bush upgrade kit", ["Suspension Bushing Replacement"]),
                 prod("Pentosin CHF 202 Power Steering Fluid", "Pentosin", "other", 45.0, 10, "litre", "CHF 202 PSF, 1L", ["Power Steering Repair"]),
                 prod("Sachs Front Spring (per unit)", "Sachs", "suspension", 150.0, 6, "pcs", "OE-spec coil spring", ["Coilover Installation", "Shock Absorber Replacement (per unit)"]),
+            ],
+            "mechanics": [
+                mech("Irfan Mustafar",         "+60110011224", "Suspension & Coilovers"),
+                mech("Kevin Yong Kah Hoe",     "+60110011225", "Steering & Power Steering"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -617,6 +690,11 @@ async def seed():
                 prod("NGK Racing Spark Plug BKR7E", "NGK", "filter", 28.0, 30, "pcs", "Cold-range racing spark plug", ["ECU Stage 2 Tune", "Turbocharger Installation"]),
                 prod("Weld-On O2 Bung (stainless)", "Generic", "performance", 15.0, 20, "pcs", "Stainless weld bung for O2 sensor", ["Exhaust System Upgrade"]),
             ],
+            "mechanics": [
+                mech("Shahrul Nizam Zakaria",  "+60143344551", "ECU Tuning & Dyno"),
+                mech("Raymond Goh Teck Lim",   "+60143344552", "Turbo & Forced Induction"),
+                mech("Hafiz Ismail",           "+60143344553", "Exhaust & Intake Systems"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -644,6 +722,10 @@ async def seed():
                 prod("Insulation Resistance Tester (HV)", "Fluke", "other", 0.0, 1, "pcs", "Workshop HV safety tool (not for sale — shop use)", ["EV/Hybrid Diagnostic Scan"]),
                 prod("Toyota CVT Hybrid Fluid", "Toyota", "lubricant", 55.0, 10, "litre", "WS ATF for Toyota E-CVT, 1L", ["EV/Hybrid Diagnostic Scan"]),
                 prod("Thermal Interface Paste (HV)", "Shin-Etsu", "other", 45.0, 8, "pcs", "Thermal compound for HV modules", ["Hybrid Battery Reconditioning", "Hybrid Battery Replacement"]),
+            ],
+            "mechanics": [
+                mech("Dr. Chong Wei Lun",      "+60154455661", "HV Battery & EV Systems"),
+                mech("Azlinda binti Nordin",   "+60154455662", "Hybrid Inverter & Diagnostics"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -676,6 +758,10 @@ async def seed():
                 prod("BlackVue DR900X-2CH Dashcam", "BlackVue", "accessories", 1200.0, 3, "pcs", "4K front + 1080p rear cloud dashcam", ["Dashcam Installation (front + rear)"]),
                 prod("Thinkware F800 PRO Dashcam", "Thinkware", "accessories", 750.0, 4, "pcs", "FHD front + rear with safety camera", ["Dashcam Installation (front + rear)"]),
             ],
+            "mechanics": [
+                mech("Khairul Amir Zainudin",  "+60165566771", "Head Unit & Audio"),
+                mech("Tracy Wong Xiu Ying",    "+60165566772", "Dashcam, Camera & Security"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -703,6 +789,10 @@ async def seed():
                 prod("3M Crystalline CR90", "3M", "accessories", 25.0, 30, "metre", "90% VLT UV/IR rejection, windscreen", ["Windscreen Film Only"]),
                 prod("3M Scotchgard Pro PPF", "3M", "accessories", 45.0, 30, "metre", "Self-healing PPF, 1.52m wide", ["Paint Protection Film (PPF)"]),
                 prod("Film Slip Solution", "Chemical Guys", "accessories", 15.0, 20, "litre", "Slip solution for film application, 1L", ["Window Tint — Full Car (Basic)", "Window Tint — Full Car (Premium)"]),
+            ],
+            "mechanics": [
+                mech("Norhafizan Ahmad",       "+60176677881", "Window Tint & PPF"),
+                mech("Sean Lim Jia Wei",       "+60176677882", "Vinyl Wrap & Interior Trim"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -735,6 +825,11 @@ async def seed():
                 prod("Meguiar's Headlight Restoration Kit", "Meguiar's", "detailing", 55.0, 10, "set", "Wet sand + polish + UV coat kit", ["Headlight Restoration"]),
                 prod("Koch Chemie One Cut & Finish", "Koch Chemie", "detailing", 95.0, 6, "pcs", "All-in-one cut and finish polish, 1L", ["Full Car Detailing (Premium)", "Paint Correction (single stage)"]),
             ],
+            "mechanics": [
+                mech("Farhan Ariff",           "+60187788991", "Ceramic Coating & Paint Correction"),
+                mech("Michelle Lau Sze Yee",   "+60187788992", "Full Detailing & Headlight Restore"),
+                mech("Zaki Hassan",            "+60187788993", "Exterior Wash & Clay Bar"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -763,6 +858,10 @@ async def seed():
                 prod("Meguiar's Carpet & Upholstery Cleaner", "Meguiar's", "detailing", 35.0, 15, "pcs", "Foaming carpet and seat cleaner, 400ml", ["Interior Deep Clean", "Full Grooming Package"]),
                 prod("Dinitrol 4941 Underbody Wax", "Dinitrol", "detailing", 65.0, 10, "pcs", "Anti-corrosion underbody spray, 1L", ["Undercarriage Wash & Coat"]),
                 prod("Odour Bomb (new car scent)", "Neutra Air", "detailing", 20.0, 20, "pcs", "Total-release odour eliminator bomb", ["Ozone & Odour Treatment"]),
+            ],
+            "mechanics": [
+                mech("Aiman Faris Roslan",     "+60198899002", "Interior Deep Clean & Leather"),
+                mech("Poh Bee Lin",            "+60198899003", "Engine Bay & Underbody"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
