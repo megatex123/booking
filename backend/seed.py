@@ -772,95 +772,185 @@ async def seed():
     await db.workshops.create_index([("location", "2dsphere")])
     print(f"✓ Created {len(workshops)} workshops")
 
-    # ── Bookings ──────────────────────────────────────────────────────────────
+    # ── Bookings — one example per status ────────────────────────────────────
     c1, c2, c3, c4 = customers
-    w_hafiz  = workshops[0]
-    w_ken    = workshops[1]
-    w_ql     = workshops[2]
-    w_razif  = workshops[8]
-    w_turbo  = workshops[17]
+    w_hafiz     = workshops[0]   # Hafiz Auto Workshop
+    w_ken       = workshops[1]   # Ken Auto Care Centre
+    w_razif     = workshops[8]   # Razif Motors & Body Works
+    w_speedwheel= workshops[11]  # SpeedWheel Tyre Depot
+    w_turbo     = workshops[15]  # TurboKing Performance Centre
+    w_suspro    = workshops[14]  # SuspensionPro Malaysia
 
     tomorrow  = (NOW + timedelta(days=1)).strftime("%Y-%m-%d")
-    yesterday = (NOW - timedelta(days=2)).strftime("%Y-%m-%d")
+    yesterday = (NOW - timedelta(days=1)).strftime("%Y-%m-%d")
     last_week = (NOW - timedelta(days=7)).strftime("%Y-%m-%d")
 
-    b1_id = oid(); b2_id = oid(); b3_id = oid(); b4_id = oid(); b5_id = oid()
+    b1_id = oid()  # pending
+    b2_id = oid()  # confirmed
+    b3_id = oid()  # in_progress
+    b4_id = oid()  # completed
+    b5_id = oid()  # rejected
+    b6_id = oid()  # cancelled
 
     bookings = [
+        # ── PENDING: customer just submitted, waiting for workshop to accept ──
         {
             "_id": b1_id,
             "customer_id": c1["_id"], "customer_name": c1["name"], "customer_phone": c1["phone"],
             "workshop_id": w_ids["hafiz"], "workshop_name": w_hafiz["workshop_name"],
             "workshop_address": w_hafiz["address"], "workshop_owner_id": owner_ids["hafiz"],
-            "services": [w_hafiz["services"][0]], "vehicle_plate": "WXY 1234", "vehicle_name": "Myvi",
-            "vehicle_brand": "Perodua", "scheduled_date": tomorrow, "scheduled_time": "10:00",
-            "notes": "Please check the brake fluid level too",
+            "services": [w_hafiz["services"][0]],  # Engine Oil Change RM80
+            "vehicle_plate": "WXY 1234", "vehicle_name": "Myvi", "vehicle_brand": "Perodua",
+            "scheduled_date": tomorrow, "scheduled_time": "10:00",
+            "notes": "Please check the brake fluid level too while you're at it.",
             "status": "pending", "total_price": 80.0,
             "payment_status": "unpaid", "payment_intent_id": None,
-            "created_at": NOW, "updated_at": NOW,
+            "created_at": NOW - timedelta(minutes=30), "updated_at": NOW - timedelta(minutes=30),
         },
+        # ── CONFIRMED: workshop accepted, appointment is on ───────────────────
         {
             "_id": b2_id,
             "customer_id": c2["_id"], "customer_name": c2["name"], "customer_phone": c2["phone"],
             "workshop_id": w_ids["hafiz"], "workshop_name": w_hafiz["workshop_name"],
             "workshop_address": w_hafiz["address"], "workshop_owner_id": owner_ids["hafiz"],
-            "services": [w_hafiz["services"][0], w_hafiz["services"][1]],
-            "vehicle_plate": "PQR 9012", "vehicle_name": "Persona",
-            "vehicle_brand": "Proton", "scheduled_date": tomorrow, "scheduled_time": "14:00",
-            "notes": "", "status": "confirmed", "total_price": 300.0,
+            "services": [w_hafiz["services"][0], w_hafiz["services"][1], w_hafiz["services"][2]],
+            # Engine Oil Change RM80 + Brake Pad RM220 + Tyre Rotation RM60
+            "vehicle_plate": "PQR 9012", "vehicle_name": "Persona", "vehicle_brand": "Proton",
+            "scheduled_date": tomorrow, "scheduled_time": "14:00",
+            "notes": "Brakes have been squeaking badly when stopping. Please do a full brake inspection.",
+            "status": "confirmed", "total_price": 360.0,
             "payment_status": "unpaid", "payment_intent_id": None,
-            "created_at": NOW - timedelta(hours=2), "updated_at": NOW,
+            "created_at": NOW - timedelta(hours=3), "updated_at": NOW - timedelta(hours=2),
         },
+        # ── IN PROGRESS: car is currently in the workshop bay ─────────────────
         {
             "_id": b3_id,
-            "customer_id": c1["_id"], "customer_name": c1["name"], "customer_phone": c1["phone"],
-            "workshop_id": w_ids["ken"], "workshop_name": w_ken["workshop_name"],
-            "workshop_address": w_ken["address"], "workshop_owner_id": owner_ids["ken"],
-            "services": [w_ken["services"][0]], "vehicle_plate": "WXY 1234", "vehicle_name": "Myvi",
-            "vehicle_brand": "Perodua", "scheduled_date": last_week, "scheduled_time": "09:00",
-            "notes": "Car has been vibrating at high speed",
-            "status": "completed", "total_price": 450.0,
-            "payment_status": "paid", "payment_intent_id": "pi_mock_demo",
-            "completion_notes": "Full service done. Found and fixed loose front tyre nut causing vibration.",
-            "next_service_months": 6,
-            "created_at": NOW - timedelta(days=8), "updated_at": NOW - timedelta(days=7),
-        },
-        {
-            "_id": b4_id,
-            "customer_id": c2["_id"], "customer_name": c2["name"], "customer_phone": c2["phone"],
+            "customer_id": c4["_id"], "customer_name": c4["name"], "customer_phone": c4["phone"],
             "workshop_id": w_ids["ken"], "workshop_name": w_ken["workshop_name"],
             "workshop_address": w_ken["address"], "workshop_owner_id": owner_ids["ken"],
             "services": [w_ken["services"][2], w_ken["services"][3]],
-            "vehicle_plate": "PQR 9012", "vehicle_name": "Persona",
-            "vehicle_brand": "Proton", "scheduled_date": yesterday, "scheduled_time": "11:00",
-            "notes": "Car pulls to the left",
+            # Wheel Alignment RM80 + Battery Replacement RM200
+            "vehicle_plate": "BDC 7788", "vehicle_name": "Almera", "vehicle_brand": "Nissan",
+            "scheduled_date": yesterday, "scheduled_time": "11:00",
+            "notes": "Car pulls to the left when I let go of the steering wheel. Battery warning light came on last week.",
             "status": "in_progress", "total_price": 280.0,
             "payment_status": "unpaid", "payment_intent_id": None,
-            "created_at": NOW - timedelta(days=3), "updated_at": NOW - timedelta(days=1),
+            "created_at": NOW - timedelta(days=2), "updated_at": NOW - timedelta(hours=2),
         },
+        # ── COMPLETED: work done, notes and next service recorded ─────────────
+        {
+            "_id": b4_id,
+            "customer_id": c1["_id"], "customer_name": c1["name"], "customer_phone": c1["phone"],
+            "workshop_id": w_ids["ken"], "workshop_name": w_ken["workshop_name"],
+            "workshop_address": w_ken["address"], "workshop_owner_id": owner_ids["ken"],
+            "services": [w_ken["services"][0]],  # Full Car Service RM450
+            "vehicle_plate": "WXY 1234", "vehicle_name": "Myvi", "vehicle_brand": "Perodua",
+            "scheduled_date": last_week, "scheduled_time": "09:00",
+            "notes": "Car has been vibrating at high speed. Please check all tyres as well.",
+            "status": "completed", "total_price": 450.0,
+            "payment_status": "paid", "payment_intent_id": "pi_mock_demo_001",
+            "completion_notes": "Full 50-point service completed. Found and fixed a loose front-left tyre nut which was causing the vibration at speed. All tyre pressures adjusted to manufacturer spec. Engine oil and filter replaced with Shell Helix HX7 10W-40. Topped up coolant and windshield washer fluid. Brake fluid is still within spec. Next service recommended in 6 months or 10,000km.",
+            "next_service_months": 6,
+            "completed_at": NOW - timedelta(days=7),
+            "created_at": NOW - timedelta(days=8), "updated_at": NOW - timedelta(days=7),
+        },
+        # ── REJECTED: workshop cannot take the booking ────────────────────────
         {
             "_id": b5_id,
             "customer_id": c3["_id"], "customer_name": c3["name"], "customer_phone": c3["phone"],
-            "workshop_id": w_ids["turboking"], "workshop_name": w_turbo["workshop_name"],
-            "workshop_address": w_turbo["address"], "workshop_owner_id": owner_ids["turboking"],
-            "services": [w_turbo["services"][0]], "vehicle_plate": "VJK 3344", "vehicle_name": "Civic",
-            "vehicle_brand": "Honda", "scheduled_date": yesterday, "scheduled_time": "13:00",
-            "notes": "Want Stage 1 tune for better fuel economy on highway",
-            "status": "confirmed", "total_price": 650.0,
+            "workshop_id": w_ids["razif"], "workshop_name": w_razif["workshop_name"],
+            "workshop_address": w_razif["address"], "workshop_owner_id": owner_ids["razif"],
+            "services": [w_razif["services"][3]],  # Panel Beating RM350
+            "vehicle_plate": "VJK 3344", "vehicle_name": "Civic", "vehicle_brand": "Honda",
+            "scheduled_date": tomorrow, "scheduled_time": "10:00",
+            "notes": "Left rear door got dented in a parking lot accident. Need panel beating and repaint to match.",
+            "status": "rejected", "total_price": 350.0,
             "payment_status": "unpaid", "payment_intent_id": None,
-            "created_at": NOW - timedelta(days=1), "updated_at": NOW - timedelta(hours=12),
+            "status_note": "Sorry, all our panel bays are fully booked this week. We are unable to take your booking at this time. Please try rebooking for next week, or contact us to be added to the waiting list.",
+            "created_at": NOW - timedelta(hours=6), "updated_at": NOW - timedelta(hours=5),
+        },
+        # ── CANCELLED: customer cancelled after confirmation ──────────────────
+        {
+            "_id": b6_id,
+            "customer_id": c2["_id"], "customer_name": c2["name"], "customer_phone": c2["phone"],
+            "workshop_id": w_ids["speedwheel"], "workshop_name": w_speedwheel["workshop_name"],
+            "workshop_address": w_speedwheel["address"], "workshop_owner_id": owner_ids["speedwheel"],
+            "services": [w_speedwheel["services"][5]],  # Tyre Replacement Package (4 tyres) RM600
+            "vehicle_plate": "PQR 9012", "vehicle_name": "Persona", "vehicle_brand": "Proton",
+            "scheduled_date": yesterday, "scheduled_time": "15:00",
+            "notes": "All 4 tyres are balding, need to replace the full set. Prefer Bridgestone or Michelin.",
+            "status": "cancelled", "total_price": 600.0,
+            "payment_status": "unpaid", "payment_intent_id": None,
+            "created_at": NOW - timedelta(days=4), "updated_at": NOW - timedelta(days=1),
         },
     ]
     await db.bookings.insert_many(bookings)
-    print(f"✓ Created {len(bookings)} bookings")
+    print(f"✓ Created {len(bookings)} bookings ({', '.join(b['status'] for b in bookings)})")
 
     # ── Chat messages ─────────────────────────────────────────────────────────
     messages = [
-        {"_id": oid(), "booking_id": b2_id, "sender_id": c2["_id"], "sender_name": c2["name"], "sender_role": "customer", "content": "Hi, I wanted to confirm my booking for tomorrow at 2pm.", "is_read": True, "created_at": NOW - timedelta(hours=1, minutes=30)},
-        {"_id": oid(), "booking_id": b2_id, "sender_id": owner_ids["hafiz"], "sender_name": "Hafiz Auto Workshop", "sender_role": "workshop", "content": "Hello! Yes, your booking is confirmed. Please arrive 5 minutes early.", "is_read": True, "created_at": NOW - timedelta(hours=1)},
-        {"_id": oid(), "booking_id": b2_id, "sender_id": c2["_id"], "sender_name": c2["name"], "sender_role": "customer", "content": "Great, thank you! Will do.", "is_read": False, "created_at": NOW - timedelta(minutes=30)},
-        {"_id": oid(), "booking_id": b3_id, "sender_id": c1["_id"], "sender_name": c1["name"], "sender_role": "customer", "content": "Is my car ready for collection?", "is_read": True, "created_at": NOW - timedelta(days=7, hours=2)},
-        {"_id": oid(), "booking_id": b3_id, "sender_id": owner_ids["ken"], "sender_name": "Ken Auto Care", "sender_role": "workshop", "content": "Yes! Your car is ready. We also topped up the coolant. Total is RM450.", "is_read": True, "created_at": NOW - timedelta(days=7, hours=1)},
+        # b1 PENDING — customer asks about parking
+        {"_id": oid(), "booking_id": b1_id, "sender_id": c1["_id"], "sender_name": c1["name"], "sender_role": "customer",
+         "content": "Hi, I just submitted a booking for tomorrow at 10am. Is there parking available at your workshop?",
+         "is_read": False, "created_at": NOW - timedelta(minutes=20)},
+
+        # b2 CONFIRMED — pre-appointment chat
+        {"_id": oid(), "booking_id": b2_id, "sender_id": c2["_id"], "sender_name": c2["name"], "sender_role": "customer",
+         "content": "Hi! I have a booking for tomorrow at 2pm. The brakes are really squeaking — is it likely to be the pads?",
+         "is_read": True, "created_at": NOW - timedelta(hours=2, minutes=45)},
+        {"_id": oid(), "booking_id": b2_id, "sender_id": owner_ids["hafiz"], "sender_name": w_hafiz["workshop_name"], "sender_role": "workshop",
+         "content": "Hello Siti! Most likely the brake pads, yes. We'll do a full inspection when you come in. Your booking is confirmed for 2pm tomorrow. See you then!",
+         "is_read": True, "created_at": NOW - timedelta(hours=2, minutes=15)},
+        {"_id": oid(), "booking_id": b2_id, "sender_id": c2["_id"], "sender_name": c2["name"], "sender_role": "customer",
+         "content": "Great, thank you! Will the tyre rotation take long as well? I need to be somewhere by 5pm.",
+         "is_read": True, "created_at": NOW - timedelta(hours=2)},
+        {"_id": oid(), "booking_id": b2_id, "sender_id": owner_ids["hafiz"], "sender_name": w_hafiz["workshop_name"], "sender_role": "workshop",
+         "content": "Total estimated time is about 3 hours. You should be done well before 5pm, no worries.",
+         "is_read": False, "created_at": NOW - timedelta(hours=1, minutes=50)},
+
+        # b3 IN PROGRESS — customer checking status
+        {"_id": oid(), "booking_id": b3_id, "sender_id": c4["_id"], "sender_name": c4["name"], "sender_role": "customer",
+         "content": "Hi, just dropping off my Almera. Is the service bay ready?",
+         "is_read": True, "created_at": NOW - timedelta(hours=3)},
+        {"_id": oid(), "booking_id": b3_id, "sender_id": owner_ids["ken"], "sender_name": w_ken["workshop_name"], "sender_role": "workshop",
+         "content": "Yes, we're ready for you! Please hand the key to the front desk. We'll start the alignment check first.",
+         "is_read": True, "created_at": NOW - timedelta(hours=2, minutes=50)},
+        {"_id": oid(), "booking_id": b3_id, "sender_id": owner_ids["ken"], "sender_name": w_ken["workshop_name"], "sender_role": "workshop",
+         "content": "Update: alignment is done. We're now testing the battery — load test shows it's at 45% capacity, well below spec. We'll proceed with replacement as booked.",
+         "is_read": False, "created_at": NOW - timedelta(hours=1)},
+
+        # b4 COMPLETED — post-service chat
+        {"_id": oid(), "booking_id": b4_id, "sender_id": c1["_id"], "sender_name": c1["name"], "sender_role": "customer",
+         "content": "Is my Myvi ready for collection?",
+         "is_read": True, "created_at": NOW - timedelta(days=7, hours=2)},
+        {"_id": oid(), "booking_id": b4_id, "sender_id": owner_ids["ken"], "sender_name": w_ken["workshop_name"], "sender_role": "workshop",
+         "content": "Yes! Your car is ready. We found a loose tyre nut causing the vibration — fixed it. We also topped up the coolant. Total is RM450. You can pay when you collect.",
+         "is_read": True, "created_at": NOW - timedelta(days=7, hours=1, minutes=30)},
+        {"_id": oid(), "booking_id": b4_id, "sender_id": c1["_id"], "sender_name": c1["name"], "sender_role": "customer",
+         "content": "Great, on my way now! Thanks for finding that issue.",
+         "is_read": True, "created_at": NOW - timedelta(days=7, hours=1)},
+
+        # b5 REJECTED — workshop explains
+        {"_id": oid(), "booking_id": b5_id, "sender_id": c3["_id"], "sender_name": c3["name"], "sender_role": "customer",
+         "content": "Hi, I submitted a booking for panel beating on my Honda Civic. How long will it take approximately?",
+         "is_read": True, "created_at": NOW - timedelta(hours=5, minutes=30)},
+        {"_id": oid(), "booking_id": b5_id, "sender_id": owner_ids["razif"], "sender_name": w_razif["workshop_name"], "sender_role": "workshop",
+         "content": "Hi Rajan, sorry to inform you that we had to reject your booking — all our panel bays are fully booked this week. A dent repair + repaint typically takes 2–3 days. Please try rebooking for next week and we will prioritise you.",
+         "is_read": True, "created_at": NOW - timedelta(hours=5)},
+        {"_id": oid(), "booking_id": b5_id, "sender_id": c3["_id"], "sender_name": c3["name"], "sender_role": "customer",
+         "content": "Okay no problem, I'll rebook for next week. Thank you for letting me know.",
+         "is_read": True, "created_at": NOW - timedelta(hours=4, minutes=45)},
+
+        # b6 CANCELLED — customer cancels
+        {"_id": oid(), "booking_id": b6_id, "sender_id": owner_ids["speedwheel"], "sender_name": w_speedwheel["workshop_name"], "sender_role": "workshop",
+         "content": "Hello Siti! Your tyre replacement booking for tomorrow 3pm is confirmed. We have Bridgestone Ecopia EP300 and Michelin tyres in stock. Which do you prefer?",
+         "is_read": True, "created_at": NOW - timedelta(days=3)},
+        {"_id": oid(), "booking_id": b6_id, "sender_id": c2["_id"], "sender_name": c2["name"], "sender_role": "customer",
+         "content": "Hi, I'm so sorry but I need to cancel this booking. My husband's car also needs urgent repairs and we can't afford both at the same time. I'll rebook next month.",
+         "is_read": True, "created_at": NOW - timedelta(days=1, hours=2)},
+        {"_id": oid(), "booking_id": b6_id, "sender_id": owner_ids["speedwheel"], "sender_name": w_speedwheel["workshop_name"], "sender_role": "workshop",
+         "content": "No worries at all! We've noted the cancellation. Whenever you're ready, just make a new booking and we'll take care of you.",
+         "is_read": True, "created_at": NOW - timedelta(days=1, hours=1, minutes=30)},
     ]
     await db.messages.insert_many(messages)
     print(f"✓ Created {len(messages)} chat messages")
@@ -881,7 +971,7 @@ async def seed():
         rev(oid(), "hafiz", oid(), "Lee Wei Liang", 4.5, "Brought my car in for a full tune-up. Great results!", 5),
         rev(oid(), "hafiz", oid(), "Amirah Syahira", 4.8, "Fast service and friendly staff. AC works perfectly now.", 3),
         # Ken
-        rev(b3_id, "ken", c1["_id"], "Ahmad Rizal", 4.0, "Good service, car runs smoothly now. Waiting time was a bit long.", 6),
+        rev(b4_id, "ken", c1["_id"], "Ahmad Rizal", 4.0, "Good service, car runs smoothly now. Waiting time was a bit long.", 6),
         rev(oid(), "ken", oid(), "Priya Devi", 4.8, "Fast and efficient. Fixed my alignment issue perfectly.", 3),
         rev(oid(), "ken", oid(), "James Lim", 4.5, "Reasonable price for a full service. Will return.", 8),
         # Razif
