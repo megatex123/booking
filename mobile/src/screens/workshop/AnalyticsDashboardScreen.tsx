@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -167,7 +168,7 @@ const PeakHoursChart: React.FC<{ peakHours: Record<string, number> }> = ({
                         styles.peakBarFill,
                         {
                           height: barHeight,
-                          backgroundColor: isTop ? Colors.primaryDark : Colors.primary,
+                          backgroundColor: isTop ? colors.primaryDark : colors.primary,
                           opacity: count === 0 ? 0.15 : 1,
                         },
                       ]}
@@ -244,16 +245,16 @@ const CustomerStatsSection: React.FC<{ stats: CustomerStats }> = ({ stats }) => 
     <SectionCard>
       <SectionHeader title="Customers" subtitle={`${stats.total} total`} />
       <View style={styles.statsRow}>
-        <View style={[styles.statCard, { borderColor: Colors.primary }]}>
+        <View style={[styles.statCard, { borderColor: colors.primary }]}>
           <Text style={styles.statLabel}>Repeat</Text>
-          <Text style={[styles.statValue, { color: Colors.primary }]}>
+          <Text style={[styles.statValue, { color: colors.primary }]}>
             {stats.repeat}
           </Text>
           <Text style={styles.statPct}>{repeatPct}%</Text>
         </View>
-        <View style={[styles.statCard, { borderColor: Colors.success }]}>
+        <View style={[styles.statCard, { borderColor: colors.success }]}>
           <Text style={styles.statLabel}>New</Text>
-          <Text style={[styles.statValue, { color: Colors.success }]}>
+          <Text style={[styles.statValue, { color: colors.success }]}>
             {stats.new}
           </Text>
           <Text style={styles.statPct}>{newPct}%</Text>
@@ -284,6 +285,8 @@ const CustomerStatsSection: React.FC<{ stats: CustomerStats }> = ({ stats }) => 
 // ---------------------------------------------------------------------------
 
 export const AnalyticsDashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [months, setMonths] = useState<MonthsOption>(6);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -360,7 +363,7 @@ export const AnalyticsDashboardScreen: React.FC<{ navigation: any }> = ({ naviga
       {/* Body */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading analytics…</Text>
         </View>
       ) : error ? (
@@ -378,8 +381,8 @@ export const AnalyticsDashboardScreen: React.FC<{ navigation: any }> = ({ naviga
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[Colors.primary]}
-              tintColor={Colors.primary}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         >
@@ -397,10 +400,11 @@ export const AnalyticsDashboardScreen: React.FC<{ navigation: any }> = ({ naviga
 // Styles
 // ---------------------------------------------------------------------------
 
-const styles = StyleSheet.create({
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
 
   // Header
@@ -409,9 +413,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   backButton: {
     marginRight: Spacing.sm,
@@ -419,17 +423,17 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 28,
-    color: Colors.primary,
+    color: colors.primary,
     lineHeight: 30,
   },
   headerTitle: {
     ...Typography.h3,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   monthsToggle: {
     flexDirection: 'row',
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: BorderRadius.full,
     padding: 2,
   },
@@ -439,15 +443,15 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   monthsOptionActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   monthsOptionText: {
     ...Typography.caption,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   monthsOptionTextActive: {
-    color: Colors.surface,
+    color: colors.surface,
   },
 
   // Body
@@ -468,30 +472,30 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...Typography.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   errorText: {
     ...Typography.body,
-    color: Colors.danger,
+    color: colors.danger,
     textAlign: 'center',
   },
   retryButton: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
   },
   retryText: {
     ...Typography.button,
-    color: Colors.surface,
+    color: colors.surface,
   },
 
   // Card
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 6,
@@ -503,16 +507,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...Typography.h3,
-    color: Colors.text,
+    color: colors.text,
   },
   sectionSubtitle: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   emptyNote: {
     ...Typography.body,
-    color: Colors.textLight,
+    color: colors.textLight,
     textAlign: 'center',
     paddingVertical: Spacing.md,
   },
@@ -521,7 +525,7 @@ const styles = StyleSheet.create({
   totalRevenue: {
     fontSize: 32,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: Spacing.xs,
   },
   barChartContainer: {
@@ -534,7 +538,7 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     width: 42,
     textAlign: 'right',
   },
@@ -542,17 +546,17 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 18,
     flexDirection: 'row',
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: BorderRadius.sm,
     overflow: 'hidden',
   },
   barFill: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.sm,
   },
   barValue: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     width: 90,
     textAlign: 'right',
   },
@@ -580,16 +584,16 @@ const styles = StyleSheet.create({
   },
   peakCount: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 10,
   },
   peakCountTop: {
-    color: Colors.primaryDark,
+    color: colors.primaryDark,
     fontWeight: '700',
   },
   peakHourLabel: {
     fontSize: 9,
-    color: Colors.textLight,
+    color: colors.textLight,
     textAlign: 'center',
   },
 
@@ -600,12 +604,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    borderBottomColor: colors.divider,
   },
   serviceRank: {
     ...Typography.bodySmall,
     fontWeight: '700',
-    color: Colors.textLight,
+    color: colors.textLight,
     width: 20,
     textAlign: 'center',
   },
@@ -615,23 +619,23 @@ const styles = StyleSheet.create({
   },
   serviceName: {
     ...Typography.bodySmall,
-    color: Colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   serviceBarTrack: {
     height: 6,
     flexDirection: 'row',
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
   },
   serviceBarFill: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.full,
   },
   serviceValue: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'right',
     width: 80,
   },
@@ -651,7 +655,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -661,19 +665,20 @@ const styles = StyleSheet.create({
   },
   statPct: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   splitBarContainer: {
     flexDirection: 'row',
     height: 10,
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
   },
   splitBarRepeat: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   splitBarNew: {
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
   },
-});
+  });
+}

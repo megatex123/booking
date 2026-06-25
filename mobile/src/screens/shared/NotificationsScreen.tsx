@@ -1,21 +1,22 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo} from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchNotifications, markRead, markAllRead } from '../../store/notificationSlice';
 
 interface Props { navigation: any }
 
 const TYPE_ICON: Record<string, { icon: string; color: string }> = {
-  new_booking:         { icon: 'calendar',              color: Colors.primary },
-  booking_confirmed:   { icon: 'checkmark-circle',      color: Colors.success },
-  booking_rejected:    { icon: 'close-circle',          color: Colors.error },
-  booking_in_progress: { icon: 'construct',             color: Colors.warning },
-  booking_completed:   { icon: 'checkmark-done-circle', color: Colors.success },
-  booking_cancelled:   { icon: 'ban',                   color: Colors.error },
-  new_message:         { icon: 'chatbubble',            color: Colors.secondary },
+  new_booking:         { icon: 'calendar',              color: colors.primary },
+  booking_confirmed:   { icon: 'checkmark-circle',      color: colors.success },
+  booking_rejected:    { icon: 'close-circle',          color: colors.error },
+  booking_in_progress: { icon: 'construct',             color: colors.warning },
+  booking_completed:   { icon: 'checkmark-done-circle', color: colors.success },
+  booking_cancelled:   { icon: 'ban',                   color: colors.error },
+  new_message:         { icon: 'chatbubble',            color: colors.secondary },
   service_reminder:     { icon: 'car-sport',             color: '#F59E0B' },
   low_stock:            { icon: 'warning-outline',        color: '#EF4444' },
   referral_reward:      { icon: 'gift',                  color: '#8B5CF6' },
@@ -36,6 +37,8 @@ function timeAgo(iso: string): string {
 }
 
 export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { items, unreadCount, loading } = useAppSelector(s => s.notifications);
   const userRole = useAppSelector(s => s.auth.user?.role);
@@ -67,7 +70,7 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   }, [dispatch]);
 
   const renderItem = ({ item }: { item: any }) => {
-    const { icon, color } = TYPE_ICON[item.type] || { icon: 'notifications', color: Colors.primary };
+    const { icon, color } = TYPE_ICON[item.type] || { icon: 'notifications', color: colors.primary };
     const isReminder = item.type === 'service_reminder';
     return (
       <TouchableOpacity
@@ -100,7 +103,7 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Notifications</Text>
         {unreadCount > 0 ? (
@@ -113,7 +116,7 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 60 }} color={Colors.primary} size="large" />
+        <ActivityIndicator style={{ marginTop: 60 }} color={colors.primary} size="large" />
       ) : (
         <FlatList
           data={items}
@@ -121,7 +124,7 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
           renderItem={renderItem}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="notifications-off-outline" size={64} color={Colors.textLight} />
+              <Ionicons name="notifications-off-outline" size={64} color={colors.textLight} />
               <Text style={styles.emptyTitle}>No notifications</Text>
             </View>
           }
@@ -131,40 +134,42 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   markBtn: { paddingHorizontal: 8 },
-  markBtnText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  markBtnText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 100 },
-  emptyTitle: { ...Typography.h3, color: Colors.textSecondary, marginTop: Spacing.lg },
+  emptyTitle: { ...Typography.h3, color: colors.textSecondary, marginTop: Spacing.lg },
   item: {
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: Colors.surface, padding: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
+    backgroundColor: colors.surface, padding: Spacing.md,
+    borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  itemUnread: { backgroundColor: Colors.primary + '08' },
+  itemUnread: { backgroundColor: colors.primary + '08' },
   iconWrap: {
     width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center', marginRight: Spacing.md,
   },
   itemBody: { flex: 1 },
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  itemTitle: { ...Typography.body, fontWeight: '600', color: Colors.text, flex: 1, marginRight: 8 },
-  itemTime: { ...Typography.caption, color: Colors.textLight },
-  itemText: { ...Typography.bodySmall, color: Colors.textSecondary, lineHeight: 18 },
+  itemTitle: { ...Typography.body, fontWeight: '600', color: colors.text, flex: 1, marginRight: 8 },
+  itemTime: { ...Typography.caption, color: colors.textLight },
+  itemText: { ...Typography.bodySmall, color: colors.textSecondary, lineHeight: 18 },
   dot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: Colors.primary, marginTop: 6, marginLeft: 6,
+    backgroundColor: colors.primary, marginTop: 6, marginLeft: 6,
   },
   bookNowRow: {
     flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6,
   },
   bookNowText: { fontSize: 12, fontWeight: '600' },
-});
+  });
+}

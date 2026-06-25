@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,14 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { authAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any; route: any }
 
 export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { email, otp } = route.params as { email: string; otp: string };
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -45,7 +48,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.successWrap}>
           <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle" size={72} color={Colors.success} />
+            <Ionicons name="checkmark-circle" size={72} color={colors.success} />
           </View>
           <Text style={styles.successTitle}>Password Reset!</Text>
           <Text style={styles.successText}>
@@ -67,12 +70,12 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.iconWrap}>
           <View style={styles.iconCircle}>
-            <Ionicons name="key-outline" size={38} color={Colors.primary} />
+            <Ionicons name="key-outline" size={38} color={colors.primary} />
           </View>
         </View>
 
@@ -112,7 +115,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons
                   name={h.ok ? 'checkmark-circle' : 'ellipse-outline'}
                   size={14}
-                  color={h.ok ? Colors.success : Colors.textLight}
+                  color={h.ok ? colors.success : colors.textLight}
                 />
                 <Text style={[styles.hintText, h.ok && styles.hintOk]}>{h.label}</Text>
               </View>
@@ -133,23 +136,24 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
   iconWrap: { alignItems: 'center', marginBottom: Spacing.lg },
   iconCircle: {
     width: 84, height: 84, borderRadius: 42,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
   header: { marginBottom: Spacing.xl },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: 10 },
-  subtitle: { ...Typography.body, color: Colors.textSecondary },
+  title: { ...Typography.h1, color: colors.text, marginBottom: 10 },
+  subtitle: { ...Typography.body, color: colors.textSecondary },
   form: { marginBottom: Spacing.xl },
   hints: { gap: 6, marginBottom: Spacing.lg, paddingHorizontal: 4 },
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  hintText: { ...Typography.caption, color: Colors.textLight },
-  hintOk: { color: Colors.success },
+  hintText: { ...Typography.caption, color: colors.textLight },
+  hintOk: { color: colors.success },
   resetBtn: { marginTop: 4 },
 
   successWrap: {
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl, gap: 16,
   },
   successIcon: { marginBottom: 8 },
-  successTitle: { ...Typography.h1, color: Colors.text, textAlign: 'center' },
-  successText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
-});
+  successTitle: { ...Typography.h1, color: colors.text, textAlign: 'center' },
+  successText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  });
+}

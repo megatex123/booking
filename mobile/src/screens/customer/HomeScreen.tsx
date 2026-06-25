@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   Platform, ScrollView, FlatList, ActivityIndicator, RefreshControl,
@@ -12,7 +12,8 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchNearbyWorkshops } from '../../store/workshopSlice';
 import { toggleFavourite, loadFavourites } from '../../store/favouriteSlice';
 import { toggleCompare, removeFromCompare } from '../../store/compareSlice';
-import { Colors, Spacing, BorderRadius, Typography } from '../../utils/theme';
+import { Colors, Spacing, BorderRadius, Typography, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Workshop } from '../../types';
 import { useTranslation } from 'react-i18next';
 
@@ -52,6 +53,8 @@ const SORTS = [
 ];
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { nearby, loading } = useAppSelector((s) => s.workshops);
@@ -133,18 +136,18 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     return (
     <TouchableOpacity style={styles.card} onPress={() => goToWorkshop(w)} activeOpacity={0.88}>
       {/* Color bar based on open status */}
-      <View style={[styles.cardAccent, { backgroundColor: w.is_open ? Colors.success : Colors.textLight }]} />
+      <View style={[styles.cardAccent, { backgroundColor: w.is_open ? colors.success : colors.textLight }]} />
 
       <View style={styles.cardBody}>
         {/* Top row */}
         <View style={styles.cardTop}>
           <View style={styles.workshopIcon}>
-            <Ionicons name="build" size={22} color={Colors.primary} />
+            <Ionicons name="build" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.workshopName} numberOfLines={1}>{w.workshop_name}</Text>
             <View style={styles.addressRow}>
-              <Ionicons name="location-outline" size={12} color={Colors.textSecondary} />
+              <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
               <Text style={styles.addressText} numberOfLines={1}>{w.address}</Text>
             </View>
           </View>
@@ -155,7 +158,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           {isFav && (
             <View style={styles.favPinBadge}>
-              <Ionicons name="bookmark" size={10} color={Colors.primary} />
+              <Ionicons name="bookmark" size={10} color={colors.primary} />
             </View>
           )}
           <TouchableOpacity
@@ -166,7 +169,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons
               name={isFav ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFav ? '#EF4444' : Colors.textLight}
+              color={isFav ? '#EF4444' : colors.textLight}
             />
           </TouchableOpacity>
         </View>
@@ -180,12 +183,12 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           {w.distance_km != null && (
             <View style={styles.statItem}>
-              <Ionicons name="navigate-outline" size={13} color={Colors.primary} />
+              <Ionicons name="navigate-outline" size={13} color={colors.primary} />
               <Text style={styles.statVal}>{w.distance_km.toFixed(1)} km</Text>
             </View>
           )}
           <View style={styles.statItem}>
-            <Ionicons name="construct-outline" size={13} color={Colors.textSecondary} />
+            <Ionicons name="construct-outline" size={13} color={colors.textSecondary} />
             <Text style={styles.statVal}>{w.services.length} services</Text>
           </View>
           {waitInfo && (
@@ -211,7 +214,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
               const c = CATEGORIES.find((x) => x.key === cat);
               return (
                 <View key={cat} style={styles.tag}>
-                  <Ionicons name={c?.icon as any ?? 'construct-outline'} size={11} color={Colors.primary} />
+                  <Ionicons name={c?.icon as any ?? 'construct-outline'} size={11} color={colors.primary} />
                   <Text style={styles.tagText}>{c?.label ?? cat}</Text>
                 </View>
               );
@@ -233,9 +236,9 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <Ionicons
               name={isInCompare ? 'checkmark-circle' : 'git-compare-outline'}
               size={12}
-              color={isInCompare ? Colors.success : compareDisabled ? Colors.textLight : Colors.primary}
+              color={isInCompare ? colors.success : compareDisabled ? colors.textLight : colors.primary}
             />
-            <Text style={[styles.compareChipText, isInCompare && { color: Colors.success }]}>
+            <Text style={[styles.compareChipText, isInCompare && { color: colors.success }]}>
               {isInCompare ? 'Added' : 'Compare'}
             </Text>
           </TouchableOpacity>
@@ -278,25 +281,25 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
       {/* Search bar */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
+          <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={t('home.searchPlaceholder')}
-            placeholderTextColor={Colors.textLight}
+            placeholderTextColor={colors.textLight}
             style={styles.searchInput}
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={18} color={Colors.textLight} />
+              <Ionicons name="close-circle" size={18} color={colors.textLight} />
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity style={styles.toggleBtn} onPress={() => setMapMode(!mapMode)}>
-          <Ionicons name={mapMode ? 'list-outline' : 'map-outline'} size={20} color={Colors.primary} />
+          <Ionicons name={mapMode ? 'list-outline' : 'map-outline'} size={20} color={colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.toggleBtn} onPress={onRefresh}>
-          <Ionicons name="refresh-outline" size={20} color={Colors.primary} />
+          <Ionicons name="refresh-outline" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -328,7 +331,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
               <Ionicons
                 name={cat.icon as any}
                 size={14}
-                color={active ? '#fff' : Colors.textSecondary}
+                color={active ? '#fff' : colors.textSecondary}
               />
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{cat.label}</Text>
               {count > 0 && (
@@ -359,7 +362,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.sortBtn, sort === s.key && styles.sortBtnActive]}
               onPress={() => setSort(s.key)}
             >
-              <Ionicons name={s.icon as any} size={14} color={sort === s.key ? Colors.primary : Colors.textSecondary} />
+              <Ionicons name={s.icon as any} size={14} color={sort === s.key ? colors.primary : colors.textSecondary} />
               <Text style={[styles.sortText, sort === s.key && styles.sortTextActive]}>{s.label}</Text>
             </TouchableOpacity>
           ))}
@@ -395,14 +398,14 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                       title={w.workshop_name}
                       description={`⭐ ${w.rating.toFixed(1)} · ${w.distance_km?.toFixed(1)} km`}
                       onCalloutPress={() => goToWorkshop(w)}
-                      pinColor={w.is_open ? Colors.success : Colors.danger}
+                      pinColor={w.is_open ? colors.success : colors.danger}
                     />
                   ))}
                 </MapView>
               )
             ) : (
               <View style={styles.mapLoader}>
-                <ActivityIndicator color={Colors.primary} size="large" />
+                <ActivityIndicator color={colors.primary} size="large" />
                 <Text style={styles.mapLoaderText}>Getting your location...</Text>
               </View>
             )}
@@ -420,14 +423,14 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 renderItem={({ item: w }) => (
                   <TouchableOpacity style={styles.miniCard} onPress={() => goToWorkshop(w)} activeOpacity={0.85}>
                     <View style={styles.miniIconWrap}>
-                      <Ionicons name="build" size={18} color={Colors.primary} />
+                      <Ionicons name="build" size={18} color={colors.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.miniName} numberOfLines={1}>{w.workshop_name}</Text>
                       <Text style={styles.miniMeta}>⭐ {w.rating.toFixed(1)} · {w.distance_km?.toFixed(1)} km</Text>
                     </View>
                     <View style={[styles.miniStatus, !w.is_open && styles.miniStatusClosed]}>
-                      <Text style={[styles.miniStatusText, !w.is_open && { color: Colors.danger }]}>
+                      <Text style={[styles.miniStatusText, !w.is_open && { color: colors.danger }]}>
                         {w.is_open ? t('home.openNow') : t('home.closed')}
                       </Text>
                     </View>
@@ -446,17 +449,17 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
               compareItems.length > 0 && { paddingBottom: 80 },
             ]}
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ListEmptyComponent={
               loading ? (
                 <View style={styles.emptyCenter}>
-                  <ActivityIndicator color={Colors.primary} size="large" />
+                  <ActivityIndicator color={colors.primary} size="large" />
                   <Text style={styles.emptyText}>Finding workshops near you...</Text>
                 </View>
               ) : (
                 <View style={styles.emptyCenter}>
                   <View style={styles.emptyIcon}>
-                    <Ionicons name="search-outline" size={40} color={Colors.textLight} />
+                    <Ionicons name="search-outline" size={40} color={colors.textLight} />
                   </View>
                   <Text style={styles.emptyTitle}>{t('home.noWorkshopsFound')}</Text>
                   <Text style={styles.emptyText}>
@@ -486,13 +489,13 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <View key={w.id} style={styles.compareTrayItem}>
                   <Text style={styles.compareTrayName} numberOfLines={1}>{w.workshop_name}</Text>
                   <TouchableOpacity onPress={() => dispatch(removeFromCompare(w.id))} hitSlop={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-                    <Ionicons name="close-circle" size={14} color={Colors.textSecondary} />
+                    <Ionicons name="close-circle" size={14} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
               ))}
               {Array.from({ length: 3 - compareItems.length }).map((_, i) => (
                 <View key={`slot-${i}`} style={styles.compareTraySlot}>
-                  <Ionicons name="add-outline" size={12} color={Colors.textLight} />
+                  <Ionicons name="add-outline" size={12} color={colors.textLight} />
                   <Text style={styles.compareTraySlotText}>Add</Text>
                 </View>
               ))}
@@ -517,8 +520,9 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, position: 'relative' },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, position: 'relative' },
 
   header: {
     flexDirection: 'row',
@@ -528,12 +532,12 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
   },
-  greeting: { ...Typography.h3, color: Colors.text },
-  subGreeting: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  greeting: { ...Typography.h3, color: colors.text },
+  subGreeting: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   profileBtn: {},
   avatar: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { color: '#fff', fontWeight: '700', fontSize: 16 },
@@ -550,20 +554,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     paddingHorizontal: 12,
     height: 44,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  searchInput: { flex: 1, ...Typography.body, color: Colors.text },
+  searchInput: { flex: 1, ...Typography.body, color: colors.text },
   toggleBtn: {
     width: 44, height: 44,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
 
   categoriesScroll: { height: 44, marginBottom: 8 },
@@ -575,22 +579,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     height: 36,
   },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipPanelActive: { backgroundColor: '#0EA5E9', borderColor: '#0EA5E9' },
-  chipText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  chipText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: '#fff' },
   chipBadge: {
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 8, minWidth: 18, height: 18,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   chipBadgeActive: { backgroundColor: 'rgba(255,255,255,0.3)' },
-  chipBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
+  chipBadgeText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   chipBadgeTextActive: { color: '#fff' },
 
   sortRow: {
@@ -600,7 +604,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 8,
   },
-  resultCount: { ...Typography.caption, color: Colors.textSecondary, flexShrink: 0 },
+  resultCount: { ...Typography.caption, color: colors.textSecondary, flexShrink: 0 },
   sortBtnsScroll: { flexShrink: 1 },
   sortBtns: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   sortBtn: {
@@ -611,17 +615,17 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  sortBtnActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '10' },
-  sortText: { fontSize: 11, fontWeight: '500', color: Colors.textSecondary },
-  sortTextActive: { color: Colors.primary, fontWeight: '600' },
+  sortBtnActive: { borderColor: colors.primary, backgroundColor: colors.primary + '10' },
+  sortText: { fontSize: 11, fontWeight: '500', color: colors.textSecondary },
+  sortTextActive: { color: colors.primary, fontWeight: '600' },
 
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 32, gap: 12 },
 
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     flexDirection: 'row',
     overflow: 'hidden',
@@ -636,25 +640,25 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
   workshopIcon: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
-  workshopName: { ...Typography.body, fontWeight: '700', color: Colors.text },
+  workshopName: { ...Typography.body, fontWeight: '700', color: colors.text },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  addressText: { ...Typography.caption, color: Colors.textSecondary, flex: 1 },
+  addressText: { ...Typography.caption, color: colors.textSecondary, flex: 1 },
   openBadge: {
-    backgroundColor: Colors.success + '15',
+    backgroundColor: colors.success + '15',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  closedBadge: { backgroundColor: Colors.danger + '15' },
-  openText: { fontSize: 11, fontWeight: '600', color: Colors.success },
-  closedText: { color: Colors.danger },
+  closedBadge: { backgroundColor: colors.danger + '15' },
+  openText: { fontSize: 11, fontWeight: '600', color: colors.success },
+  closedText: { color: colors.danger },
 
   statsRow: { flexDirection: 'row', gap: 14, marginBottom: 10 },
   statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statVal: { ...Typography.caption, color: Colors.text, fontWeight: '600' },
-  statSub: { ...Typography.caption, color: Colors.textSecondary },
+  statVal: { ...Typography.caption, color: colors.text, fontWeight: '600' },
+  statSub: { ...Typography.caption, color: colors.textSecondary },
   waitBadge: { borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3, alignSelf: 'flex-start' },
   waitLabel: { ...Typography.caption, fontWeight: '700', fontSize: 11 },
   promoBadge: {
@@ -670,21 +674,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: colors.primary + '10',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8,
     paddingVertical: 3,
     marginRight: 6,
   },
-  tagText: { fontSize: 10, fontWeight: '600', color: Colors.primary },
+  tagText: { fontSize: 10, fontWeight: '600', color: colors.primary },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  priceHint: { ...Typography.caption, color: Colors.textSecondary },
+  priceHint: { ...Typography.caption, color: colors.textSecondary },
   bookBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: BorderRadius.full,
@@ -694,12 +698,12 @@ const styles = StyleSheet.create({
   mapWrap: { flex: 1, position: 'relative' },
   map: { flex: 1 },
   mapLoader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  mapLoaderText: { ...Typography.body, color: Colors.textSecondary, marginTop: 12 },
+  mapLoaderText: { ...Typography.body, color: colors.textSecondary, marginTop: 12 },
 
   sheet: {
     position: 'absolute',
     bottom: 0, left: 0, right: 0,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingTop: 12, paddingBottom: 24,
     shadowColor: '#000',
@@ -709,17 +713,17 @@ const styles = StyleSheet.create({
   },
   sheetHandle: {
     width: 36, height: 4,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 12,
   },
-  sheetTitle: { ...Typography.bodySmall, fontWeight: '600', color: Colors.textSecondary, paddingHorizontal: Spacing.lg, marginBottom: 12 },
+  sheetTitle: { ...Typography.bodySmall, fontWeight: '600', color: colors.textSecondary, paddingHorizontal: Spacing.lg, marginBottom: 12 },
   sheetList: { paddingHorizontal: Spacing.lg, gap: 10 },
   miniCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.md,
     padding: 10,
     width: 210,
@@ -727,30 +731,30 @@ const styles = StyleSheet.create({
   },
   miniIconWrap: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
-  miniName: { ...Typography.caption, fontWeight: '600', color: Colors.text },
-  miniMeta: { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
+  miniName: { ...Typography.caption, fontWeight: '600', color: colors.text },
+  miniMeta: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   miniStatus: {
-    backgroundColor: Colors.success + '15',
+    backgroundColor: colors.success + '15',
     borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
   },
-  miniStatusClosed: { backgroundColor: Colors.danger + '15' },
-  miniStatusText: { fontSize: 10, fontWeight: '600', color: Colors.success },
+  miniStatusClosed: { backgroundColor: colors.danger + '15' },
+  miniStatusText: { fontSize: 10, fontWeight: '600', color: colors.success },
 
   emptyCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyIcon: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
-  emptyTitle: { ...Typography.h3, color: Colors.text, marginBottom: 8 },
-  emptyText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center' },
+  emptyTitle: { ...Typography.h3, color: colors.text, marginBottom: 8 },
+  emptyText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center' },
   clearBtn: {
     marginTop: 16,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 20, paddingVertical: 10,
     borderRadius: BorderRadius.full,
   },
@@ -765,7 +769,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: 30,
-    backgroundColor: Colors.primary + '18',
+    backgroundColor: colors.primary + '18',
     borderRadius: 6,
     padding: 2,
   },
@@ -777,22 +781,22 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '0A',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '0A',
   },
   compareChipActive: {
-    borderColor: Colors.success,
-    backgroundColor: Colors.success + '0A',
+    borderColor: colors.success,
+    backgroundColor: colors.success + '0A',
   },
   compareChipDisabled: {
-    borderColor: Colors.border,
+    borderColor: colors.border,
     backgroundColor: 'transparent',
     opacity: 0.5,
   },
   compareChipText: {
     fontSize: 10,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
   },
 
   /* Compare tray */
@@ -803,9 +807,9 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     gap: 8,
@@ -824,7 +828,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: colors.primary + '10',
     borderRadius: BorderRadius.sm,
     paddingHorizontal: 8,
     paddingVertical: 5,
@@ -833,7 +837,7 @@ const styles = StyleSheet.create({
   compareTrayName: {
     fontSize: 11,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
     flexShrink: 1,
   },
   compareTraySlot: {
@@ -841,7 +845,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 3,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderStyle: 'dashed',
     borderRadius: BorderRadius.sm,
     paddingHorizontal: 10,
@@ -849,13 +853,13 @@ const styles = StyleSheet.create({
   },
   compareTraySlotText: {
     fontSize: 11,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   compareTrayBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     paddingHorizontal: 14,
     paddingVertical: 9,
@@ -872,7 +876,8 @@ const styles = StyleSheet.create({
   },
   compareTrayHintText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
-});
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   FlatList, Image, Linking, Dimensions,
@@ -12,7 +12,8 @@ import { Card } from '../../components/common/Card';
 import { Loading } from '../../components/common/Loading';
 import { reviewAPI, workshopAPI, uploadAPI } from '../../services/api';
 import { LocationMap } from '../../components/common/LocationMap';
-import { Colors, Typography, Spacing, BorderRadius, StatusColors } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, StatusColors, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, getCategoryLabel } from '../../utils/helpers';
 import { Workshop, WorkshopService, Review, PHOTO_CATEGORY_LABELS } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../store';
@@ -26,6 +27,8 @@ interface Props {
 }
 
 export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { t } = useTranslation();
   const workshop: Workshop = route.params?.workshop;
   const dispatch = useAppDispatch();
@@ -104,8 +107,8 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
             </ScrollView>
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Ionicons name="build-outline" size={64} color={Colors.textLight} />
-              <Text style={{ color: Colors.textLight, marginTop: 8, fontSize: 13 }}>No photos yet</Text>
+              <Ionicons name="build-outline" size={64} color={colors.textLight} />
+              <Text style={{ color: colors.textLight, marginTop: 8, fontSize: 13 }}>No photos yet</Text>
             </View>
           )}
 
@@ -175,14 +178,14 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
             </View>
             {workshop.distance_km != null && (
               <View style={styles.stat}>
-                <Ionicons name="navigate-outline" size={15} color={Colors.primary} />
+                <Ionicons name="navigate-outline" size={15} color={colors.primary} />
                 <Text style={styles.statText}>{workshop.distance_km.toFixed(1)} km away</Text>
               </View>
             )}
           </View>
 
           <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={16} color={Colors.textSecondary} />
+            <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
             <Text style={styles.address}>{workshop.address}</Text>
           </View>
 
@@ -199,9 +202,9 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
             <Ionicons
               name={isInCompare ? 'checkmark-circle' : 'git-compare-outline'}
               size={14}
-              color={isInCompare ? Colors.success : compareDisabled ? Colors.textLight : Colors.primary}
+              color={isInCompare ? colors.success : compareDisabled ? colors.textLight : colors.primary}
             />
-            <Text style={[styles.compareChipText, isInCompare && { color: Colors.success }]}>
+            <Text style={[styles.compareChipText, isInCompare && { color: colors.success }]}>
               {isInCompare ? t('home.addedToCompare') : compareDisabled ? t('home.compareFull') : t('home.addToCompare')}
             </Text>
           </TouchableOpacity>
@@ -223,21 +226,21 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
           {queueSnap && queueSnap.total_stations > 0 && (() => {
             const waitMin = queueSnap.est_wait_minutes;
             let waitLabel = 'Available now';
-            let waitColor = Colors.success;
-            if (waitMin === null) { waitLabel = 'No estimate'; waitColor = Colors.textSecondary; }
+            let waitColor = colors.success;
+            if (waitMin === null) { waitLabel = 'No estimate'; waitColor = colors.textSecondary; }
             else if (waitMin > 0) {
               const h = Math.floor(waitMin / 60);
               const m = waitMin % 60;
               waitLabel = h > 0 ? `~${h}h ${m}m wait` : `~${m} min wait`;
-              waitColor = waitMin <= 30 ? '#F59E0B' : Colors.danger;
+              waitColor = waitMin <= 30 ? '#F59E0B' : colors.danger;
             }
             return (
               <View style={styles.queueCard}>
                 <View style={styles.queueHeader}>
-                  <Ionicons name="time-outline" size={16} color={Colors.primary} />
+                  <Ionicons name="time-outline" size={16} color={colors.primary} />
                   <Text style={styles.queueTitle}>{t('workshop.liveQueueStatus')}</Text>
                   <TouchableOpacity onPress={refreshQueue} style={styles.queueRefreshBtn} disabled={refreshingQueue}>
-                    <Ionicons name={refreshingQueue ? 'sync' : 'refresh-outline'} size={16} color={Colors.primary} />
+                    <Ionicons name={refreshingQueue ? 'sync' : 'refresh-outline'} size={16} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.queueStats}>
@@ -304,7 +307,7 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.actionBtn} onPress={callWorkshop}>
-              <Ionicons name="call" size={20} color={Colors.primary} />
+              <Ionicons name="call" size={20} color={colors.primary} />
               <Text style={styles.actionBtnText}>{t('workshop.call')}</Text>
             </TouchableOpacity>
           </View>
@@ -398,14 +401,15 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   imageContainer: { height: 220, position: 'relative', overflow: 'hidden' },
   image: { width: '100%', height: '100%' },
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -422,7 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  catChipActive: { backgroundColor: Colors.primary },
+  catChipActive: { backgroundColor: colors.primary },
   catChipText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
   catChipTextActive: { color: '#fff' },
   photoCounter: {
@@ -461,92 +465,92 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     right: 16,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     borderRadius: 99,
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
-  closedBadge: { backgroundColor: Colors.danger },
+  closedBadge: { backgroundColor: colors.danger },
   statusText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   content: { padding: Spacing.lg },
-  name: { ...Typography.h2, color: Colors.text, marginBottom: 10 },
+  name: { ...Typography.h2, color: colors.text, marginBottom: 10 },
   statsRow: { flexDirection: 'row', gap: 20, marginBottom: 10 },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  statText: { ...Typography.bodySmall, color: Colors.text, fontWeight: '600' },
-  statSub: { ...Typography.caption, color: Colors.textSecondary },
+  statText: { ...Typography.bodySmall, color: colors.text, fontWeight: '600' },
+  statSub: { ...Typography.caption, color: colors.textSecondary },
   addressRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 12 },
-  address: { ...Typography.bodySmall, color: Colors.textSecondary, flex: 1, lineHeight: 20 },
-  description: { ...Typography.body, color: Colors.textSecondary, lineHeight: 22, marginBottom: 16 },
+  address: { ...Typography.bodySmall, color: colors.textSecondary, flex: 1, lineHeight: 20 },
+  description: { ...Typography.body, color: colors.textSecondary, lineHeight: 22, marginBottom: 16 },
   actions: { flexDirection: 'row', gap: 12, marginBottom: Spacing.xl },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  actionBtnText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.md, marginTop: Spacing.sm },
+  actionBtnText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.md, marginTop: Spacing.sm },
   serviceItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  serviceItemSelected: { borderColor: Colors.primary, backgroundColor: Colors.primary + '06' },
+  serviceItemSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '06' },
   serviceLeft: { flex: 1, marginRight: 12 },
   categoryTag: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 10,
     paddingVertical: 3,
     alignSelf: 'flex-start',
     marginBottom: 6,
   },
-  categoryTagText: { fontSize: 10, color: Colors.primary, fontWeight: '600' },
-  serviceName: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text, marginBottom: 4 },
-  serviceDesc: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 18, marginBottom: 4 },
-  serviceDuration: { ...Typography.caption, color: Colors.textSecondary },
+  categoryTagText: { fontSize: 10, color: colors.primary, fontWeight: '600' },
+  serviceName: { ...Typography.bodySmall, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  serviceDesc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18, marginBottom: 4 },
+  serviceDuration: { ...Typography.caption, color: colors.textSecondary },
   serviceRight: { alignItems: 'flex-end', gap: 10 },
-  servicePrice: { ...Typography.body, fontWeight: '700', color: Colors.primary },
+  servicePrice: { ...Typography.body, fontWeight: '700', color: colors.primary },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  emptyText: { ...Typography.body, color: Colors.textSecondary, marginBottom: 16 },
+  checkboxSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  emptyText: { ...Typography.body, color: colors.textSecondary, marginBottom: 16 },
   reviewCard: { marginBottom: 10 },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   reviewAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reviewAvatarText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   reviewInfo: {},
-  reviewName: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text },
+  reviewName: { ...Typography.bodySmall, fontWeight: '600', color: colors.text },
   stars: { flexDirection: 'row', gap: 2, marginTop: 2 },
-  reviewComment: { ...Typography.bodySmall, color: Colors.textSecondary, lineHeight: 20 },
+  reviewComment: { ...Typography.bodySmall, color: colors.textSecondary, lineHeight: 20 },
   bookBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -554,8 +558,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  bookCount: { ...Typography.caption, color: Colors.textSecondary },
-  bookTotal: { ...Typography.h3, color: Colors.primary },
+  bookCount: { ...Typography.caption, color: colors.textSecondary },
+  bookTotal: { ...Typography.h3, color: colors.primary },
   bookBtn: { minWidth: 120 },
 
   heartBtn: {
@@ -579,23 +583,23 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '0A',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '0A',
     marginBottom: 14,
   },
   compareChipActive: {
-    borderColor: Colors.success,
-    backgroundColor: Colors.success + '0A',
+    borderColor: colors.success,
+    backgroundColor: colors.success + '0A',
   },
   compareChipDisabled: {
-    borderColor: Colors.border,
+    borderColor: colors.border,
     backgroundColor: 'transparent',
     opacity: 0.5,
   },
   compareChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
   },
   panelRow: {
     flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6,
@@ -609,21 +613,21 @@ const styles = StyleSheet.create({
   panelBadgeText: { ...Typography.caption, color: '#0EA5E9', fontWeight: '600' },
 
   queueCard: {
-    backgroundColor: Colors.primary + '08',
+    backgroundColor: colors.primary + '08',
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.primary + '20',
+    borderColor: colors.primary + '20',
     padding: Spacing.md,
     marginBottom: 14,
   },
   queueHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  queueTitle: { ...Typography.bodySmall, fontWeight: '700', color: Colors.text, flex: 1 },
+  queueTitle: { ...Typography.bodySmall, fontWeight: '700', color: colors.text, flex: 1 },
   queueRefreshBtn: { padding: 4 },
   queueStats: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   queueStat: { flex: 1, alignItems: 'center' },
-  queueStatVal: { ...Typography.h3, color: Colors.text },
-  queueStatLbl: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
-  queueDivider: { width: 1, height: 32, backgroundColor: Colors.border },
+  queueStatVal: { ...Typography.h3, color: colors.text },
+  queueStatLbl: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
+  queueDivider: { width: 1, height: 32, backgroundColor: colors.border },
   queueWaitBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: BorderRadius.full,
@@ -638,7 +642,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md, marginBottom: 10,
   },
   promoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  promoTitle: { ...Typography.bodySmall, fontWeight: '700', color: Colors.text, flex: 1 },
-  promoDesc: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 18, marginBottom: 6 },
+  promoTitle: { ...Typography.bodySmall, fontWeight: '700', color: colors.text, flex: 1 },
+  promoDesc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18, marginBottom: 6 },
   promoExpiry: { ...Typography.caption, color: '#F97316', fontWeight: '600' },
-});
+  });
+}

@@ -12,7 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { showAlert } from '../../utils/webAlert';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -74,6 +75,8 @@ function sortCustomers(list: CRMCustomer[], sort: SortKey): CRMCustomer[] {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [customers, setCustomers] = useState<CRMCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -136,7 +139,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
         {/* Avatar + name row */}
         <View style={styles.cardHeader}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={22} color={Colors.primary} />
+            <Ionicons name="person" size={22} color={colors.primary} />
           </View>
 
           <View style={styles.customerInfo}>
@@ -153,7 +156,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
             <View style={styles.metaRow}>
-              <Ionicons name="calendar-outline" size={12} color={Colors.textSecondary} />
+              <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
               <Text style={styles.metaText}>
                 Last visit: {formatLastVisit(item.last_visit)}
               </Text>
@@ -161,7 +164,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
 
             {item.phone ? (
               <View style={styles.metaRow}>
-                <Ionicons name="call-outline" size={12} color={Colors.textSecondary} />
+                <Ionicons name="call-outline" size={12} color={colors.textSecondary} />
                 <Text style={styles.metaText}>{item.phone}</Text>
               </View>
             ) : null}
@@ -174,7 +177,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
         {/* Vehicles */}
         {item.vehicles.length > 0 && (
           <View style={styles.vehiclesRow}>
-            <Ionicons name="car-outline" size={12} color={Colors.textSecondary} />
+            <Ionicons name="car-outline" size={12} color={colors.textSecondary} />
             <Text style={styles.vehicleText} numberOfLines={1}>
               {shownVehicles.join('  ·  ')}
               {extraVehicles > 0 ? `  +${extraVehicles} more` : ''}
@@ -192,7 +195,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={Colors.text} />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Customers</Text>
@@ -201,17 +204,17 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
           )}
         </View>
         <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn} activeOpacity={0.7}>
-          <Ionicons name="refresh-outline" size={22} color={Colors.primary} />
+          <Ionicons name="refresh-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Search bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={16} color={Colors.textSecondary} style={styles.searchIcon} />
+        <Ionicons name="search-outline" size={16} color={colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by name or phone..."
-          placeholderTextColor={Colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           value={search}
           onChangeText={setSearch}
           clearButtonMode="while-editing"
@@ -219,14 +222,14 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')} style={styles.clearBtn}>
-            <Ionicons name="close-circle" size={16} color={Colors.textSecondary} />
+            <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading customers...</Text>
         </View>
       ) : (
@@ -242,7 +245,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.primary}
+              tintColor={colors.primary}
             />
           }
           ListHeaderComponent={
@@ -251,20 +254,20 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
               {customers.length > 0 && (
                 <View style={styles.statsRow}>
                   <View style={styles.statPill}>
-                    <Ionicons name="people-outline" size={14} color={Colors.primary} />
+                    <Ionicons name="people-outline" size={14} color={colors.primary} />
                     <Text style={styles.statValue}>{customers.length}</Text>
                     <Text style={styles.statLabel}>Customers</Text>
                   </View>
                   <View style={styles.statPill}>
-                    <Ionicons name="cash-outline" size={14} color={Colors.success} />
-                    <Text style={[styles.statValue, { color: Colors.success }]}>
+                    <Ionicons name="cash-outline" size={14} color={colors.success} />
+                    <Text style={[styles.statValue, { color: colors.success }]}>
                       {formatMoney(totalRevenue)}
                     </Text>
                     <Text style={styles.statLabel}>Revenue</Text>
                   </View>
                   <View style={styles.statPill}>
-                    <Ionicons name="trending-up-outline" size={14} color={Colors.secondary} />
-                    <Text style={[styles.statValue, { color: Colors.secondary }]}>
+                    <Ionicons name="trending-up-outline" size={14} color={colors.secondary} />
+                    <Text style={[styles.statValue, { color: colors.secondary }]}>
                       {formatMoney(avgSpend)}
                     </Text>
                     <Text style={styles.statLabel}>Avg Spend</Text>
@@ -287,7 +290,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
                         <Ionicons
                           name={opt.icon as any}
                           size={12}
-                          color={active ? '#fff' : Colors.textSecondary}
+                          color={active ? '#fff' : colors.textSecondary}
                         />
                         <Text style={[styles.sortBtnText, active && styles.sortBtnTextActive]}>
                           {opt.label}
@@ -312,7 +315,7 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
                 <Ionicons
                   name={search.trim() ? 'search-outline' : 'people-outline'}
                   size={40}
-                  color={Colors.textLight}
+                  color={colors.textLight}
                 />
               </View>
               <Text style={styles.emptyTitle}>
@@ -335,10 +338,11 @@ export const CustomerCRMScreen: React.FC<Props> = ({ navigation }) => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
 
   // Header
@@ -358,11 +362,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...Typography.h2,
-    color: Colors.text,
+    color: colors.text,
   },
   headerCount: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   refreshBtn: {
@@ -375,10 +379,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: Spacing.md,
     marginBottom: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     paddingHorizontal: Spacing.sm,
     height: 42,
   },
@@ -388,7 +392,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     ...Typography.body,
-    color: Colors.text,
+    color: colors.text,
     paddingVertical: 0,
   },
   clearBtn: {
@@ -404,7 +408,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 
   // List
@@ -428,12 +432,12 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     paddingVertical: 12,
     paddingHorizontal: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -443,11 +447,11 @@ const styles = StyleSheet.create({
   statValue: {
     ...Typography.body,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
   },
   statLabel: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 
   // Sort row
@@ -463,18 +467,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   sortBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   sortBtnText: {
     ...Typography.caption,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   sortBtnTextActive: {
     color: '#fff',
@@ -483,13 +487,13 @@ const styles = StyleSheet.create({
   // Result count
   resultCount: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: Spacing.sm,
   },
 
   // Customer card
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     shadowColor: '#000',
@@ -507,7 +511,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -525,11 +529,11 @@ const styles = StyleSheet.create({
   customerName: {
     ...Typography.body,
     fontWeight: '700',
-    color: Colors.text,
+    color: colors.text,
     flexShrink: 1,
   },
   visitBadge: {
-    backgroundColor: Colors.primary + '18',
+    backgroundColor: colors.primary + '18',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -537,7 +541,7 @@ const styles = StyleSheet.create({
   visitBadgeText: {
     ...Typography.caption,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
   },
   metaRow: {
     flexDirection: 'row',
@@ -546,12 +550,12 @@ const styles = StyleSheet.create({
   },
   metaText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   totalSpent: {
     ...Typography.body,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
     flexShrink: 0,
   },
 
@@ -563,11 +567,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    borderTopColor: colors.divider,
   },
   vehicleText: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
   },
 
@@ -583,21 +587,22 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.md,
   },
   emptyTitle: {
     ...Typography.h3,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 6,
     textAlign: 'center',
   },
   emptyText: {
     ...Typography.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
-});
+  });
+}

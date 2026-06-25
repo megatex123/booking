@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, ActivityIndicator,
@@ -13,7 +13,8 @@ import { updateUser } from '../../store/authSlice';
 import { createBooking } from '../../store/bookingSlice';
 import { userAPI, referralAPI, corporateAPI, loyaltyAPI } from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, getAvailableDates, generateTimeSlots, formatDate, formatTime } from '../../utils/helpers';
 import { Workshop, WorkshopService } from '../../types';
 
@@ -48,6 +49,8 @@ function splitMakeModel(model: string): { brand: string; name: string } {
 }
 
 export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const workshop: Workshop = route.params?.workshop;
   const services: WorkshopService[] = route.params?.services || [];
   const dispatch = useAppDispatch();
@@ -270,7 +273,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book Service</Text>
         <View style={{ width: 24 }} />
@@ -305,14 +308,14 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.sectionTitle}>Select Vehicle</Text>
           {errors.vehicle && (
             <View style={styles.errorRow}>
-              <Ionicons name="alert-circle-outline" size={14} color={Colors.danger} />
+              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
               <Text style={styles.errorText}>{errors.vehicle}</Text>
             </View>
           )}
 
           {vehicles.length === 0 && !showAddForm && (
             <View style={styles.noVehicleCard}>
-              <Ionicons name="car-outline" size={40} color={Colors.textLight} />
+              <Ionicons name="car-outline" size={40} color={colors.textLight} />
               <Text style={styles.noVehicleTitle}>No vehicles registered</Text>
               <Text style={styles.noVehicleText}>Register your vehicle to continue with the booking.</Text>
             </View>
@@ -331,15 +334,15 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                   {selected && <View style={styles.vehicleRadioDot} />}
                 </View>
                 <View style={[styles.vehicleIconCircle, selected && styles.vehicleIconCircleSelected]}>
-                  <Ionicons name="car" size={20} color={selected ? '#fff' : Colors.primary} />
+                  <Ionicons name="car" size={20} color={selected ? '#fff' : colors.primary} />
                 </View>
                 <View style={styles.vehicleDetails}>
                   <Text style={[styles.vehiclePlate, selected && styles.vehicleTextSelected]}>{v.plate}</Text>
-                  <Text style={[styles.vehicleModel, selected && { color: Colors.primary + 'CC' }]}>
+                  <Text style={[styles.vehicleModel, selected && { color: colors.primary + 'CC' }]}>
                     {v.brand} {v.name}{v.year ? ` · ${v.year}` : ''}{v.color ? ` · ${v.color}` : ''}
                   </Text>
                 </View>
-                {selected && <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />}
+                {selected && <Ionicons name="checkmark-circle" size={20} color={colors.primary} />}
               </TouchableOpacity>
             );
           })}
@@ -347,7 +350,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           {/* Add Vehicle toggle */}
           {!showAddForm && (
             <TouchableOpacity style={styles.addVehicleBtn} onPress={() => setShowAddForm(true)}>
-              <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
+              <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
               <Text style={styles.addVehicleBtnText}>
                 {vehicles.length === 0 ? 'Register a Vehicle' : '+ Add Another Vehicle'}
               </Text>
@@ -361,7 +364,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={styles.addFormTitle}>Register Vehicle</Text>
                 {vehicles.length > 0 && (
                   <TouchableOpacity onPress={() => { setShowAddForm(false); setAddErrors({}); }}>
-                    <Ionicons name="close" size={20} color={Colors.textSecondary} />
+                    <Ionicons name="close" size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -372,7 +375,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={newPlate}
                 onChangeText={setNewPlate}
                 placeholder="e.g. WXY 1234"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 autoCapitalize="characters"
               />
               {addErrors.plate && <Text style={styles.fieldError}>{addErrors.plate}</Text>}
@@ -385,7 +388,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={newBrand}
                     onChangeText={setNewBrand}
                     placeholder="e.g. Perodua"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     autoCapitalize="words"
                   />
                   {addErrors.brand && <Text style={styles.fieldError}>{addErrors.brand}</Text>}
@@ -397,7 +400,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={newName}
                     onChangeText={setNewName}
                     placeholder="e.g. Myvi"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     autoCapitalize="words"
                   />
                   {addErrors.name && <Text style={styles.fieldError}>{addErrors.name}</Text>}
@@ -412,7 +415,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={newYear}
                     onChangeText={setNewYear}
                     placeholder="e.g. 2021"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     keyboardType="number-pad"
                     maxLength={4}
                   />
@@ -424,7 +427,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={newColor}
                     onChangeText={setNewColor}
                     placeholder="e.g. Silver"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     autoCapitalize="words"
                   />
                 </View>
@@ -449,7 +452,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.sectionTitle}>Select Date</Text>
           {errors.date && (
             <View style={styles.errorRow}>
-              <Ionicons name="alert-circle-outline" size={14} color={Colors.danger} />
+              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
               <Text style={styles.errorText}>{errors.date}</Text>
             </View>
           )}
@@ -480,7 +483,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.sectionTitle}>Select Time</Text>
           {errors.time && (
             <View style={styles.errorRow}>
-              <Ionicons name="alert-circle-outline" size={14} color={Colors.danger} />
+              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
               <Text style={styles.errorText}>{errors.time}</Text>
             </View>
           )}
@@ -507,7 +510,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Describe the problem or any special requests..."
-            placeholderTextColor={Colors.textLight}
+            placeholderTextColor={colors.textLight}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
@@ -522,9 +525,9 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
             activeOpacity={0.8}
           >
             <View style={styles.forOtherLeft}>
-              <Ionicons name="people-outline" size={20} color={bookedForOther ? Colors.primary : Colors.textSecondary} />
+              <Ionicons name="people-outline" size={20} color={bookedForOther ? colors.primary : colors.textSecondary} />
               <View>
-                <Text style={[styles.forOtherTitle, bookedForOther && { color: Colors.primary }]}>
+                <Text style={[styles.forOtherTitle, bookedForOther && { color: colors.primary }]}>
                   Booking for someone else?
                 </Text>
                 <Text style={styles.forOtherSub}>Family member, spouse, friend</Text>
@@ -533,7 +536,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons
               name={bookedForOther ? 'checkmark-circle' : 'ellipse-outline'}
               size={22}
-              color={bookedForOther ? Colors.primary : Colors.textLight}
+              color={bookedForOther ? colors.primary : colors.textLight}
             />
           </TouchableOpacity>
 
@@ -545,7 +548,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={guestName}
                 onChangeText={setGuestName}
                 placeholder="e.g. Ayah, Ibu, Ahmad"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 autoCapitalize="words"
               />
               <Text style={styles.fieldLabel}>Their Phone</Text>
@@ -554,7 +557,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={guestPhone}
                 onChangeText={setGuestPhone}
                 placeholder="e.g. 012-3456789"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 keyboardType="phone-pad"
               />
               <Text style={styles.fieldLabel}>Their Car Plate</Text>
@@ -565,7 +568,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={guestPlate}
                     onChangeText={setGuestPlate}
                     placeholder="e.g. WXY 1234"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     autoCapitalize="characters"
                   />
                 </View>
@@ -575,7 +578,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                     value={guestMake}
                     onChangeText={setGuestMake}
                     placeholder="Brand e.g. Perodua"
-                    placeholderTextColor={Colors.textLight}
+                    placeholderTextColor={colors.textLight}
                     autoCapitalize="words"
                   />
                 </View>
@@ -585,7 +588,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={guestModel}
                 onChangeText={setGuestModel}
                 placeholder="Model e.g. Myvi"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 autoCapitalize="words"
               />
             </View>
@@ -609,7 +612,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                 <View style={[styles.payTypeRadio, active && styles.payTypeRadioActive]}>
                   {active && <View style={styles.payTypeRadioDot} />}
                 </View>
-                <Ionicons name={icons[pt] as any} size={20} color={active ? Colors.primary : Colors.textSecondary} />
+                <Ionicons name={icons[pt] as any} size={20} color={active ? colors.primary : colors.textSecondary} />
                 <Text style={[styles.payTypeLabel, active && styles.payTypeLabelActive]}>{labels[pt]}</Text>
               </TouchableOpacity>
             );
@@ -624,21 +627,21 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={insProvider ? styles.pickerValue : styles.pickerPlaceholder}>
                 {insProvider ? INSURANCE_PROVIDERS.find(p => p.value === insProvider)?.label : 'Select insurance provider'}
               </Text>
-              <Ionicons name="chevron-down" size={16} color={Colors.textLight} />
+              <Ionicons name="chevron-down" size={16} color={colors.textLight} />
             </TouchableOpacity>
             <TextInput
               style={styles.fieldInput}
               value={insPolicyNo}
               onChangeText={setInsPolicyNo}
               placeholder="Policy number"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
             />
             <TextInput
               style={styles.fieldInput}
               value={insIncidentDate}
               onChangeText={setInsIncidentDate}
               placeholder="Incident date (YYYY-MM-DD)"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
             />
           </View>
         )}
@@ -652,7 +655,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
               value={referralCode}
               onChangeText={(t) => { setReferralCode(t.toUpperCase()); setReferralInfo(null); setReferralError(''); }}
               placeholder="e.g. ABC123"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
               autoCapitalize="characters"
               maxLength={6}
             />
@@ -662,7 +665,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
           {referralInfo && (
             <View style={styles.referralSuccess}>
-              <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
               <Text style={styles.referralSuccessText}>
                 {referralInfo.referrer_name}'s code! You save {referralInfo.discount_pct}% (up to RM{referralInfo.discount_cap.toFixed(0)})
               </Text>
@@ -688,15 +691,15 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                   style={[styles.loyaltyToggle, useLoyaltyPoints && styles.loyaltyToggleActive]}
                   onPress={() => setUseLoyaltyPoints((v) => !v)}
                 >
-                  <Ionicons name={useLoyaltyPoints ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={useLoyaltyPoints ? Colors.success : Colors.textLight} />
-                  <Text style={[styles.loyaltyToggleText, useLoyaltyPoints && { color: Colors.success }]}>
+                  <Ionicons name={useLoyaltyPoints ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={useLoyaltyPoints ? colors.success : colors.textLight} />
+                  <Text style={[styles.loyaltyToggleText, useLoyaltyPoints && { color: colors.success }]}>
                     {useLoyaltyPoints ? 'Applied' : 'Use points'}
                   </Text>
                 </TouchableOpacity>
               </View>
               {useLoyaltyPoints && loyaltyPtsToUse >= 100 && (
                 <View style={styles.loyaltyBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
+                  <Ionicons name="checkmark-circle" size={14} color={colors.success} />
                   <Text style={styles.loyaltyBadgeText}>{loyaltyPtsToUse} pts → RM{loyaltyDiscount.toFixed(2)} off your booking</Text>
                 </View>
               )}
@@ -728,8 +731,8 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
                   style={[styles.providerOption, insProvider === p.value && styles.providerOptionActive]}
                   onPress={() => { setInsProvider(p.value); setShowProviderPicker(false); }}
                 >
-                  <Text style={[styles.providerOptionText, insProvider === p.value && { color: Colors.primary, fontWeight: '700' }]}>{p.label}</Text>
-                  {insProvider === p.value && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  <Text style={[styles.providerOptionText, insProvider === p.value && { color: colors.primary, fontWeight: '700' }]}>{p.label}</Text>
+                  {insProvider === p.value && <Ionicons name="checkmark" size={18} color={colors.primary} />}
                 </TouchableOpacity>
               ))}
             </View>
@@ -741,97 +744,98 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   summaryCard: { margin: Spacing.lg, marginBottom: 8 },
-  workshopName: { ...Typography.h3, color: Colors.text, marginBottom: 4 },
-  workshopAddress: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 12 },
-  divider: { height: 1, backgroundColor: Colors.divider, marginVertical: 12 },
+  workshopName: { ...Typography.h3, color: colors.text, marginBottom: 4 },
+  workshopAddress: { ...Typography.caption, color: colors.textSecondary, marginBottom: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
   serviceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  serviceName: { ...Typography.bodySmall, color: Colors.text },
-  servicePrice: { ...Typography.bodySmall, color: Colors.text, fontWeight: '600' },
-  serviceDuration: { ...Typography.caption, color: Colors.textLight, marginTop: 2 },
+  serviceName: { ...Typography.bodySmall, color: colors.text },
+  servicePrice: { ...Typography.bodySmall, color: colors.text, fontWeight: '600' },
+  serviceDuration: { ...Typography.caption, color: colors.textLight, marginTop: 2 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { ...Typography.body, color: Colors.textSecondary },
-  totalAmount: { ...Typography.h3, color: Colors.primary },
+  totalLabel: { ...Typography.body, color: colors.textSecondary },
+  totalAmount: { ...Typography.h3, color: colors.primary },
 
   section: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.md },
-  optional: { ...Typography.body, color: Colors.textSecondary, fontWeight: '400' },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.md },
+  optional: { ...Typography.body, color: colors.textSecondary, fontWeight: '400' },
 
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10, marginTop: -4 },
-  errorText: { ...Typography.caption, color: Colors.danger },
+  errorText: { ...Typography.caption, color: colors.danger },
 
   noVehicleCard: {
     alignItems: 'center', paddingVertical: 32, gap: 8,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderColor: Colors.border, borderStyle: 'dashed',
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed',
     marginBottom: 12,
   },
-  noVehicleTitle: { ...Typography.h3, color: Colors.text },
-  noVehicleText: { ...Typography.bodySmall, color: Colors.textSecondary, textAlign: 'center', maxWidth: 260 },
+  noVehicleTitle: { ...Typography.h3, color: colors.text },
+  noVehicleText: { ...Typography.bodySmall, color: colors.textSecondary, textAlign: 'center', maxWidth: 260 },
 
   vehicleCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: 10,
-    borderWidth: 1.5, borderColor: Colors.border,
+    borderWidth: 1.5, borderColor: colors.border,
   },
   vehicleCardSelected: {
-    borderColor: Colors.primary, backgroundColor: Colors.primary + '06',
+    borderColor: colors.primary, backgroundColor: colors.primary + '06',
   },
   vehicleRadio: {
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: Colors.border,
+    borderWidth: 2, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  vehicleRadioSelected: { borderColor: Colors.primary },
+  vehicleRadioSelected: { borderColor: colors.primary },
   vehicleRadioDot: {
-    width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary,
+    width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary,
   },
   vehicleIconCircle: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.primary + '15', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center',
   },
-  vehicleIconCircleSelected: { backgroundColor: Colors.primary },
+  vehicleIconCircleSelected: { backgroundColor: colors.primary },
   vehicleDetails: { flex: 1 },
-  vehiclePlate: { ...Typography.bodySmall, fontWeight: '700', color: Colors.text },
-  vehicleTextSelected: { color: Colors.primary },
-  vehicleModel: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  vehiclePlate: { ...Typography.bodySmall, fontWeight: '700', color: colors.text },
+  vehicleTextSelected: { color: colors.primary },
+  vehicleModel: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
 
   addVehicleBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 14, paddingHorizontal: 16,
     borderRadius: BorderRadius.md, borderWidth: 1.5,
-    borderColor: Colors.primary, borderStyle: 'dashed',
-    justifyContent: 'center', backgroundColor: Colors.primary + '05',
+    borderColor: colors.primary, borderStyle: 'dashed',
+    justifyContent: 'center', backgroundColor: colors.primary + '05',
   },
-  addVehicleBtnText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  addVehicleBtnText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
 
   addForm: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.border, marginTop: 4,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    padding: Spacing.md, borderWidth: 1, borderColor: colors.border, marginTop: 4,
   },
   addFormHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  addFormTitle: { ...Typography.h3, color: Colors.text },
-  fieldLabel: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 },
+  addFormTitle: { ...Typography.h3, color: colors.text },
+  fieldLabel: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
   fieldInput: {
-    backgroundColor: Colors.background, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 12, paddingVertical: 10,
-    ...Typography.body, color: Colors.text, marginBottom: 12,
+    ...Typography.body, color: colors.text, marginBottom: 12,
   },
-  fieldInputError: { borderColor: Colors.danger },
-  fieldError: { ...Typography.caption, color: Colors.danger, marginTop: -8, marginBottom: 10 },
+  fieldInputError: { borderColor: colors.danger },
+  fieldError: { ...Typography.caption, color: colors.danger, marginTop: -8, marginBottom: 10 },
   row2: { flexDirection: 'row', gap: 10 },
   col2: { flex: 1 },
   saveVehicleBtn: {
-    backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary, borderRadius: BorderRadius.md,
     paddingVertical: 13, alignItems: 'center', marginTop: 4,
   },
   saveVehicleBtnText: { ...Typography.button, color: '#fff' },
@@ -839,85 +843,85 @@ const styles = StyleSheet.create({
   dateList: { marginHorizontal: -4 },
   dateChip: {
     alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
-    borderRadius: BorderRadius.md, backgroundColor: Colors.surface,
-    borderWidth: 1.5, borderColor: Colors.border, marginHorizontal: 4, minWidth: 60,
+    borderRadius: BorderRadius.md, backgroundColor: colors.surface,
+    borderWidth: 1.5, borderColor: colors.border, marginHorizontal: 4, minWidth: 60,
   },
-  dateChipSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  dateDay: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 2 },
-  dateNum: { ...Typography.h3, color: Colors.text },
-  dateMonth: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  dateChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  dateDay: { ...Typography.caption, color: colors.textSecondary, marginBottom: 2 },
+  dateNum: { ...Typography.h3, color: colors.text },
+  dateMonth: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   dateTextSelected: { color: '#fff' },
 
   timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   timeChip: {
     paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: BorderRadius.sm, backgroundColor: Colors.surface,
-    borderWidth: 1.5, borderColor: Colors.border,
+    borderRadius: BorderRadius.sm, backgroundColor: colors.surface,
+    borderWidth: 1.5, borderColor: colors.border,
   },
-  timeChipSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  timeText: { ...Typography.bodySmall, color: Colors.text, fontWeight: '500' },
+  timeChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  timeText: { ...Typography.bodySmall, color: colors.text, fontWeight: '500' },
   timeTextSelected: { color: '#fff' },
 
   notesInput: {
-    backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: 12,
-    ...Typography.body, color: Colors.text, minHeight: 90,
+    ...Typography.body, color: colors.text, minHeight: 90,
   },
   paymentNote: {
-    ...Typography.bodySmall, color: Colors.textSecondary,
-    backgroundColor: Colors.primary + '10', borderRadius: BorderRadius.sm,
+    ...Typography.bodySmall, color: colors.textSecondary,
+    backgroundColor: colors.primary + '10', borderRadius: BorderRadius.sm,
     padding: 12, marginBottom: 16, lineHeight: 20,
   },
 
   // Book for others
   forOtherToggle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.md, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    padding: Spacing.md, borderWidth: 1.5, borderColor: colors.border,
   },
   forOtherLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  forOtherTitle: { ...Typography.body, color: Colors.text, fontWeight: '600' },
-  forOtherSub: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  forOtherTitle: { ...Typography.body, color: colors.text, fontWeight: '600' },
+  forOtherSub: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   forOtherForm: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.border, marginTop: 10,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    padding: Spacing.md, borderWidth: 1, borderColor: colors.border, marginTop: 10,
   },
 
   // Payment type
   payTypeCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: 10,
-    borderWidth: 1.5, borderColor: Colors.border,
+    borderWidth: 1.5, borderColor: colors.border,
   },
-  payTypeCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '06' },
+  payTypeCardActive: { borderColor: colors.primary, backgroundColor: colors.primary + '06' },
   payTypeRadio: {
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: Colors.border,
+    borderWidth: 2, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  payTypeRadioActive: { borderColor: Colors.primary },
-  payTypeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary },
-  payTypeLabel: { ...Typography.body, color: Colors.textSecondary, flex: 1 },
-  payTypeLabelActive: { color: Colors.primary, fontWeight: '600' },
+  payTypeRadioActive: { borderColor: colors.primary },
+  payTypeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+  payTypeLabel: { ...Typography.body, color: colors.textSecondary, flex: 1 },
+  payTypeLabelActive: { color: colors.primary, fontWeight: '600' },
 
   // Referral
   referralRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   referralInput: {
-    flex: 1, backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border,
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 12, paddingVertical: 10,
-    ...Typography.body, color: Colors.text, letterSpacing: 3,
+    ...Typography.body, color: colors.text, letterSpacing: 3,
   },
-  referralInputValid: { borderColor: Colors.success },
-  referralInputError: { borderColor: Colors.danger },
+  referralInputValid: { borderColor: colors.success },
+  referralInputError: { borderColor: colors.danger },
   referralApplyBtn: {
-    backgroundColor: Colors.primary, borderRadius: BorderRadius.sm,
+    backgroundColor: colors.primary, borderRadius: BorderRadius.sm,
     paddingHorizontal: 16, paddingVertical: 12,
   },
   referralApplyText: { ...Typography.button, color: '#fff' },
   referralSuccess: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-  referralSuccessText: { ...Typography.bodySmall, color: Colors.success, flex: 1 },
-  referralErrorText: { ...Typography.caption, color: Colors.danger, marginTop: 6 },
+  referralSuccessText: { ...Typography.bodySmall, color: colors.success, flex: 1 },
+  referralErrorText: { ...Typography.caption, color: colors.danger, marginTop: 6 },
 
   loyaltyCard: {
     backgroundColor: '#F59E0B08', borderRadius: BorderRadius.md,
@@ -925,44 +929,45 @@ const styles = StyleSheet.create({
   },
   loyaltyTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   loyaltyLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  loyaltyPts: { ...Typography.body, fontWeight: '700', color: Colors.text },
-  loyaltyRm: { ...Typography.caption, color: Colors.textSecondary, marginTop: 1 },
+  loyaltyPts: { ...Typography.body, fontWeight: '700', color: colors.text },
+  loyaltyRm: { ...Typography.caption, color: colors.textSecondary, marginTop: 1 },
   loyaltyToggle: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: Colors.border + '60', borderRadius: BorderRadius.full,
+    backgroundColor: colors.border + '60', borderRadius: BorderRadius.full,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  loyaltyToggleActive: { backgroundColor: Colors.success + '15' },
-  loyaltyToggleText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  loyaltyToggleActive: { backgroundColor: colors.success + '15' },
+  loyaltyToggleText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   loyaltyBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: Colors.success + '15', borderRadius: BorderRadius.full,
+    backgroundColor: colors.success + '15', borderRadius: BorderRadius.full,
     paddingHorizontal: 10, paddingVertical: 5, marginTop: 10, alignSelf: 'flex-start',
   },
-  loyaltyBadgeText: { ...Typography.caption, color: Colors.success, fontWeight: '600' },
+  loyaltyBadgeText: { ...Typography.caption, color: colors.success, fontWeight: '600' },
 
   // Insurance provider picker
   pickerBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 12, paddingVertical: 12,
     marginBottom: 12,
   },
-  pickerValue: { ...Typography.body, color: Colors.text },
-  pickerPlaceholder: { ...Typography.body, color: Colors.textLight },
+  pickerValue: { ...Typography.body, color: colors.text },
+  pickerPlaceholder: { ...Typography.body, color: colors.textLight },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end',
   },
   providerSheet: {
-    backgroundColor: Colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingTop: 20, paddingBottom: 40,
   },
-  providerSheetTitle: { ...Typography.h3, color: Colors.text, textAlign: 'center', marginBottom: 12 },
+  providerSheetTitle: { ...Typography.h3, color: colors.text, textAlign: 'center', marginBottom: 12 },
   providerOption: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: Colors.divider,
+    borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  providerOptionActive: { backgroundColor: Colors.primary + '08' },
-  providerOptionText: { ...Typography.body, color: Colors.text },
-});
+  providerOptionActive: { backgroundColor: colors.primary + '08' },
+  providerOptionText: { ...Typography.body, color: colors.text },
+  });
+}

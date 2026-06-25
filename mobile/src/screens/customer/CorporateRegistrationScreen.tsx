@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator,
@@ -6,13 +6,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { corporateAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { showAlert } from '../../utils/webAlert';
 import { Button } from '../../components/common/Button';
 
 interface Props { navigation: any }
 
 export const CorporateRegistrationScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [companyName, setCompanyName] = useState('');
   const [registrationNo, setRegistrationNo] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -62,7 +65,7 @@ export const CorporateRegistrationScreen: React.FC<Props> = ({ navigation }) => 
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Corporate Account</Text>
         <View style={{ width: 40 }} />
@@ -89,7 +92,7 @@ export const CorporateRegistrationScreen: React.FC<Props> = ({ navigation }) => 
                 value={f.value}
                 onChangeText={f.onChange}
                 placeholder={f.placeholder}
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 keyboardType={f.keyboard}
                 autoCapitalize={f.lower ? 'none' : 'words'}
               />
@@ -98,7 +101,7 @@ export const CorporateRegistrationScreen: React.FC<Props> = ({ navigation }) => 
           ))}
 
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={18} color={Colors.primary} />
+            <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
             <Text style={styles.infoText}>
               You become the admin of this account. Add drivers and fleet vehicles after registration. Drivers are invited by their existing Bengkil Lah email.
             </Text>
@@ -112,40 +115,42 @@ export const CorporateRegistrationScreen: React.FC<Props> = ({ navigation }) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   hero: {
     alignItems: 'center', backgroundColor: '#0F172A',
     paddingVertical: Spacing.xl, paddingHorizontal: Spacing.lg,
   },
   heroIcon: {
     width: 68, height: 68, borderRadius: 34,
-    backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
   heroTitle: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 8 },
   heroSub: { ...Typography.body, color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 22 },
   form: { padding: Spacing.lg },
   fieldGroup: { marginBottom: Spacing.md },
-  fieldLabel: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 },
+  fieldLabel: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
   fieldInput: {
-    backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 12, paddingVertical: 11,
-    ...Typography.body, color: Colors.text,
+    ...Typography.body, color: colors.text,
   },
-  fieldInputError: { borderColor: Colors.danger },
-  fieldError: { ...Typography.caption, color: Colors.danger, marginTop: 4 },
+  fieldInputError: { borderColor: colors.danger },
+  fieldError: { ...Typography.caption, color: colors.danger, marginTop: 4 },
   infoBox: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-    backgroundColor: Colors.primary + '10', borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary + '10', borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: Spacing.lg,
   },
-  infoText: { ...Typography.bodySmall, color: Colors.textSecondary, flex: 1, lineHeight: 20 },
-});
+  infoText: { ...Typography.bodySmall, color: colors.textSecondary, flex: 1, lineHeight: 20 },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { showAlert } from '../../utils/webAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,8 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { registerCustomer, registerWorkshop } from '../../store/authSlice';
-import { Colors, Typography, Spacing } from '../../utils/theme';
+import { Colors, Typography, Spacing, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props {
   navigation: any;
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const role = route.params?.role || 'customer';
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((s) => s.auth);
@@ -70,7 +73,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.header}>
@@ -143,18 +146,20 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
   header: { marginBottom: Spacing.xl },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: 8 },
-  subtitle: { ...Typography.body, color: Colors.textSecondary },
+  title: { ...Typography.h1, color: colors.text, marginBottom: 8 },
+  subtitle: { ...Typography.body, color: colors.textSecondary },
   section: { marginBottom: Spacing.lg },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.md },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.md },
   row: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
-  coordHint: { ...Typography.caption, color: Colors.textSecondary, marginTop: -8, marginBottom: 12, lineHeight: 18 },
+  coordHint: { ...Typography.caption, color: colors.textSecondary, marginTop: -8, marginBottom: 12, lineHeight: 18 },
   registerBtn: { marginBottom: 20 },
-  loginLink: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center' },
-  loginLinkBold: { color: Colors.primary, fontWeight: '600' },
-});
+  loginLink: { ...Typography.body, color: colors.textSecondary, textAlign: 'center' },
+  loginLinkBold: { color: colors.primary, fontWeight: '600' },
+  });
+}

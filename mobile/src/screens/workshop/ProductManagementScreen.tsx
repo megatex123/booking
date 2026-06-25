@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, Modal, ScrollView, RefreshControl, Platform, Alert,
@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Loading } from '../../components/common/Loading';
 import { workshopAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice } from '../../utils/helpers';
 
 interface Props { navigation: any }
@@ -41,12 +42,14 @@ const UNITS = ['pcs', 'litre', 'kg', 'set', 'bottle', 'box'];
 
 const CAT_COLORS: Record<string, string> = {
   lubricant: '#1565C0', filter: '#6A1B9A', brake: '#B71C1C',
-  tyre: '#E65100', electrical: '#F9A825', body: '#2E7D32', other: Colors.textSecondary,
+  tyre: '#E65100', electrical: '#F9A825', body: '#2E7D32', other: colors.textSecondary,
 };
 
 const EMPTY_FORM = { name: '', brand: '', category: 'lubricant', price: '', quantity: '', unit: 'pcs', description: '', service_tags: [] as string[], reorder_threshold: '' };
 
 export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [products, setProducts] = useState<Product[]>([]);
   const [workshopServices, setWorkshopServices] = useState<{ _id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +124,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
   const filtered = filter === 'all' ? products : products.filter((p) => p.category === filter);
 
   const renderProduct = ({ item }: { item: Product }) => {
-    const color = CAT_COLORS[item.category] || Colors.textSecondary;
+    const color = CAT_COLORS[item.category] || colors.textSecondary;
     const threshold = item.reorder_threshold ?? 0;
     const lowStock = threshold > 0 ? item.quantity <= threshold : item.quantity <= 5;
     return (
@@ -135,10 +138,10 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
             </View>
             <View style={styles.cardActions}>
               <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn}>
-                <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
+                <Ionicons name="pencil-outline" size={16} color={colors.primary} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleDelete(item)} style={styles.iconBtn}>
-                <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                <Ionicons name="trash-outline" size={16} color={colors.danger} />
               </TouchableOpacity>
             </View>
           </View>
@@ -148,7 +151,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={[styles.catChipText, { color }]}>{item.category}</Text>
             </View>
             <View style={[styles.stockBadge, lowStock && styles.stockBadgeLow]}>
-              <Ionicons name="cube-outline" size={11} color={lowStock ? Colors.danger : Colors.success} />
+              <Ionicons name="cube-outline" size={11} color={lowStock ? colors.danger : colors.success} />
               <Text style={[styles.stockText, lowStock && styles.stockTextLow]}>
                 {item.quantity} {item.unit}
               </Text>
@@ -157,7 +160,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
 
           {item.service_tags && item.service_tags.length > 0 && (
             <View style={styles.serviceTagsRow}>
-              <Ionicons name="construct-outline" size={10} color={Colors.textLight} />
+              <Ionicons name="construct-outline" size={10} color={colors.textLight} />
               <Text style={styles.serviceTagsText} numberOfLines={1}>
                 {item.service_tags.join(' • ')}
               </Text>
@@ -177,7 +180,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Product Inventory</Text>
         <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
@@ -192,7 +195,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
           const active = filter === c.key;
           return (
             <TouchableOpacity key={c.key} style={[styles.chip, active && styles.chipActive]} onPress={() => setFilter(c.key)}>
-              <Ionicons name={c.icon as any} size={13} color={active ? '#fff' : Colors.textSecondary} />
+              <Ionicons name={c.icon as any} size={13} color={active ? '#fff' : colors.textSecondary} />
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.label}</Text>
               {count > 0 && (
                 <View style={[styles.badge, active && styles.badgeActive]}>
@@ -214,10 +217,10 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
           contentContainerStyle={[styles.list, filtered.length === 0 && { flex: 1 }]}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="cube-outline" size={48} color={Colors.textLight} />
+              <Ionicons name="cube-outline" size={48} color={colors.textLight} />
               <Text style={styles.emptyText}>No products yet{filter !== 'all' ? ' in this category' : ''}</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={openAdd}>
                 <Text style={styles.emptyBtnText}>Add Product</Text>
@@ -235,7 +238,7 @@ export const ProductManagementScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editing ? 'Edit Product' : 'Add Product'}</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -322,7 +325,7 @@ const Field = ({ label, value, onChange, placeholder, keyboardType, multiline }:
     <Text style={styles.fieldLabel}>{label}</Text>
     <TextInput
       value={value} onChangeText={onChange} placeholder={placeholder}
-      placeholderTextColor={Colors.textLight}
+      placeholderTextColor={colors.textLight}
       keyboardType={keyboardType || 'default'} multiline={multiline}
       numberOfLines={multiline ? 3 : 1}
       style={[styles.input, multiline && { minHeight: 80, textAlignVertical: 'top' }]}
@@ -330,75 +333,77 @@ const Field = ({ label, value, onChange, placeholder, keyboardType, multiline }:
   </View>
 );
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  title: { ...Typography.h3, color: Colors.text },
-  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+  title: { ...Typography.h3, color: colors.text },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
 
   filterScroll: { maxHeight: 48, flexGrow: 0, flexShrink: 0, marginBottom: 4 },
   filterList: { paddingHorizontal: Spacing.lg, gap: 8, alignItems: 'center', paddingVertical: 4, flexDirection: 'row', flexWrap: 'nowrap' },
-  chip: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  chip: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: '#fff' },
-  badge: { backgroundColor: Colors.border, borderRadius: 8, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badge: { backgroundColor: colors.border, borderRadius: 8, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgeActive: { backgroundColor: 'rgba(255,255,255,0.3)' },
-  badgeText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
+  badgeText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   badgeTextActive: { color: '#fff' },
 
-  resultCount: { ...Typography.caption, color: Colors.textSecondary, paddingHorizontal: Spacing.lg, marginVertical: 6, flexShrink: 0 },
+  resultCount: { ...Typography.caption, color: colors.textSecondary, paddingHorizontal: Spacing.lg, marginVertical: 6, flexShrink: 0 },
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 32, paddingTop: 4 },
   separator: { height: 10 },
 
-  card: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: BorderRadius.md, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  card: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: BorderRadius.md, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   catBar: { width: 4 },
   cardBody: { flex: 1, padding: Spacing.md },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  productName: { ...Typography.body, fontWeight: '700', color: Colors.text },
-  brand: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  productName: { ...Typography.body, fontWeight: '700', color: colors.text },
+  brand: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   cardActions: { flexDirection: 'row', gap: 4 },
   iconBtn: { padding: 4 },
 
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   catChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.full },
   catChipText: { fontSize: 11, fontWeight: '600' },
-  stockBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.success + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.full },
-  stockBadgeLow: { backgroundColor: Colors.danger + '15' },
-  stockText: { fontSize: 11, fontWeight: '600', color: Colors.success },
-  stockTextLow: { color: Colors.danger },
+  stockBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.success + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.full },
+  stockBadgeLow: { backgroundColor: colors.danger + '15' },
+  stockText: { fontSize: 11, fontWeight: '600', color: colors.success },
+  stockTextLow: { color: colors.danger },
 
   serviceTagsRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  serviceTagsText: { ...Typography.caption, color: Colors.textLight, fontSize: 10, flex: 1 },
+  serviceTagsText: { ...Typography.caption, color: colors.textLight, fontSize: 10, flex: 1 },
 
   serviceTagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  svcTagChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full, backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border },
-  svcTagChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  svcTagChipText: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary, fontSize: 11 },
+  svcTagChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: BorderRadius.full, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  svcTagChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  svcTagChipText: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary, fontSize: 11 },
   svcTagChipTextActive: { color: '#fff' },
 
   priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  price: { ...Typography.body, fontWeight: '700', color: Colors.primary },
-  desc: { ...Typography.caption, color: Colors.textSecondary, flex: 1, marginLeft: 8, textAlign: 'right' },
+  price: { ...Typography.body, fontWeight: '700', color: colors.primary },
+  desc: { ...Typography.caption, color: colors.textSecondary, flex: 1, marginLeft: 8, textAlign: 'right' },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
-  emptyText: { ...Typography.body, color: Colors.textSecondary },
-  emptyBtn: { backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: BorderRadius.full },
+  emptyText: { ...Typography.body, color: colors.textSecondary },
+  emptyBtn: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: BorderRadius.full },
   emptyBtnText: { ...Typography.button, color: '#fff' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: Colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, maxHeight: '92%' },
+  modalSheet: { backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, maxHeight: '92%' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle: { ...Typography.h3, color: Colors.text },
-  fieldLabel: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 },
-  input: { backgroundColor: Colors.surface, borderRadius: BorderRadius.sm, borderWidth: 1.5, borderColor: Colors.border, paddingHorizontal: 12, paddingVertical: 10, ...Typography.body, color: Colors.text },
+  modalTitle: { ...Typography.h3, color: colors.text },
+  fieldLabel: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
+  input: { backgroundColor: colors.surface, borderRadius: BorderRadius.sm, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...Typography.body, color: colors.text },
   row2: { flexDirection: 'row', gap: 10 },
   unitRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  optChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border },
-  optChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  optChipText: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary },
+  optChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: BorderRadius.full, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  optChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optChipText: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary },
   optChipTextActive: { color: '#fff' },
-  saveBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  saveBtn: { backgroundColor: colors.primary, borderRadius: BorderRadius.md, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   saveBtnText: { ...Typography.button, color: '#fff' },
-});
+  });
+}

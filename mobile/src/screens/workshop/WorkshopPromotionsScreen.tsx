@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { workshopAPI } from '../../services/api';
 import { showAlert, showConfirm } from '../../utils/webAlert';
 
@@ -30,6 +31,8 @@ const MIN_ENDS_AT = () => {
 };
 
 export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -109,17 +112,17 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Promotions & Flash Deals</Text>
         <TouchableOpacity onPress={openCreate}>
-          <Ionicons name="add-circle-outline" size={26} color={Colors.primary} />
+          <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator color={Colors.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
             {/* Info banner */}
@@ -161,7 +164,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
               value={title}
               onChangeText={setTitle}
               placeholder="e.g. Free tyre rotation with oil change"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
               maxLength={80}
             />
             <Text style={styles.fieldLabel}>Description (optional)</Text>
@@ -170,7 +173,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
               value={description}
               onChangeText={setDescription}
               placeholder="More details about the offer, T&C, etc."
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
               multiline
               numberOfLines={3}
               maxLength={200}
@@ -181,7 +184,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
               value={endsAt}
               onChangeText={setEndsAt}
               placeholder="YYYY-MM-DDTHH:MM"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
             />
             <Text style={styles.fieldHint}>Format: 2025-12-31T23:59</Text>
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
@@ -199,29 +202,29 @@ const PromoCard: React.FC<{ promo: Promo; onEdit: () => void; onToggle: () => vo
   return (
     <View style={[cardStyles.card, (promo.is_expired || !promo.is_active) && cardStyles.cardDim]}>
       <View style={cardStyles.top}>
-        <Ionicons name="flame" size={16} color={promo.is_active && !promo.is_expired ? '#F97316' : Colors.textLight} />
+        <Ionicons name="flame" size={16} color={promo.is_active && !promo.is_expired ? '#F97316' : colors.textLight} />
         <Text style={cardStyles.title} numberOfLines={2}>{promo.title}</Text>
         <Switch
           value={promo.is_active && !promo.is_expired}
           onValueChange={onToggle}
           disabled={promo.is_expired}
-          trackColor={{ true: Colors.primary }}
+          trackColor={{ true: colors.primary }}
         />
       </View>
       {promo.description ? <Text style={cardStyles.desc} numberOfLines={2}>{promo.description}</Text> : null}
       <View style={cardStyles.footer}>
         <View style={cardStyles.expiry}>
-          <Ionicons name="time-outline" size={13} color={promo.is_expired ? Colors.danger : Colors.textSecondary} />
-          <Text style={[cardStyles.expiryText, promo.is_expired && { color: Colors.danger }]}>
+          <Ionicons name="time-outline" size={13} color={promo.is_expired ? colors.danger : colors.textSecondary} />
+          <Text style={[cardStyles.expiryText, promo.is_expired && { color: colors.danger }]}>
             {promo.is_expired ? 'Expired ' : 'Ends '}{fmtDate(promo.ends_at)}
           </Text>
         </View>
         <View style={cardStyles.actions}>
           <TouchableOpacity onPress={onEdit} style={cardStyles.actionBtn}>
-            <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
+            <Ionicons name="pencil-outline" size={16} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={onDelete} style={cardStyles.actionBtn}>
-            <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+            <Ionicons name="trash-outline" size={16} color={colors.danger} />
           </TouchableOpacity>
         </View>
       </View>
@@ -229,14 +232,15 @@ const PromoCard: React.FC<{ promo: Promo; onEdit: () => void; onToggle: () => vo
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   content: { padding: Spacing.lg },
 
   infoBanner: {
@@ -245,50 +249,51 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F9731630',
     padding: Spacing.md, marginBottom: Spacing.lg,
   },
-  infoText: { ...Typography.bodySmall, color: Colors.text, flex: 1, lineHeight: 20 },
+  infoText: { ...Typography.bodySmall, color: colors.text, flex: 1, lineHeight: 20 },
 
-  groupTitle: { ...Typography.h3, color: Colors.text, marginBottom: 12 },
+  groupTitle: { ...Typography.h3, color: colors.text, marginBottom: 12 },
   emptyCard: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.lg, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border, borderStyle: 'dashed',
+    borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed',
   },
-  emptyText: { ...Typography.bodySmall, color: Colors.textSecondary },
+  emptyText: { ...Typography.bodySmall, color: colors.textSecondary },
 
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: Colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: Spacing.lg, paddingBottom: 32,
   },
-  sheetTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.lg },
-  fieldLabel: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', marginBottom: 6, marginTop: 12 },
+  sheetTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.lg },
+  fieldLabel: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600', marginBottom: 6, marginTop: 12 },
   input: {
-    borderWidth: 1, borderColor: Colors.border, borderRadius: BorderRadius.sm,
+    borderWidth: 1, borderColor: colors.border, borderRadius: BorderRadius.sm,
     paddingHorizontal: 14, paddingVertical: 10,
-    ...Typography.body, color: Colors.text, backgroundColor: Colors.background,
+    ...Typography.body, color: colors.text, backgroundColor: colors.background,
   },
   textArea: { height: 80, textAlignVertical: 'top', paddingTop: 10 },
-  fieldHint: { ...Typography.caption, color: Colors.textSecondary, marginTop: 4 },
+  fieldHint: { ...Typography.caption, color: colors.textSecondary, marginTop: 4 },
   saveBtn: {
-    backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary, borderRadius: BorderRadius.md,
     paddingVertical: 14, alignItems: 'center', marginTop: Spacing.lg,
   },
   saveBtnText: { ...Typography.button, color: '#fff' },
-});
+  });
+}
 
 const cardStyles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: 12,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   cardDim: { opacity: 0.65 },
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
-  title: { ...Typography.body, fontWeight: '700', color: Colors.text, flex: 1 },
-  desc: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 18, marginBottom: 8 },
+  title: { ...Typography.body, fontWeight: '700', color: colors.text, flex: 1 },
+  desc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18, marginBottom: 8 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   expiry: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
-  expiryText: { ...Typography.caption, color: Colors.textSecondary },
+  expiryText: { ...Typography.caption, color: colors.textSecondary },
   actions: { flexDirection: 'row', gap: 4 },
   actionBtn: { padding: 6 },
 });

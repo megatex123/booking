@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Platform,
@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { referralAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { showAlert } from '../../utils/webAlert';
 
 interface Props { navigation: any }
@@ -39,6 +40,8 @@ function copyToClipboard(text: string) {
 }
 
 export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +72,7 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ flex: 1 }} color={Colors.primary} size="large" />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.primary} size="large" />
       </SafeAreaView>
     );
   }
@@ -78,7 +81,7 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Referral Program</Text>
         <View style={{ width: 40 }} />
@@ -110,8 +113,8 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.codeRow}>
             <Text style={styles.code}>{stats?.code}</Text>
             <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
-              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={copied ? Colors.success : Colors.primary} />
-              <Text style={[styles.copyText, copied && { color: Colors.success }]}>{copied ? 'Copied!' : 'Copy'}</Text>
+              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={18} color={copied ? colors.success : colors.primary} />
+              <Text style={[styles.copyText, copied && { color: colors.success }]}>{copied ? 'Copied!' : 'Copy'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -134,14 +137,14 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Referral History</Text>
         {history.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="people-outline" size={48} color={Colors.textLight} />
+            <Ionicons name="people-outline" size={48} color={colors.textLight} />
             <Text style={styles.emptyText}>No referrals yet. Share your code to get started!</Text>
           </View>
         ) : (
           history.map((item) => (
             <View key={item.id} style={styles.historyCard}>
               <View style={styles.historyRow}>
-                <View style={[styles.statusDot, { backgroundColor: item.status === 'rewarded' ? Colors.success : Colors.warning }]} />
+                <View style={[styles.statusDot, { backgroundColor: item.status === 'rewarded' ? colors.success : colors.warning }]} />
                 <Text style={styles.historyName}>{item.referee_name || 'Friend'}</Text>
                 <Text style={styles.historyDate}>{item.created_at.slice(0, 10)}</Text>
               </View>
@@ -151,11 +154,11 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
                 </Text>
                 {item.status === 'rewarded' && (
                   <Text style={styles.historyDetail}>
-                    Reward earned: <Text style={[styles.historyAmount, { color: Colors.success }]}>+RM{item.reward_earned.toFixed(2)}</Text>
+                    Reward earned: <Text style={[styles.historyAmount, { color: colors.success }]}>+RM{item.reward_earned.toFixed(2)}</Text>
                   </Text>
                 )}
-                <View style={[styles.statusBadge, { backgroundColor: item.status === 'rewarded' ? Colors.success + '20' : Colors.warning + '20' }]}>
-                  <Text style={[styles.statusText, { color: item.status === 'rewarded' ? Colors.success : Colors.warning }]}>
+                <View style={[styles.statusBadge, { backgroundColor: item.status === 'rewarded' ? colors.success + '20' : colors.warning + '20' }]}>
+                  <Text style={[styles.statusText, { color: item.status === 'rewarded' ? colors.success : colors.warning }]}>
                     {item.status === 'rewarded' ? 'Rewarded' : 'Pending completion'}
                   </Text>
                 </View>
@@ -170,15 +173,16 @@ export const ReferralScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   hero: {
     alignItems: 'center',
     backgroundColor: '#8B5CF6',
@@ -195,47 +199,48 @@ const styles = StyleSheet.create({
   heroSub: { ...Typography.body, color: 'rgba(255,255,255,0.85)', textAlign: 'center', lineHeight: 22 },
   creditsCard: {
     marginHorizontal: Spacing.lg, marginTop: Spacing.lg,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.lg, alignItems: 'center',
     borderWidth: 2, borderColor: '#8B5CF6',
   },
-  creditsLabel: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 4 },
+  creditsLabel: { ...Typography.caption, color: colors.textSecondary, marginBottom: 4 },
   creditsValue: { fontSize: 32, fontWeight: '800', color: '#8B5CF6' },
-  creditsNote: { ...Typography.caption, color: Colors.textLight, marginTop: 4 },
+  creditsNote: { ...Typography.caption, color: colors.textLight, marginTop: 4 },
   codeCard: {
     marginHorizontal: Spacing.lg, marginTop: Spacing.md,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.lg,
   },
-  codeLabel: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 10 },
+  codeLabel: { ...Typography.caption, color: colors.textSecondary, marginBottom: 10 },
   codeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  code: { fontSize: 28, fontWeight: '800', color: Colors.text, letterSpacing: 4 },
-  copyBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: BorderRadius.sm, backgroundColor: Colors.primary + '15' },
-  copyText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  code: { fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: 4 },
+  copyBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: BorderRadius.sm, backgroundColor: colors.primary + '15' },
+  copyText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: Spacing.lg, marginTop: Spacing.md,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
   },
   statCell: { flex: 1, alignItems: 'center', paddingVertical: Spacing.md },
-  statBorder: { borderRightWidth: 1, borderRightColor: Colors.border },
-  statValue: { ...Typography.h2, color: Colors.primary },
-  statLabel: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginHorizontal: Spacing.lg, marginTop: Spacing.lg, marginBottom: Spacing.sm },
+  statBorder: { borderRightWidth: 1, borderRightColor: colors.border },
+  statValue: { ...Typography.h2, color: colors.primary },
+  statLabel: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginHorizontal: Spacing.lg, marginTop: Spacing.lg, marginBottom: Spacing.sm },
   empty: { alignItems: 'center', paddingVertical: Spacing.xl, paddingHorizontal: Spacing.lg },
-  emptyText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', marginTop: 12 },
+  emptyText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: 12 },
   historyCard: {
     marginHorizontal: Spacing.lg, marginBottom: Spacing.sm,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },
   historyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  historyName: { ...Typography.body, color: Colors.text, fontWeight: '600', flex: 1 },
-  historyDate: { ...Typography.caption, color: Colors.textLight },
+  historyName: { ...Typography.body, color: colors.text, fontWeight: '600', flex: 1 },
+  historyDate: { ...Typography.caption, color: colors.textLight },
   historyDetails: { gap: 4 },
-  historyDetail: { ...Typography.bodySmall, color: Colors.textSecondary },
-  historyAmount: { fontWeight: '700', color: Colors.text },
+  historyDetail: { ...Typography.bodySmall, color: colors.textSecondary },
+  historyAmount: { fontWeight: '700', color: colors.text },
   statusBadge: { alignSelf: 'flex-start', borderRadius: BorderRadius.sm, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4 },
   statusText: { ...Typography.caption, fontWeight: '600' },
-});
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { showAlert } from '../../utils/webAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,13 +7,16 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loginUser } from '../../store/authSlice';
-import { Colors, Typography, Spacing } from '../../utils/theme';
+import { Colors, Typography, Spacing, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props {
   navigation: any;
 }
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((s) => s.auth);
   const [email, setEmail] = useState('');
@@ -40,7 +43,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.header}>
@@ -92,16 +95,18 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
   header: { marginBottom: Spacing.xl },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: 8 },
-  subtitle: { ...Typography.body, color: Colors.textSecondary },
+  title: { ...Typography.h1, color: colors.text, marginBottom: 8 },
+  subtitle: { ...Typography.body, color: colors.textSecondary },
   form: { marginBottom: Spacing.xl },
   forgotWrap: { alignSelf: 'flex-end', marginBottom: 16, marginTop: -4 },
-  forgotText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  forgotText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
   loginBtn: { marginTop: 0 },
-  registerLink: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center' },
-  registerLinkBold: { color: Colors.primary, fontWeight: '600' },
-});
+  registerLink: { ...Typography.body, color: colors.textSecondary, textAlign: 'center' },
+  registerLinkBold: { color: colors.primary, fontWeight: '600' },
+  });
+}

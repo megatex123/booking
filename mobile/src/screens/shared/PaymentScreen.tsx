@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { showAlert } from '../../utils/webAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { paymentAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice } from '../../utils/helpers';
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
 }
 
 export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { bookingId, totalPrice } = route.params;
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'processing' | 'done'>('select');
@@ -45,7 +48,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.successContainer}>
-          <Ionicons name="checkmark-circle" size={80} color={Colors.success} />
+          <Ionicons name="checkmark-circle" size={80} color={colors.success} />
           <Text style={styles.successTitle}>Payment Successful!</Text>
           <Text style={styles.successText}>
             You've paid {formatPrice(totalPrice)} for your car service.
@@ -66,7 +69,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment</Text>
         <View style={{ width: 24 }} />
@@ -78,7 +81,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.amountLabel}>Total Amount</Text>
           <Text style={styles.amount}>{formatPrice(totalPrice)}</Text>
           <View style={styles.secureRow}>
-            <Ionicons name="shield-checkmark" size={14} color={Colors.success} />
+            <Ionicons name="shield-checkmark" size={14} color={colors.success} />
             <Text style={styles.secureText}>Secured payment</Text>
           </View>
         </Card>
@@ -93,7 +96,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
             activeOpacity={0.85}
           >
             <View style={styles.methodIcon}>
-              <Ionicons name={pm.icon as any} size={22} color={method === pm.id ? Colors.primary : Colors.textSecondary} />
+              <Ionicons name={pm.icon as any} size={22} color={method === pm.id ? colors.primary : colors.textSecondary} />
             </View>
             <Text style={[styles.methodLabel, method === pm.id && styles.methodLabelSelected]}>
               {pm.label}
@@ -105,7 +108,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
         ))}
 
         <View style={styles.noteBox}>
-          <Ionicons name="information-circle-outline" size={16} color={Colors.primary} />
+          <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
           <Text style={styles.noteText}>
             This is a demo payment. No actual charge will be made. In production, Stripe handles secure card processing.
           </Text>
@@ -124,68 +127,70 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   content: { padding: Spacing.lg, gap: 12 },
   amountCard: { alignItems: 'center', paddingVertical: Spacing.xl },
-  amountLabel: { ...Typography.body, color: Colors.textSecondary, marginBottom: 8 },
-  amount: { fontSize: 42, fontWeight: '800', color: Colors.text, letterSpacing: -1 },
+  amountLabel: { ...Typography.body, color: colors.textSecondary, marginBottom: 8 },
+  amount: { fontSize: 42, fontWeight: '800', color: colors.text, letterSpacing: -1 },
   secureRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 12 },
-  secureText: { ...Typography.caption, color: Colors.success },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginTop: 8 },
+  secureText: { ...Typography.caption, color: colors.success },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginTop: 8 },
   methodCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  methodCardSelected: { borderColor: Colors.primary, backgroundColor: Colors.primary + '06' },
+  methodCardSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '06' },
   methodIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  methodLabel: { ...Typography.body, color: Colors.text, flex: 1 },
-  methodLabelSelected: { color: Colors.primary, fontWeight: '600' },
+  methodLabel: { ...Typography.body, color: colors.text, flex: 1 },
+  methodLabelSelected: { color: colors.primary, fontWeight: '600' },
   radio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: Colors.primary },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary },
+  radioSelected: { borderColor: colors.primary },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   noteBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: colors.primary + '10',
     borderRadius: BorderRadius.sm,
     padding: 12,
   },
-  noteText: { ...Typography.caption, color: Colors.textSecondary, flex: 1, lineHeight: 18 },
+  noteText: { ...Typography.caption, color: colors.textSecondary, flex: 1, lineHeight: 18 },
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
-  successTitle: { ...Typography.h1, color: Colors.text, marginTop: 20, marginBottom: 12 },
-  successText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24 },
-});
+  successTitle: { ...Typography.h1, color: colors.text, marginTop: 20, marginBottom: 12 },
+  successText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 24 },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { chatAPI } from '../../services/api';
 import { connectSocket, joinBookingRoom, leaveBookingRoom, getSocket } from '../../services/socket';
 import { useAppSelector } from '../../store';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Message } from '../../types';
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
 }
 
 export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { bookingId, workshopName, customerName } = route.params;
   const { user } = useAppSelector((s) => s.auth);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -111,7 +114,7 @@ export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{chatTitle}</Text>
@@ -126,7 +129,7 @@ export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color={Colors.primary} />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : (
           <FlatList
@@ -138,7 +141,7 @@ export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Ionicons name="chatbubbles-outline" size={48} color={Colors.textLight} />
+                <Ionicons name="chatbubbles-outline" size={48} color={colors.textLight} />
                 <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
               </View>
             }
@@ -150,7 +153,7 @@ export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
             value={input}
             onChangeText={setInput}
             placeholder="Type a message..."
-            placeholderTextColor={Colors.textLight}
+            placeholderTextColor={colors.textLight}
             style={styles.textInput}
             multiline
             maxLength={1000}
@@ -173,21 +176,22 @@ export const ChatScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   headerInfo: {},
-  headerName: { ...Typography.body, fontWeight: '700', color: Colors.text },
-  headerSub: { ...Typography.caption, color: Colors.textSecondary },
+  headerName: { ...Typography.body, fontWeight: '700', color: colors.text },
+  headerSub: { ...Typography.caption, color: colors.textSecondary },
   body: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   messageList: { padding: Spacing.md, gap: 4 },
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -207,7 +211,7 @@ const styles = StyleSheet.create({
     maxWidth: '72%',
     padding: 10,
     borderRadius: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -216,47 +220,48 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 4,
   },
   bubbleMe: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 4,
   },
   bubbleThem: {},
-  senderName: { ...Typography.caption, color: Colors.primary, fontWeight: '600', marginBottom: 2 },
-  msgText: { ...Typography.bodySmall, color: Colors.text, lineHeight: 20 },
+  senderName: { ...Typography.caption, color: colors.primary, fontWeight: '600', marginBottom: 2 },
+  msgText: { ...Typography.bodySmall, color: colors.text, lineHeight: 20 },
   msgTextMe: { color: '#fff' },
-  msgTime: { ...Typography.caption, color: Colors.textLight, marginTop: 4, textAlign: 'right' },
+  msgTime: { ...Typography.caption, color: colors.textLight, marginTop: 4, textAlign: 'right' },
   msgTimeMe: { color: 'rgba(255,255,255,0.7)' },
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { ...Typography.body, color: Colors.textSecondary, marginTop: 12 },
+  emptyText: { ...Typography.body, color: colors.textSecondary, marginTop: 12 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 10,
     paddingHorizontal: Spacing.lg,
     paddingVertical: 10,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   textInput: {
     flex: 1,
     ...Typography.body,
-    color: Colors.text,
+    color: colors.text,
     maxHeight: 100,
     paddingVertical: 9,
     paddingHorizontal: 14,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   sendBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
-});
+  });
+}

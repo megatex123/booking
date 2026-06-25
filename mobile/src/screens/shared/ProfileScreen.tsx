@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { logout } from '../../store/authSlice';
 import { fetchMyBookings } from '../../store/bookingSlice';
 import { reviewAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Typography, Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { setLanguage } from '../../i18n';
@@ -24,9 +24,11 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user } = useAppSelector((s) => s.auth);
   const { bookings } = useAppSelector((s) => s.bookings);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
-  const { preference, setScheme } = useTheme();
+  const { colors, preference, setScheme } = useTheme();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language as LangCode;
+
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     if (user?.role === 'customer') {
@@ -37,13 +39,13 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm('Are you sure you want to log out?')) {
+      if (window.confirm(t('auth.logoutConfirm'))) {
         dispatch(logout());
       }
     } else {
-      Alert.alert('Log Out', 'Are you sure you want to log out?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Log Out', style: 'destructive', onPress: () => dispatch(logout()) },
+      Alert.alert(t('auth.logoutTitle'), t('auth.logoutConfirm'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('auth.logout'), style: 'destructive', onPress: () => dispatch(logout()) },
       ]);
     }
   };
@@ -108,9 +110,9 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               onPress={item.onPress}
               activeOpacity={0.7}
             >
-              <Ionicons name={item.icon as any} size={20} color={Colors.textSecondary} />
+              <Ionicons name={item.icon as any} size={20} color={colors.textSecondary} />
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
             </TouchableOpacity>
           ))}
         </Card>
@@ -133,7 +135,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                 activeOpacity={0.8}
               >
                 <Text style={{ fontSize: 16 }}>{flag}</Text>
-                <Text style={[styles.themeOptionText, currentLang === code && { color: Colors.primary, fontWeight: '700' }]}>
+                <Text style={[styles.themeOptionText, currentLang === code && { color: colors.primary, fontWeight: '700' }]}>
                   {label}
                 </Text>
               </TouchableOpacity>
@@ -152,8 +154,8 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={() => setScheme(val)}
                 activeOpacity={0.8}
               >
-                <Ionicons name={icon as any} size={18} color={preference === val ? Colors.primary : Colors.textSecondary} />
-                <Text style={[styles.themeOptionText, preference === val && { color: Colors.primary, fontWeight: '700' }]}>
+                <Ionicons name={icon as any} size={18} color={preference === val ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.themeOptionText, preference === val && { color: colors.primary, fontWeight: '700' }]}>
                   {label}
                 </Text>
               </TouchableOpacity>
@@ -162,7 +164,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         </Card>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
           <Text style={styles.logoutText}>{t('auth.logout')}</Text>
         </TouchableOpacity>
 
@@ -173,81 +175,97 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { alignItems: 'center', paddingVertical: Spacing.xl, paddingHorizontal: Spacing.lg },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
-  name: { ...Typography.h2, color: Colors.text, marginBottom: 4 },
-  email: { ...Typography.body, color: Colors.textSecondary, marginBottom: 12 },
-  roleBadge: {
-    backgroundColor: Colors.primary + '15',
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-  },
-  roleText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.lg,
-    padding: Spacing.lg,
-  },
-  stat: { flex: 1, alignItems: 'center' },
-  statValue: { ...Typography.h2, color: Colors.primary },
-  statLabel: { ...Typography.caption, color: Colors.textSecondary, marginTop: 4 },
-  statDivider: { width: 1, backgroundColor: Colors.border },
-  menu: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, padding: 0, overflow: 'hidden' },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 16,
-  },
-  menuItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  menuLabel: { ...Typography.body, color: Colors.text, flex: 1 },
-  infoCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg },
-  infoLabel: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 4 },
-  infoValue: { ...Typography.body, color: Colors.text },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    paddingVertical: 15,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.danger + '12',
-    borderWidth: 1.5,
-    borderColor: Colors.danger,
-  },
-  logoutText: { ...Typography.button, color: Colors.danger },
-  version: { ...Typography.caption, color: Colors.textLight, textAlign: 'center' },
-  appearanceCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, padding: Spacing.md },
-  appearanceTitle: { ...Typography.bodySmall, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
-  themeRow: { flexDirection: 'row', gap: 8 },
-  themeOption: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 10, borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.background, borderWidth: 1.5, borderColor: Colors.border,
-  },
-  themeOptionActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '0D' },
-  themeOptionText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
-});
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { alignItems: 'center', paddingVertical: Spacing.xl, paddingHorizontal: Spacing.lg },
+    avatar: {
+      width: 90,
+      height: 90,
+      borderRadius: 45,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      elevation: 4,
+    },
+    avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
+    name: { ...Typography.h2, color: colors.text, marginBottom: 4 },
+    email: { ...Typography.body, color: colors.textSecondary, marginBottom: 12 },
+    roleBadge: {
+      backgroundColor: colors.primary + '15',
+      borderRadius: BorderRadius.full,
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+    },
+    roleText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
+    statsRow: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      marginHorizontal: Spacing.lg,
+      borderRadius: BorderRadius.md,
+      marginBottom: Spacing.lg,
+      padding: Spacing.lg,
+    },
+    stat: { flex: 1, alignItems: 'center' },
+    statValue: { ...Typography.h2, color: colors.primary },
+    statLabel: { ...Typography.caption, color: colors.textSecondary, marginTop: 4 },
+    statDivider: { width: 1, backgroundColor: colors.border },
+    menu: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, padding: 0, overflow: 'hidden' },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: 16,
+    },
+    menuItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.divider },
+    menuLabel: { ...Typography.body, color: colors.text, flex: 1 },
+    infoCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+    infoLabel: { ...Typography.caption, color: colors.textSecondary, marginBottom: 4 },
+    infoValue: { ...Typography.body, color: colors.text },
+    logoutBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      marginHorizontal: Spacing.lg,
+      marginBottom: Spacing.md,
+      paddingVertical: 15,
+      borderRadius: BorderRadius.md,
+      backgroundColor: colors.danger + '12',
+      borderWidth: 1.5,
+      borderColor: colors.danger,
+    },
+    logoutText: { ...Typography.button, color: colors.danger },
+    version: { ...Typography.caption, color: colors.textLight, textAlign: 'center' },
+    appearanceCard: { marginHorizontal: Spacing.lg, marginBottom: Spacing.lg, padding: Spacing.md },
+    appearanceTitle: {
+      ...Typography.bodySmall,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 12,
+    },
+    themeRow: { flexDirection: 'row', gap: 8 },
+    themeOption: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: colors.background,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+    },
+    themeOptionActive: { borderColor: colors.primary, backgroundColor: colors.primary + '0D' },
+    themeOptionText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
+  });
+}

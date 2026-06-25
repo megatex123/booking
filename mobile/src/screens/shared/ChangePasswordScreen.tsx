@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,14 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { authAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
 export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -47,7 +50,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.successWrap}>
           <View style={styles.successIcon}>
-            <Ionicons name="shield-checkmark" size={72} color={Colors.success} />
+            <Ionicons name="shield-checkmark" size={72} color={colors.success} />
           </View>
           <Text style={styles.successTitle}>Password Changed!</Text>
           <Text style={styles.successText}>
@@ -69,7 +72,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>
         <View style={{ width: 24 }} />
@@ -82,7 +85,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
       >
         <View style={styles.iconWrap}>
           <View style={styles.iconCircle}>
-            <Ionicons name="lock-closed-outline" size={32} color={Colors.primary} />
+            <Ionicons name="lock-closed-outline" size={32} color={colors.primary} />
           </View>
           <Text style={styles.subtitle}>Enter your current password, then choose a new one.</Text>
         </View>
@@ -134,7 +137,7 @@ export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
                   <Ionicons
                     name={h.ok ? 'checkmark-circle' : 'ellipse-outline'}
                     size={14}
-                    color={h.ok ? Colors.success : Colors.textLight}
+                    color={h.ok ? colors.success : colors.textLight}
                   />
                   <Text style={[styles.hintText, h.ok && styles.hintOk]}>{h.label}</Text>
                 </View>
@@ -156,34 +159,35 @@ export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   body: { padding: Spacing.lg },
 
   iconWrap: { alignItems: 'center', marginBottom: Spacing.xl, gap: 12 },
   iconCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  subtitle: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
 
   section: { marginBottom: Spacing.md },
   divider: {
-    height: 1, backgroundColor: Colors.border,
+    height: 1, backgroundColor: colors.border,
     marginHorizontal: -Spacing.lg, marginBottom: Spacing.lg,
   },
 
   hints: { gap: 6, marginBottom: Spacing.sm, paddingHorizontal: 4 },
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  hintText: { ...Typography.caption, color: Colors.textLight },
-  hintOk: { color: Colors.success },
+  hintText: { ...Typography.caption, color: colors.textLight },
+  hintOk: { color: colors.success },
 
   updateBtn: { marginTop: Spacing.md },
 
@@ -192,6 +196,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl, gap: 16,
   },
   successIcon: { marginBottom: 8 },
-  successTitle: { ...Typography.h1, color: Colors.text, textAlign: 'center' },
-  successText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
-});
+  successTitle: { ...Typography.h1, color: colors.text, textAlign: 'center' },
+  successText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  });
+}

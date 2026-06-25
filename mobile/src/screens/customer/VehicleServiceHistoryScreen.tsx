@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { bookingAPI, uploadAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice } from '../../utils/helpers';
 
 interface ProductUsed {
@@ -68,12 +69,14 @@ function formatShortDate(iso: string): string {
 function urgencyColor(dueDate: Date): string {
   const now = new Date();
   const daysLeft = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysLeft < 0) return Colors.danger;
+  if (daysLeft < 0) return colors.danger;
   if (daysLeft < 30) return '#F59E0B'; // warning amber
-  return Colors.success;
+  return colors.success;
 }
 
 export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { vehicle } = route.params as { vehicle: { plate: string; model: string; year?: string; color?: string } };
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +114,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Service History</Text>
         <View style={{ width: 40 }} />
@@ -121,7 +124,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
         {/* Vehicle summary */}
         <View style={styles.vehicleCard}>
           <View style={styles.vehicleIcon}>
-            <Ionicons name="car" size={30} color={Colors.primary} />
+            <Ionicons name="car" size={30} color={colors.primary} />
           </View>
           <View style={styles.vehicleInfo}>
             <Text style={styles.vehiclePlate}>{vehicle.plate}</Text>
@@ -147,7 +150,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
             </Text>
             {nextServiceInfo.dueDate < new Date() && (
               <View style={styles.overdueChip}>
-                <Ionicons name="warning-outline" size={13} color={Colors.danger} />
+                <Ionicons name="warning-outline" size={13} color={colors.danger} />
                 <Text style={styles.overdueText}>Overdue — book a service now</Text>
               </View>
             )}
@@ -157,14 +160,14 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
         {/* Service history timeline */}
         {loading && (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator color={Colors.primary} />
+            <ActivityIndicator color={colors.primary} />
             <Text style={styles.loadingText}>Loading service history...</Text>
           </View>
         )}
 
         {!loading && bookings.length === 0 && (
           <View style={styles.empty}>
-            <Ionicons name="clipboard-outline" size={56} color={Colors.textLight} />
+            <Ionicons name="clipboard-outline" size={56} color={colors.textLight} />
             <Text style={styles.emptyTitle}>No service history</Text>
             <Text style={styles.emptyText}>Completed bookings for this vehicle will appear here</Text>
           </View>
@@ -186,7 +189,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
                   <View style={styles.serviceCard}>
                     {/* Workshop */}
                     <View style={styles.workshopRow}>
-                      <Ionicons name="storefront-outline" size={14} color={Colors.primary} />
+                      <Ionicons name="storefront-outline" size={14} color={colors.primary} />
                       <Text style={styles.workshopName}>{b.workshop_name}</Text>
                     </View>
 
@@ -194,7 +197,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
                     <View style={styles.servicesList}>
                       {b.services.map((svc: any) => (
                         <View key={svc._id} style={styles.serviceChip}>
-                          <Ionicons name="construct-outline" size={11} color={Colors.textSecondary} />
+                          <Ionicons name="construct-outline" size={11} color={colors.textSecondary} />
                           <Text style={styles.serviceChipText}>{svc.name}</Text>
                         </View>
                       ))}
@@ -240,7 +243,7 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
                               )}
                               {sr.next_service_months ? (
                                 <View style={styles.nextChip}>
-                                  <Ionicons name="calendar-outline" size={11} color={Colors.primary} />
+                                  <Ionicons name="calendar-outline" size={11} color={colors.primary} />
                                   <Text style={styles.nextChipText}>
                                     Next in {formatMonths(sr.next_service_months)}
                                   </Text>
@@ -277,138 +280,140 @@ export const VehicleServiceHistoryScreen: React.FC<Props> = ({ navigation, route
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   body: { padding: Spacing.lg },
 
   vehicleCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: 14,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   vehicleIcon: {
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center', marginRight: Spacing.md,
   },
   vehicleInfo: { flex: 1 },
-  vehiclePlate: { ...Typography.h2, color: Colors.text },
-  vehicleMeta: { ...Typography.bodySmall, color: Colors.textSecondary, marginTop: 2 },
-  serviceCount: { ...Typography.caption, color: Colors.primary, fontWeight: '600', marginTop: 4 },
+  vehiclePlate: { ...Typography.h2, color: colors.text },
+  vehicleMeta: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+  serviceCount: { ...Typography.caption, color: colors.primary, fontWeight: '600', marginTop: 4 },
 
   nextServiceCard: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: 14,
     borderWidth: 1.5,
   },
   nextServiceHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   nextServiceTitle: { ...Typography.caption, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  nextServiceDate: { ...Typography.h2, color: Colors.text, marginBottom: 2 },
-  nextServiceSub: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 16 },
+  nextServiceDate: { ...Typography.h2, color: colors.text, marginBottom: 2 },
+  nextServiceSub: { ...Typography.caption, color: colors.textSecondary, lineHeight: 16 },
   overdueChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: Colors.danger + '12', borderRadius: BorderRadius.full,
+    backgroundColor: colors.danger + '12', borderRadius: BorderRadius.full,
     paddingHorizontal: 10, paddingVertical: 5, marginTop: 8, alignSelf: 'flex-start',
-    borderWidth: 1, borderColor: Colors.danger + '30',
+    borderWidth: 1, borderColor: colors.danger + '30',
   },
-  overdueText: { ...Typography.caption, color: Colors.danger, fontWeight: '600' },
+  overdueText: { ...Typography.caption, color: colors.danger, fontWeight: '600' },
 
   loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 10 },
-  loadingText: { ...Typography.bodySmall, color: Colors.textSecondary },
+  loadingText: { ...Typography.bodySmall, color: colors.textSecondary },
   empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyTitle: { ...Typography.h3, color: Colors.text },
-  emptyText: { ...Typography.bodySmall, color: Colors.textSecondary, textAlign: 'center', maxWidth: 260 },
+  emptyTitle: { ...Typography.h3, color: colors.text },
+  emptyText: { ...Typography.bodySmall, color: colors.textSecondary, textAlign: 'center', maxWidth: 260 },
 
   timeline: { gap: 0 },
   timelineHeader: {
-    ...Typography.caption, fontWeight: '700', color: Colors.textSecondary,
+    ...Typography.caption, fontWeight: '700', color: colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12,
   },
   timelineItem: { flexDirection: 'row', gap: 12 },
   timelineLeft: { alignItems: 'center', width: 16 },
   dot: {
     width: 12, height: 12, borderRadius: 6,
-    backgroundColor: Colors.border, borderWidth: 2, borderColor: Colors.border,
+    backgroundColor: colors.border, borderWidth: 2, borderColor: colors.border,
     marginTop: 4,
   },
-  dotFirst: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  line: { width: 2, flex: 1, backgroundColor: Colors.border, marginTop: 4, minHeight: 24 },
+  dotFirst: { backgroundColor: colors.primary, borderColor: colors.primary },
+  line: { width: 2, flex: 1, backgroundColor: colors.border, marginTop: 4, minHeight: 24 },
 
   timelineContent: { flex: 1, paddingBottom: 20 },
-  serviceDate: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', marginBottom: 6 },
+  serviceDate: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600', marginBottom: 6 },
   serviceCard: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.border, gap: 10,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    padding: Spacing.md, borderWidth: 1, borderColor: colors.border, gap: 10,
   },
   workshopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  workshopName: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text, flex: 1 },
+  workshopName: { ...Typography.bodySmall, fontWeight: '600', color: colors.text, flex: 1 },
 
   servicesList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   serviceChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.primary + '10', borderRadius: BorderRadius.full,
+    backgroundColor: colors.primary + '10', borderRadius: BorderRadius.full,
     paddingHorizontal: 9, paddingVertical: 4,
   },
-  serviceChipText: { ...Typography.caption, color: Colors.primary, fontWeight: '500' },
+  serviceChipText: { ...Typography.caption, color: colors.primary, fontWeight: '500' },
 
   reportsSection: {
-    borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 10, gap: 8,
+    borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10, gap: 8,
   },
   svcReport: {
-    backgroundColor: Colors.background, borderRadius: BorderRadius.sm,
-    padding: 10, borderWidth: 1, borderColor: Colors.border, gap: 4,
+    backgroundColor: colors.background, borderRadius: BorderRadius.sm,
+    padding: 10, borderWidth: 1, borderColor: colors.border, gap: 4,
   },
-  svcReportName: { ...Typography.caption, fontWeight: '700', color: Colors.text },
-  svcReportWork: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 16 },
+  svcReportName: { ...Typography.caption, fontWeight: '700', color: colors.text },
+  svcReportWork: { ...Typography.caption, color: colors.textSecondary, lineHeight: 16 },
   mediaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 4 },
-  mediaThumbnail: { width: 56, height: 56, borderRadius: 6, backgroundColor: Colors.border },
+  mediaThumbnail: { width: 56, height: 56, borderRadius: 6, backgroundColor: colors.border },
   videoThumb: {
     width: 56, height: 56, borderRadius: 6,
     backgroundColor: '#333', alignItems: 'center', justifyContent: 'center',
   },
   productsSection: {
-    borderTopWidth: 1, borderTopColor: Colors.border + '80', paddingTop: 6, gap: 5, marginTop: 2,
+    borderTopWidth: 1, borderTopColor: colors.border + '80', paddingTop: 6, gap: 5, marginTop: 2,
   },
   productsLabel: {
-    ...Typography.caption, fontWeight: '700', color: Colors.textSecondary,
+    ...Typography.caption, fontWeight: '700', color: colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.4, fontSize: 9, marginBottom: 2,
   },
   productRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   productDot: {
-    width: 4, height: 4, borderRadius: 2, backgroundColor: Colors.textLight, marginTop: 1,
+    width: 4, height: 4, borderRadius: 2, backgroundColor: colors.textLight, marginTop: 1,
   },
-  productName: { ...Typography.caption, color: Colors.text, fontWeight: '500', flex: 1 },
-  productBrand: { fontSize: 10, color: Colors.textSecondary },
-  productQty: { ...Typography.caption, color: Colors.textSecondary, fontSize: 10 },
-  productPrice: { ...Typography.caption, color: Colors.primary, fontWeight: '600', fontSize: 10, minWidth: 50, textAlign: 'right' },
+  productName: { ...Typography.caption, color: colors.text, fontWeight: '500', flex: 1 },
+  productBrand: { fontSize: 10, color: colors.textSecondary },
+  productQty: { ...Typography.caption, color: colors.textSecondary, fontSize: 10 },
+  productPrice: { ...Typography.caption, color: colors.primary, fontWeight: '600', fontSize: 10, minWidth: 50, textAlign: 'right' },
 
   nextChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.primary + '12', borderRadius: BorderRadius.full,
+    backgroundColor: colors.primary + '12', borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginTop: 2,
   },
-  nextChipText: { ...Typography.caption, color: Colors.primary, fontWeight: '600', fontSize: 10 },
+  nextChipText: { ...Typography.caption, color: colors.primary, fontWeight: '600', fontSize: 10 },
 
-  generalReport: { borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 8 },
+  generalReport: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
   reportLabel: {
-    ...Typography.caption, fontWeight: '700', color: Colors.textSecondary,
+    ...Typography.caption, fontWeight: '700', color: colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4,
   },
-  reportText: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 16 },
+  reportText: { ...Typography.caption, color: colors.textSecondary, lineHeight: 16 },
 
   totalRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 8,
+    borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8,
   },
-  totalLabel: { ...Typography.caption, color: Colors.textSecondary },
-  totalAmount: { ...Typography.bodySmall, fontWeight: '700', color: Colors.primary },
-});
+  totalLabel: { ...Typography.caption, color: colors.textSecondary },
+  totalAmount: { ...Typography.bodySmall, fontWeight: '700', color: colors.primary },
+  });
+}

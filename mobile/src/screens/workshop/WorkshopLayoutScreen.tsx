@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Modal, RefreshControl, Platform, Alert, TextInput,
@@ -10,7 +10,8 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchMyBookings } from '../../store/bookingSlice';
 import { fetchMyWorkshop } from '../../store/workshopSlice';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, StatusColors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, StatusColors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatTime, formatDate } from '../../utils/helpers';
 import { Booking } from '../../types';
 
@@ -26,6 +27,8 @@ interface Station {
 const ACTIVE_STATUSES = ['confirmed', 'in_progress'];
 
 export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { bookings } = useAppSelector((s) => s.bookings);
   const { myWorkshop } = useAppSelector((s) => s.workshops);
@@ -156,7 +159,7 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Workshop Layout</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => setAddModal(true)}>
@@ -166,25 +169,25 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Summary bar */}
         <View style={styles.summaryBar}>
           <View style={styles.summaryItem}>
-            <View style={[styles.dot, { backgroundColor: Colors.success }]} />
+            <View style={[styles.dot, { backgroundColor: colors.success }]} />
             <Text style={styles.summaryText}>{freeCount} Free</Text>
           </View>
           <View style={styles.summaryItem}>
-            <View style={[styles.dot, { backgroundColor: Colors.warning }]} />
+            <View style={[styles.dot, { backgroundColor: colors.warning }]} />
             <Text style={styles.summaryText}>{occupiedCount} Occupied</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.summaryText}>{unassignedBookings.length} unassigned</Text>
           </View>
           <View style={styles.summaryItemRight}>
-            <View style={[styles.onlineDot, { backgroundColor: isOnline ? Colors.success : Colors.danger }]} />
-            <Text style={[styles.summaryText, { color: isOnline ? Colors.success : Colors.danger }]}>
+            <View style={[styles.onlineDot, { backgroundColor: isOnline ? colors.success : colors.danger }]} />
+            <Text style={[styles.summaryText, { color: isOnline ? colors.success : colors.danger }]}>
               {isOnline ? 'Online' : 'Offline'}
             </Text>
           </View>
@@ -198,13 +201,13 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
               const isOnlineCustomer = !!onlineMap[b.customer_id];
               return (
                 <View key={b.id} style={styles.unassignedCard}>
-                  <View style={[styles.statusDot, { backgroundColor: StatusColors[b.status] || Colors.textLight }]} />
+                  <View style={[styles.statusDot, { backgroundColor: StatusColors[b.status] || colors.textLight }]} />
                   <View style={{ flex: 1 }}>
                     <View style={styles.unassignedNameRow}>
                       <Text style={styles.unassignedName}>{b.customer_name}</Text>
                       <View style={styles.presenceBadge}>
-                        <View style={[styles.presenceDot, { backgroundColor: isOnlineCustomer ? Colors.success : Colors.textLight }]} />
-                        <Text style={[styles.presenceText, { color: isOnlineCustomer ? Colors.success : Colors.textLight }]}>
+                        <View style={[styles.presenceDot, { backgroundColor: isOnlineCustomer ? colors.success : colors.textLight }]} />
+                        <Text style={[styles.presenceText, { color: isOnlineCustomer ? colors.success : colors.textLight }]}>
                           {isOnlineCustomer ? 'Online' : 'Offline'}
                         </Text>
                       </View>
@@ -226,7 +229,7 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.loadingText}>Loading stations…</Text>
           ) : stations.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons name="grid-outline" size={48} color={Colors.textLight} />
+              <Ionicons name="grid-outline" size={48} color={colors.textLight} />
               <Text style={styles.emptyText}>No repair bays yet</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={() => setAddModal(true)}>
                 <Text style={styles.emptyBtnText}>Add First Bay</Text>
@@ -238,8 +241,8 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
                 const booking = bookingForStation(s._id);
                 const occupied = !!booking;
                 const accent = occupied
-                  ? (booking.status === 'in_progress' ? Colors.primary : Colors.warning)
-                  : Colors.success;
+                  ? (booking.status === 'in_progress' ? colors.primary : colors.warning)
+                  : colors.success;
 
                 return (
                   <View key={s._id} style={[styles.stationCard, { borderColor: accent + '60' }]}>
@@ -250,7 +253,7 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
                       <View style={styles.stationHeaderRow}>
                         <Text style={styles.stationName}>{s.name}</Text>
                         <TouchableOpacity onPress={() => handleDeleteStation(s)}>
-                          <Ionicons name="trash-outline" size={14} color={Colors.textLight} />
+                          <Ionicons name="trash-outline" size={14} color={colors.textLight} />
                         </TouchableOpacity>
                       </View>
 
@@ -269,9 +272,9 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
                             {booking.services.map((sv: any) => sv.name).join(', ')}
                           </Text>
                           <View style={styles.bookingMetaRow}>
-                            <Ionicons name="car-outline" size={11} color={Colors.textSecondary} />
+                            <Ionicons name="car-outline" size={11} color={colors.textSecondary} />
                             <Text style={styles.bookingMeta}>{booking.vehicle_plate}</Text>
-                            <Ionicons name="time-outline" size={11} color={Colors.textSecondary} />
+                            <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
                             <Text style={styles.bookingMeta}>{formatTime(booking.scheduled_time)}</Text>
                           </View>
                           <TouchableOpacity style={styles.unassignBtn} onPress={() => handleUnassign(booking)}>
@@ -283,8 +286,8 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
                           style={[styles.assignBtn, unassignedBookings.length === 0 && styles.assignBtnDisabled]}
                           onPress={() => unassignedBookings.length > 0 ? openAssign(s) : showAlert('No Bookings', 'No active bookings waiting for assignment')}
                         >
-                          <Ionicons name="add-circle-outline" size={14} color={unassignedBookings.length > 0 ? Colors.primary : Colors.textLight} />
-                          <Text style={[styles.assignBtnText, unassignedBookings.length === 0 && { color: Colors.textLight }]}>
+                          <Ionicons name="add-circle-outline" size={14} color={unassignedBookings.length > 0 ? colors.primary : colors.textLight} />
+                          <Text style={[styles.assignBtnText, unassignedBookings.length === 0 && { color: colors.textLight }]}>
                             Assign Booking
                           </Text>
                         </TouchableOpacity>
@@ -306,21 +309,21 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Repair Bay</Text>
               <TouchableOpacity onPress={() => setAddModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             <Text style={styles.fieldLabel}>Bay Name *</Text>
             <TextInput
               value={stationName} onChangeText={setStationName}
               placeholder="e.g. Bay 1, Lift A, Alignment Station"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
               style={styles.input}
             />
             <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Description (optional)</Text>
             <TextInput
               value={stationDesc} onChangeText={setStationDesc}
               placeholder="What work is this bay for?"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
               style={styles.input}
             />
             <TouchableOpacity style={[styles.saveBtn, savingStation && { opacity: 0.6 }]} onPress={handleAddStation} disabled={savingStation}>
@@ -337,21 +340,21 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Assign to {selectedStation?.name}</Text>
               <TouchableOpacity onPress={() => setAssignModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             <Text style={styles.assignPickLabel}>Choose a booking to assign:</Text>
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
               {unassignedBookings.map((b) => (
                 <TouchableOpacity key={b.id} style={styles.pickCard} onPress={() => handleAssign(b)}>
-                  <View style={[styles.dot, { backgroundColor: StatusColors[b.status] || Colors.textLight, marginTop: 2 }]} />
+                  <View style={[styles.dot, { backgroundColor: StatusColors[b.status] || colors.textLight, marginTop: 2 }]} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.pickName}>{b.customer_name}</Text>
                     <Text style={styles.pickMeta}>{b.services.map((s: any) => s.name).join(', ')}</Text>
                     <Text style={styles.pickMeta}>{b.vehicle_brand} {b.vehicle_name} · {b.vehicle_plate}</Text>
                     <Text style={styles.pickMeta}>{formatDate(b.scheduled_date)} {formatTime(b.scheduled_time)}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />
+                  <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -362,68 +365,70 @@ export const WorkshopLayoutScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  title: { ...Typography.h3, color: Colors.text },
-  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+  title: { ...Typography.h3, color: colors.text },
+  addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
 
-  summaryBar: { flexDirection: 'row', gap: 20, paddingHorizontal: Spacing.lg, paddingVertical: 12, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, alignItems: 'center' },
+  summaryBar: { flexDirection: 'row', gap: 20, paddingHorizontal: Spacing.lg, paddingVertical: 12, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, alignItems: 'center' },
   summaryItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   summaryItemRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
-  summaryText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  summaryText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   dot: { width: 8, height: 8, borderRadius: 4 },
   onlineDot: { width: 8, height: 8, borderRadius: 4 },
 
   section: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginBottom: 12 },
-  loadingText: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', paddingVertical: 20 },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginBottom: 12 },
+  loadingText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', paddingVertical: 20 },
 
-  unassignedCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.surface, borderRadius: BorderRadius.sm, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: Colors.warning },
+  unassignedCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: BorderRadius.sm, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: colors.warning },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   unassignedNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  unassignedName: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text },
+  unassignedName: { ...Typography.bodySmall, fontWeight: '600', color: colors.text },
   presenceBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   presenceDot: { width: 6, height: 6, borderRadius: 3 },
   presenceText: { fontSize: 10, fontWeight: '600' },
-  unassignedMeta: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
-  unassignedTime: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary },
+  unassignedMeta: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
+  unassignedTime: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingBottom: 8 },
-  stationCard: { width: '47%', backgroundColor: Colors.surface, borderRadius: BorderRadius.md, overflow: 'hidden', borderWidth: 1.5, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+  stationCard: { width: '47%', backgroundColor: colors.surface, borderRadius: BorderRadius.md, overflow: 'hidden', borderWidth: 1.5, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
   stationBar: { height: 5 },
   stationContent: { padding: 12, gap: 8 },
   stationHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  stationName: { ...Typography.body, fontWeight: '700', color: Colors.text },
+  stationName: { ...Typography.body, fontWeight: '700', color: colors.text },
   stationStatusChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.full },
   stationStatusText: { fontSize: 11, fontWeight: '600' },
 
   bookingInfo: { gap: 3 },
-  bookingCustomer: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text },
-  bookingMeta: { fontSize: 11, color: Colors.textSecondary },
+  bookingCustomer: { ...Typography.bodySmall, fontWeight: '600', color: colors.text },
+  bookingMeta: { fontSize: 11, color: colors.textSecondary },
   bookingMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  unassignBtn: { marginTop: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: BorderRadius.full, backgroundColor: Colors.danger + '15', alignSelf: 'flex-start' },
-  unassignBtnText: { fontSize: 11, fontWeight: '600', color: Colors.danger },
+  unassignBtn: { marginTop: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: BorderRadius.full, backgroundColor: colors.danger + '15', alignSelf: 'flex-start' },
+  unassignBtnText: { fontSize: 11, fontWeight: '600', color: colors.danger },
 
-  assignBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: BorderRadius.full, backgroundColor: Colors.primary + '12', alignSelf: 'flex-start' },
-  assignBtnDisabled: { backgroundColor: Colors.border },
-  assignBtnText: { fontSize: 11, fontWeight: '600', color: Colors.primary },
+  assignBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 5, paddingHorizontal: 10, borderRadius: BorderRadius.full, backgroundColor: colors.primary + '12', alignSelf: 'flex-start' },
+  assignBtnDisabled: { backgroundColor: colors.border },
+  assignBtnText: { fontSize: 11, fontWeight: '600', color: colors.primary },
 
   empty: { alignItems: 'center', paddingVertical: 48, gap: 12 },
-  emptyText: { ...Typography.body, color: Colors.textSecondary },
-  emptyBtn: { backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: BorderRadius.full },
+  emptyText: { ...Typography.body, color: colors.textSecondary },
+  emptyBtn: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: BorderRadius.full },
   emptyBtnText: { ...Typography.button, color: '#fff' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: Colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg },
+  modalSheet: { backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle: { ...Typography.h3, color: Colors.text },
-  fieldLabel: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 },
-  input: { backgroundColor: Colors.surface, borderRadius: BorderRadius.sm, borderWidth: 1.5, borderColor: Colors.border, paddingHorizontal: 12, paddingVertical: 10, ...Typography.body, color: Colors.text },
-  saveBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
+  modalTitle: { ...Typography.h3, color: colors.text },
+  fieldLabel: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary, marginBottom: 6 },
+  input: { backgroundColor: colors.surface, borderRadius: BorderRadius.sm, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...Typography.body, color: colors.text },
+  saveBtn: { backgroundColor: colors.primary, borderRadius: BorderRadius.md, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
   saveBtnText: { ...Typography.button, color: '#fff' },
-  assignPickLabel: { ...Typography.bodySmall, color: Colors.textSecondary, marginBottom: 12 },
-  pickCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, backgroundColor: Colors.surface, borderRadius: BorderRadius.sm, marginBottom: 8 },
-  pickName: { ...Typography.body, fontWeight: '600', color: Colors.text, marginBottom: 2 },
-  pickMeta: { ...Typography.caption, color: Colors.textSecondary, marginTop: 1 },
-});
+  assignPickLabel: { ...Typography.bodySmall, color: colors.textSecondary, marginBottom: 12 },
+  pickCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, backgroundColor: colors.surface, borderRadius: BorderRadius.sm, marginBottom: 8 },
+  pickName: { ...Typography.body, fontWeight: '600', color: colors.text, marginBottom: 2 },
+  pickMeta: { ...Typography.caption, color: colors.textSecondary, marginTop: 1 },
+  });
+}

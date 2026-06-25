@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props {
   navigation: any;
 }
 
 export const UserTypeScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [selected, setSelected] = useState<'customer' | 'workshop' | null>(null);
 
   const options = [
@@ -30,7 +33,7 @@ export const UserTypeScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-        <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </TouchableOpacity>
 
       <Text style={styles.title}>Who are you?</Text>
@@ -51,7 +54,7 @@ export const UserTypeScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.cardDesc}>{opt.description}</Text>
             {selected === opt.type && (
               <View style={styles.checkmark}>
-                <Ionicons name="checkmark-circle" size={22} color={Colors.primary} />
+                <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
               </View>
             )}
           </TouchableOpacity>
@@ -76,27 +79,29 @@ export const UserTypeScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
-  title: { ...Typography.h2, color: Colors.text, marginBottom: 8 },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, marginBottom: Spacing.xl },
+  title: { ...Typography.h2, color: colors.text, marginBottom: 8 },
+  subtitle: { ...Typography.body, color: colors.textSecondary, marginBottom: Spacing.xl },
   options: { gap: 16, marginBottom: Spacing.xl },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     position: 'relative',
   },
-  cardSelected: { borderColor: Colors.primary, backgroundColor: Colors.primary + '08' },
+  cardSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '08' },
   cardIcon: { fontSize: 36, marginBottom: 12 },
-  cardTitle: { ...Typography.h3, color: Colors.text, marginBottom: 6 },
-  selectedText: { color: Colors.primary },
-  cardDesc: { ...Typography.body, color: Colors.textSecondary, lineHeight: 22 },
+  cardTitle: { ...Typography.h3, color: colors.text, marginBottom: 6 },
+  selectedText: { color: colors.primary },
+  cardDesc: { ...Typography.body, color: colors.textSecondary, lineHeight: 22 },
   checkmark: { position: 'absolute', top: 16, right: 16 },
   continueBtn: { marginBottom: 20 },
-  loginLink: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center' },
-  loginLinkBold: { color: Colors.primary, fontWeight: '600' },
-});
+  loginLink: { ...Typography.body, color: colors.textSecondary, textAlign: 'center' },
+  loginLinkBold: { color: colors.primary, fontWeight: '600' },
+  });
+}

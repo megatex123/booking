@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { workshopAPI } from '../../services/api';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { showAlert } from '../../utils/webAlert';
 import { Button } from '../../components/common/Button';
 
@@ -23,6 +24,8 @@ const PROVIDERS = [
 ];
 
 export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [isPanel, setIsPanel] = useState(false);
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +64,7 @@ export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ flex: 1 }} color={Colors.primary} size="large" />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.primary} size="large" />
       </SafeAreaView>
     );
   }
@@ -70,7 +73,7 @@ export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => 
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Panel Workshop Settings</Text>
         <View style={{ width: 40 }} />
@@ -86,7 +89,7 @@ export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => 
             <Switch
               value={isPanel}
               onValueChange={setIsPanel}
-              trackColor={{ true: Colors.primary, false: Colors.border }}
+              trackColor={{ true: colors.primary, false: colors.border }}
               thumbColor="#fff"
             />
           </View>
@@ -107,16 +110,16 @@ export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => 
                   <View style={[styles.checkbox, active && styles.checkboxActive]}>
                     {active && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </View>
-                  <View style={[styles.providerBadge, { backgroundColor: active ? Colors.primary + '15' : Colors.surface }]}>
-                    <Ionicons name="shield-checkmark" size={18} color={active ? Colors.primary : Colors.textLight} />
+                  <View style={[styles.providerBadge, { backgroundColor: active ? colors.primary + '15' : colors.surface }]}>
+                    <Ionicons name="shield-checkmark" size={18} color={active ? colors.primary : colors.textLight} />
                   </View>
-                  <Text style={[styles.providerLabel, active && { color: Colors.primary, fontWeight: '700' }]}>{p.label}</Text>
+                  <Text style={[styles.providerLabel, active && { color: colors.primary, fontWeight: '700' }]}>{p.label}</Text>
                 </TouchableOpacity>
               );
             })}
 
             <View style={styles.infoBox}>
-              <Ionicons name="information-circle-outline" size={18} color={Colors.primary} />
+              <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
               <Text style={styles.infoText}>
                 Your workshop will appear in "Panel Workshop" filtered searches for the providers you select. Customers with those insurers can submit direct claim bookings to you.
               </Text>
@@ -133,47 +136,49 @@ export const WorkshopPanelSettingsScreen: React.FC<Props> = ({ navigation }) => 
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   card: {
-    backgroundColor: Colors.surface, margin: Spacing.lg,
+    backgroundColor: colors.surface, margin: Spacing.lg,
     borderRadius: BorderRadius.md, padding: Spacing.lg,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  toggleTitle: { ...Typography.body, color: Colors.text, fontWeight: '600' },
-  toggleSub: { ...Typography.bodySmall, color: Colors.textSecondary, marginTop: 4, lineHeight: 18 },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginHorizontal: Spacing.lg, marginBottom: Spacing.sm },
+  toggleTitle: { ...Typography.body, color: colors.text, fontWeight: '600' },
+  toggleSub: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginHorizontal: Spacing.lg, marginBottom: Spacing.sm },
   providerCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.surface, marginHorizontal: Spacing.lg, marginBottom: 10,
+    backgroundColor: colors.surface, marginHorizontal: Spacing.lg, marginBottom: 10,
     borderRadius: BorderRadius.md, padding: Spacing.md,
-    borderWidth: 1.5, borderColor: Colors.border,
+    borderWidth: 1.5, borderColor: colors.border,
   },
-  providerCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '05' },
+  providerCardActive: { borderColor: colors.primary, backgroundColor: colors.primary + '05' },
   checkbox: {
     width: 22, height: 22, borderRadius: 4,
-    borderWidth: 2, borderColor: Colors.border,
+    borderWidth: 2, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  checkboxActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   providerBadge: {
     width: 36, height: 36, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  providerLabel: { ...Typography.body, color: Colors.text, flex: 1 },
+  providerLabel: { ...Typography.body, color: colors.text, flex: 1 },
   infoBox: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-    backgroundColor: Colors.primary + '10', borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary + '10', borderRadius: BorderRadius.md,
     padding: Spacing.md, margin: Spacing.lg,
   },
-  infoText: { ...Typography.bodySmall, color: Colors.textSecondary, flex: 1, lineHeight: 20 },
+  infoText: { ...Typography.bodySmall, color: colors.textSecondary, flex: 1, lineHeight: 20 },
   saveSection: { paddingHorizontal: Spacing.lg },
-});
+  });
+}

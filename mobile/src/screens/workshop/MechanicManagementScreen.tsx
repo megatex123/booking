@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, Modal, ScrollView, RefreshControl, Switch,
@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Loading } from '../../components/common/Loading';
 import { api } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
@@ -38,6 +39,8 @@ const EMPTY_FORM: FormState = {
 };
 
 export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -139,7 +142,7 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
         <Ionicons
           name="construct"
           size={22}
-          color={item.is_active ? Colors.primary : Colors.textLight}
+          color={item.is_active ? colors.primary : colors.textLight}
         />
       </View>
 
@@ -157,13 +160,13 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           <View style={styles.cardActions}>
             <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn}>
-              <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
+              <Ionicons name="pencil-outline" size={16} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleToggleActive(item)} style={styles.iconBtn}>
               <Ionicons
                 name={item.is_active ? 'pause-circle-outline' : 'play-circle-outline'}
                 size={18}
-                color={item.is_active ? Colors.warning : Colors.success}
+                color={item.is_active ? colors.warning : colors.success}
               />
             </TouchableOpacity>
           </View>
@@ -180,7 +183,7 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.metaRow}>
           {item.phone ? (
             <View style={styles.phonePill}>
-              <Ionicons name="call-outline" size={11} color={Colors.textSecondary} />
+              <Ionicons name="call-outline" size={11} color={colors.textSecondary} />
               <Text style={styles.phoneText}>{item.phone}</Text>
             </View>
           ) : null}
@@ -200,7 +203,7 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Mechanics</Text>
         <View style={styles.countBadge}>
@@ -232,13 +235,13 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.primary}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIconWrap}>
-                <Ionicons name="construct-outline" size={48} color={Colors.textLight} />
+                <Ionicons name="construct-outline" size={48} color={colors.textLight} />
               </View>
               <Text style={styles.emptyTitle}>No mechanics yet</Text>
               <Text style={styles.emptySubtitle}>Add your workshop staff to assign them to bookings</Text>
@@ -273,7 +276,7 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
                 {editing ? 'Edit Mechanic' : 'Add Mechanic'}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -312,8 +315,8 @@ export const MechanicManagementScreen: React.FC<Props> = ({ navigation }) => {
                   <Switch
                     value={form.is_active}
                     onValueChange={(v) => setForm({ ...form, is_active: v })}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '80' }}
-                    thumbColor={form.is_active ? Colors.primary : Colors.textLight}
+                    trackColor={{ false: colors.border, true: colors.primary + '80' }}
+                    thumbColor={form.is_active ? colors.primary : colors.textLight}
                   />
                 </View>
               )}
@@ -352,7 +355,7 @@ const Field = ({
       value={value}
       onChangeText={onChange}
       placeholder={placeholder}
-      placeholderTextColor={Colors.textLight}
+      placeholderTextColor={colors.textLight}
       keyboardType={(keyboardType as any) || 'default'}
       multiline={multiline}
       numberOfLines={multiline ? 3 : 1}
@@ -361,8 +364,9 @@ const Field = ({
   </View>
 );
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
 
   // Header
   header: {
@@ -370,15 +374,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     gap: Spacing.sm,
   },
   backBtn: { padding: 2 },
-  title: { ...Typography.h3, color: Colors.text, flex: 1 },
+  title: { ...Typography.h3, color: colors.text, flex: 1 },
   countBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.full,
     minWidth: 26,
     height: 26,
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
 
   subCount: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
     paddingBottom: 2,
@@ -404,7 +408,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     gap: Spacing.md,
@@ -419,24 +423,24 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: colors.primary + '12',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  iconWrapInactive: { backgroundColor: Colors.border },
+  iconWrapInactive: { backgroundColor: colors.border },
   cardBody: { flex: 1 },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 },
-  mechanicName: { ...Typography.body, fontWeight: '700', color: Colors.text },
-  specialty: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
-  textFaded: { color: Colors.textLight },
+  mechanicName: { ...Typography.body, fontWeight: '700', color: colors.text },
+  specialty: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
+  textFaded: { color: colors.textLight },
   cardActions: { flexDirection: 'row', gap: 2, marginLeft: Spacing.sm },
   iconBtn: { padding: 4 },
 
   // Workload
   workload: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
 
@@ -446,32 +450,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  phoneText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '500' },
+  phoneText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '500' },
 
   activeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: Colors.success + '15',
+    backgroundColor: colors.success + '15',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  inactiveBadge: { backgroundColor: Colors.border },
+  inactiveBadge: { backgroundColor: colors.border },
   activeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
   },
-  inactiveDot: { backgroundColor: Colors.textLight },
-  activeBadgeText: { fontSize: 11, fontWeight: '600', color: Colors.success },
-  inactiveBadgeText: { color: Colors.textLight },
+  inactiveDot: { backgroundColor: colors.textLight },
+  activeBadgeText: { fontSize: 11, fontWeight: '600', color: colors.success },
+  inactiveBadgeText: { color: colors.textLight },
 
   // Empty state
   empty: {
@@ -485,15 +489,15 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
-  emptyTitle: { ...Typography.h3, color: Colors.text },
+  emptyTitle: { ...Typography.h3, color: colors.text },
   emptySubtitle: {
     ...Typography.bodySmall,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 32,
   },
@@ -501,7 +505,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: BorderRadius.full,
@@ -517,10 +521,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -534,7 +538,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: Spacing.lg,
@@ -546,48 +550,49 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
   },
-  modalTitle: { ...Typography.h3, color: Colors.text },
+  modalTitle: { ...Typography.h3, color: colors.text },
   fieldLabel: {
     ...Typography.caption,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.sm,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     paddingHorizontal: 12,
     paddingVertical: 10,
     ...Typography.body,
-    color: Colors.text,
+    color: colors.text,
   },
 
   // Toggle row (Is Active)
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.sm,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: Spacing.md,
     marginBottom: 14,
     gap: Spacing.md,
   },
   toggleHint: {
     ...Typography.caption,
-    color: Colors.textLight,
+    color: colors.textLight,
     marginTop: 2,
   },
 
   saveBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
   },
   saveBtnText: { ...Typography.button, color: '#fff' },
-});
+  });
+}

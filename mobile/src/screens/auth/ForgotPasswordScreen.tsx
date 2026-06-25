@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,14 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { authAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
 export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -37,12 +40,12 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.iconWrap}>
           <View style={styles.iconCircle}>
-            <Ionicons name="lock-open-outline" size={38} color={Colors.primary} />
+            <Ionicons name="lock-open-outline" size={38} color={colors.primary} />
           </View>
         </View>
 
@@ -84,20 +87,22 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
   iconWrap: { alignItems: 'center', marginBottom: Spacing.lg },
   iconCircle: {
     width: 84, height: 84, borderRadius: 42,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
   header: { marginBottom: Spacing.xl },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: 10 },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, lineHeight: 22 },
+  title: { ...Typography.h1, color: colors.text, marginBottom: 10 },
+  subtitle: { ...Typography.body, color: colors.textSecondary, lineHeight: 22 },
   form: { marginBottom: Spacing.xl },
   sendBtn: { marginTop: 8 },
-  backToLogin: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center' },
-  backToLoginBold: { color: Colors.primary, fontWeight: '600' },
-});
+  backToLogin: { ...Typography.body, color: colors.textSecondary, textAlign: 'center' },
+  backToLoginBold: { color: colors.primary, fontWeight: '600' },
+  });
+}

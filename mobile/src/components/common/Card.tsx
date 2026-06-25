@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, BorderRadius } from '../../utils/theme';
+import { BorderRadius } from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props {
   children: React.ReactNode;
@@ -8,15 +9,17 @@ interface Props {
   padding?: number;
 }
 
-export const Card: React.FC<Props> = ({ children, style, padding = 16 }) => (
-  <View style={[styles.card, { padding }, style]}>
-    {children}
-  </View>
-);
+export const Card: React.FC<Props> = ({ children, style, padding = 16 }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { padding, backgroundColor: colors.surface }, style]}>
+      {children}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

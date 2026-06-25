@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { removeFromCompare, clearCompare } from '../../store/compareSlice';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Workshop } from '../../types';
 
 interface Props { navigation: any }
@@ -42,6 +43,8 @@ function cheapestService(w: Workshop, category: string): string {
 }
 
 export const CompareScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const items = useAppSelector((s) => s.compare.items);
 
@@ -50,13 +53,13 @@ export const CompareScreen: React.FC<Props> = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={Colors.text} />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Compare Workshops</Text>
           <View style={{ width: 36 }} />
         </View>
         <View style={styles.emptyWrap}>
-          <Ionicons name="git-compare-outline" size={64} color={Colors.textLight} />
+          <Ionicons name="git-compare-outline" size={64} color={colors.textLight} />
           <Text style={styles.emptyTitle}>Nothing to compare</Text>
           <Text style={styles.emptyBody}>Add 2–3 workshops from the Explore tab to compare them here.</Text>
         </View>
@@ -76,7 +79,7 @@ export const CompareScreen: React.FC<Props> = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={Colors.text} />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Compare ({N})</Text>
         <TouchableOpacity onPress={() => { dispatch(clearCompare()); navigation.goBack(); }} style={styles.clearBtn}>
@@ -94,7 +97,7 @@ export const CompareScreen: React.FC<Props> = ({ navigation }) => {
                 style={styles.removeBtn}
                 onPress={() => dispatch(removeFromCompare(w.id))}
               >
-                <Ionicons name="close-circle" size={16} color={Colors.textLight} />
+                <Ionicons name="close-circle" size={16} color={colors.textLight} />
               </TouchableOpacity>
               <Text style={styles.wsName} numberOfLines={2}>{w.workshop_name}</Text>
               <View style={[styles.statusPill, !w.is_open && styles.statusPillClosed]}>
@@ -232,40 +235,41 @@ function DataRow({
 
 /* ── Styles ─────────────────────────────────────────────────────────────── */
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: 12,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   clearBtn: { paddingHorizontal: 8 },
-  clearBtnText: { ...Typography.bodySmall, color: Colors.error, fontWeight: '600' },
+  clearBtnText: { ...Typography.bodySmall, color: colors.error, fontWeight: '600' },
 
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: 12 },
-  emptyTitle: { ...Typography.h3, color: Colors.text },
-  emptyBody: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  emptyTitle: { ...Typography.h3, color: colors.text },
+  emptyBody: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
 
   /* Table layout */
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     minHeight: 48,
     alignItems: 'center',
   },
-  rowAlt: { backgroundColor: Colors.surface },
+  rowAlt: { backgroundColor: colors.surface },
 
   workshopRow: {
     alignItems: 'flex-start',
     paddingVertical: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 2,
-    borderBottomColor: Colors.primary + '30',
+    borderBottomColor: colors.primary + '30',
   },
 
   labelCell: {
@@ -273,11 +277,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '600',
     flexShrink: 0,
   },
-  labelHighlight: { color: Colors.primary, fontWeight: '700' },
+  labelHighlight: { color: colors.primary, fontWeight: '700' },
 
   dataCell: {
     flex: 1,
@@ -286,62 +290,63 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderLeftWidth: 1,
-    borderLeftColor: Colors.border,
+    borderLeftColor: colors.border,
   },
 
-  cellText: { ...Typography.bodySmall, color: Colors.text, textAlign: 'center' },
-  cellBold: { fontWeight: '700', color: Colors.primary, fontSize: 14 },
-  cellPrice: { color: Colors.primary, fontWeight: '600', textAlign: 'center' },
-  cellNA: { color: Colors.textLight, textAlign: 'center' },
+  cellText: { ...Typography.bodySmall, color: colors.text, textAlign: 'center' },
+  cellBold: { fontWeight: '700', color: colors.primary, fontSize: 14 },
+  cellPrice: { color: colors.primary, fontWeight: '600', textAlign: 'center' },
+  cellNA: { color: colors.textLight, textAlign: 'center' },
 
   ratingCell: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  ratingVal: { ...Typography.bodySmall, fontWeight: '700', color: Colors.text },
-  ratingCount: { ...Typography.caption, color: Colors.textSecondary },
+  ratingVal: { ...Typography.bodySmall, fontWeight: '700', color: colors.text },
+  ratingCount: { ...Typography.caption, color: colors.textSecondary },
 
   wsHeader: {
     flex: 1,
     paddingHorizontal: 8,
     alignItems: 'center',
     borderLeftWidth: 1,
-    borderLeftColor: Colors.border,
+    borderLeftColor: colors.border,
     gap: 6,
   },
   removeBtn: { alignSelf: 'flex-end' },
   wsName: {
     ...Typography.bodySmall,
     fontWeight: '700',
-    color: Colors.text,
+    color: colors.text,
     textAlign: 'center',
   },
   statusPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.success + '18',
+    backgroundColor: colors.success + '18',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  statusPillClosed: { backgroundColor: Colors.error + '15' },
-  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.success },
-  statusDotClosed: { backgroundColor: Colors.error },
-  statusPillText: { fontSize: 10, fontWeight: '600', color: Colors.success },
-  statusPillTextClosed: { color: Colors.error },
+  statusPillClosed: { backgroundColor: colors.error + '15' },
+  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
+  statusDotClosed: { backgroundColor: colors.error },
+  statusPillText: { fontSize: 10, fontWeight: '600', color: colors.success },
+  statusPillTextClosed: { color: colors.error },
 
   sectionBar: {
-    backgroundColor: Colors.primary + '12',
+    backgroundColor: colors.primary + '12',
     paddingHorizontal: Spacing.md,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.primary + '20',
+    borderBottomColor: colors.primary + '20',
   },
   sectionBarText: {
-    fontSize: 10, fontWeight: '700', color: Colors.primary, letterSpacing: 0.8,
+    fontSize: 10, fontWeight: '700', color: colors.primary, letterSpacing: 0.8,
   },
 
-  bookCell: { flex: 1, padding: 8, borderLeftWidth: 1, borderLeftColor: Colors.border },
+  bookCell: { flex: 1, padding: 8, borderLeftWidth: 1, borderLeftColor: colors.border },
   bookBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: BorderRadius.md,
     paddingVertical: 10,
     alignItems: 'center',
   },
   bookBtnText: { ...Typography.bodySmall, fontWeight: '700', color: '#fff' },
-});
+  });
+}

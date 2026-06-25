@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput,
   Image, ActivityIndicator, Modal,
@@ -12,7 +12,8 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchMyWorkshop, updateMyWorkshop } from '../../store/workshopSlice';
 import { workshopAPI, uploadAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { PHOTO_CATEGORY_LABELS, WorkshopImage } from '../../types';
 
 const PHOTO_CATEGORIES = Object.keys(PHOTO_CATEGORY_LABELS) as string[];
@@ -22,6 +23,8 @@ interface Props { navigation: any }
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const WorkshopProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { myWorkshop } = useAppSelector((s) => s.workshops);
 
@@ -184,7 +187,7 @@ export const WorkshopProfileScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Workshop Profile</Text>
         <View style={{ width: 24 }} />
@@ -208,8 +211,8 @@ export const WorkshopProfileScreen: React.FC<Props> = ({ navigation }) => {
             <Switch
               value={isOpen}
               onValueChange={setIsOpen}
-              trackColor={{ false: Colors.border, true: Colors.success + '60' }}
-              thumbColor={isOpen ? Colors.success : Colors.textLight}
+              trackColor={{ false: colors.border, true: colors.success + '60' }}
+              thumbColor={isOpen ? colors.success : colors.textLight}
             />
           </View>
         </Card>
@@ -304,7 +307,7 @@ map.on('click',function(e){
             disabled={geocoding}
             activeOpacity={0.8}
           >
-            <Ionicons name="search-outline" size={16} color={Colors.primary} />
+            <Ionicons name="search-outline" size={16} color={colors.primary} />
             <Text style={styles.geocodeBtnText}>
               {geocoding ? 'Detecting...' : 'Detect from Address'}
             </Text>
@@ -319,7 +322,7 @@ map.on('click',function(e){
                 value={latitude}
                 onChangeText={setLatitude}
                 placeholder="e.g. 3.1390"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -331,7 +334,7 @@ map.on('click',function(e){
                 value={longitude}
                 onChangeText={setLongitude}
                 placeholder="e.g. 101.6869"
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -339,7 +342,7 @@ map.on('click',function(e){
 
           {latitude && longitude && (
             <View style={styles.coordBadge}>
-              <Ionicons name="location" size={14} color={Colors.success} />
+              <Ionicons name="location" size={14} color={colors.success} />
               <Text style={styles.coordBadgeText}>
                 {parseFloat(latitude).toFixed(5)}, {parseFloat(longitude).toFixed(5)}
               </Text>
@@ -411,9 +414,9 @@ map.on('click',function(e){
               onPress={() => navigation.navigate('WorkshopReviews')}
               activeOpacity={0.8}
             >
-              <Ionicons name="star-outline" size={15} color={Colors.primary} />
+              <Ionicons name="star-outline" size={15} color={colors.primary} />
               <Text style={styles.reviewsBtnText}>View Customer Reviews</Text>
-              <Ionicons name="chevron-forward" size={15} color={Colors.primary} />
+              <Ionicons name="chevron-forward" size={15} color={colors.primary} />
             </TouchableOpacity>
           </Card>
         )}
@@ -421,7 +424,7 @@ map.on('click',function(e){
         {/* Photo Gallery */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Photo Gallery</Text>
-          <Text style={[Typography.caption, { color: Colors.textSecondary, marginBottom: 12 }]}>
+          <Text style={[Typography.caption, { color: colors.textSecondary, marginBottom: 12 }]}>
             Add categorised photos so customers can see your workshop, equipment, and team.
           </Text>
 
@@ -446,7 +449,7 @@ map.on('click',function(e){
                     <Text style={styles.photoCatLabelText}>{PHOTO_CATEGORY_LABELS[photo.category] || photo.category}</Text>
                   </View>
                   <TouchableOpacity style={styles.photoDeleteBtn} onPress={() => handleRemovePhoto(idx)}>
-                    <Ionicons name="close-circle" size={20} color={Colors.danger} />
+                    <Ionicons name="close-circle" size={20} color={colors.danger} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -459,8 +462,8 @@ map.on('click',function(e){
             disabled={uploadingPhoto}
           >
             {uploadingPhoto
-              ? <ActivityIndicator size="small" color={Colors.primary} />
-              : <Ionicons name="camera-outline" size={18} color={Colors.primary} />
+              ? <ActivityIndicator size="small" color={colors.primary} />
+              : <Ionicons name="camera-outline" size={18} color={colors.primary} />
             }
             <Text style={styles.addPhotoBtnText}>
               {uploadingPhoto ? 'Uploading...' : photos.length === 0 ? 'Add First Photo' : '+ Add Photo'}
@@ -509,7 +512,7 @@ map.on('click',function(e){
               value={pendingCaption}
               onChangeText={setPendingCaption}
               placeholder="Caption (optional)"
-              placeholderTextColor={Colors.textLight}
+              placeholderTextColor={colors.textLight}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowCatPicker(false)}>
@@ -526,35 +529,36 @@ map.on('click',function(e){
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   content: { padding: Spacing.lg, gap: 16 },
 
   statusCard: { padding: Spacing.md },
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   statusLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   statusDot: { width: 12, height: 12, borderRadius: 6 },
-  dotOpen: { backgroundColor: Colors.success },
-  dotClosed: { backgroundColor: Colors.danger },
-  statusTitle: { ...Typography.body, fontWeight: '600', color: Colors.text },
-  statusSub: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  dotOpen: { backgroundColor: colors.success },
+  dotClosed: { backgroundColor: colors.danger },
+  statusTitle: { ...Typography.body, fontWeight: '600', color: colors.text },
+  statusSub: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
 
   section: { gap: 12 },
   sectionTitle: {
     ...Typography.bodySmall,
     fontWeight: '700',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -562,26 +566,26 @@ const styles = StyleSheet.create({
 
   hoursRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   hoursDash: { paddingBottom: 16, alignItems: 'center' },
-  hoursDashText: { ...Typography.h3, color: Colors.textLight },
+  hoursDashText: { ...Typography.h3, color: colors.textLight },
 
-  daysLabel: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', marginBottom: 8 },
+  daysLabel: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600', marginBottom: 8 },
   daysRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   dayChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     borderWidth: 1,
-    borderColor: Colors.primary + '40',
+    borderColor: colors.primary + '40',
   },
-  dayText: { fontSize: 12, fontWeight: '600', color: Colors.primary },
+  dayText: { fontSize: 12, fontWeight: '600', color: colors.primary },
 
   statsRow: { flexDirection: 'row', alignItems: 'center' },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { ...Typography.h2, color: Colors.primary },
+  statValue: { ...Typography.h2, color: colors.primary },
   statStar: { marginTop: -4 },
-  statLabel: { ...Typography.caption, color: Colors.textSecondary },
-  statDivider: { width: 1, height: 40, backgroundColor: Colors.border },
+  statLabel: { ...Typography.caption, color: colors.textSecondary },
+  statDivider: { width: 1, height: 40, backgroundColor: colors.border },
 
   saveBtn: { marginTop: 4 },
 
@@ -590,12 +594,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: 10,
   },
   locationHint: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -605,23 +609,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     borderWidth: 1.5,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     borderRadius: BorderRadius.md,
     paddingVertical: 10,
     marginBottom: 12,
   },
-  geocodeBtnText: { ...Typography.button, color: Colors.primary, fontSize: 13 },
+  geocodeBtnText: { ...Typography.button, color: colors.primary, fontSize: 13 },
   coordRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  coordLabel: { ...Typography.caption, color: Colors.textSecondary, marginBottom: 4, fontWeight: '600' },
+  coordLabel: { ...Typography.caption, color: colors.textSecondary, marginBottom: 4, fontWeight: '600' },
   coordInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: BorderRadius.sm,
     paddingHorizontal: 10,
     paddingVertical: 9,
     ...Typography.bodySmall,
-    color: Colors.text,
+    color: colors.text,
   },
   coordBadge: {
     flexDirection: 'row',
@@ -630,12 +634,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: Colors.success + '12',
+    backgroundColor: colors.success + '12',
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
+    borderColor: colors.success + '30',
   },
-  coordBadgeText: { ...Typography.caption, color: Colors.success, fontWeight: '600' },
+  coordBadgeText: { ...Typography.caption, color: colors.success, fontWeight: '600' },
 
   reviewsBtn: {
     flexDirection: 'row',
@@ -644,12 +648,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   reviewsBtnText: {
     ...Typography.bodySmall,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
     flex: 1,
   },
 
@@ -666,40 +670,41 @@ const styles = StyleSheet.create({
   addPhotoBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     paddingVertical: 12, borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderColor: Colors.primary, borderStyle: 'dashed',
-    backgroundColor: Colors.primary + '05',
+    borderWidth: 1.5, borderColor: colors.primary, borderStyle: 'dashed',
+    backgroundColor: colors.primary + '05',
   },
-  addPhotoBtnText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  addPhotoBtnText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
 
   // Category picker modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalSheet: {
-    backgroundColor: Colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
     padding: Spacing.lg, paddingBottom: 40,
   },
-  modalTitle: { ...Typography.h3, color: Colors.text, textAlign: 'center', marginBottom: 14 },
+  modalTitle: { ...Typography.h3, color: colors.text, textAlign: 'center', marginBottom: 14 },
   modalPreview: { width: '100%', height: 140, borderRadius: BorderRadius.md, marginBottom: 14 },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   catOption: {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 99,
-    backgroundColor: Colors.background, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.border,
   },
-  catOptionActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  catOptionText: { ...Typography.caption, color: Colors.text, fontWeight: '600' },
+  catOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  catOptionText: { ...Typography.caption, color: colors.text, fontWeight: '600' },
   captionInput: {
-    backgroundColor: Colors.background, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 12, paddingVertical: 10,
-    ...Typography.body, color: Colors.text, marginBottom: 14,
+    ...Typography.body, color: colors.text, marginBottom: 14,
   },
   modalActions: { flexDirection: 'row', gap: 10 },
   modalCancelBtn: {
     flex: 1, paddingVertical: 13, borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderColor: Colors.border, alignItems: 'center',
+    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center',
   },
-  modalCancelText: { ...Typography.button, color: Colors.textSecondary },
+  modalCancelText: { ...Typography.button, color: colors.textSecondary },
   modalConfirmBtn: {
     flex: 1, paddingVertical: 13, borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primary, alignItems: 'center',
+    backgroundColor: colors.primary, alignItems: 'center',
   },
   modalConfirmText: { ...Typography.button, color: '#fff' },
-});
+  });
+}

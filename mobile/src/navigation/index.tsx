@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { useTheme } from '../hooks/useTheme';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setAuth } from '../store/authSlice';
@@ -82,12 +83,28 @@ export function RootNavigator() {
   return user.role === 'customer' ? <CustomerNavigator /> : <WorkshopNavigator />;
 }
 
+function ThemedNavigationContainer({ children }: { children: React.ReactNode }) {
+  const { scheme, colors } = useTheme();
+  const navTheme = {
+    dark: scheme === 'dark',
+    colors: {
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.primary,
+    },
+  };
+  return <NavigationContainer theme={navTheme}>{children}</NavigationContainer>;
+}
+
 export function AppNavigator() {
   return (
     <ThemeProvider>
-      <NavigationContainer>
+      <ThemedNavigationContainer>
         <RootNavigator />
-      </NavigationContainer>
+      </ThemedNavigationContainer>
     </ThemeProvider>
   );
 }

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, formatDate, formatTime } from '../../utils/helpers';
 import { Booking } from '../../types';
 
@@ -13,13 +14,15 @@ interface Props {
 }
 
 export const BookingSuccessScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const booking: Booking = route.params?.booking;
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.successIcon}>
-          <Ionicons name="checkmark-circle" size={72} color={Colors.success} />
+          <Ionicons name="checkmark-circle" size={72} color={colors.success} />
         </View>
         <Text style={styles.title}>Booking Sent!</Text>
         <Text style={styles.subtitle}>
@@ -68,20 +71,21 @@ const Row = ({ label, value, highlight }: { label: string; value: string; highli
 );
 
 const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: Colors.divider },
-  label: { ...Typography.bodySmall, color: Colors.textSecondary },
-  value: { ...Typography.bodySmall, color: Colors.text, fontWeight: '500', maxWidth: '60%', textAlign: 'right' },
-  highlight: { color: Colors.primary, fontWeight: '700' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider },
+  label: { ...Typography.bodySmall, color: colors.textSecondary },
+  value: { ...Typography.bodySmall, color: colors.text, fontWeight: '500', maxWidth: '60%', textAlign: 'right' },
+  highlight: { color: colors.primary, fontWeight: '700' },
 });
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, padding: Spacing.lg, alignItems: 'center' },
   successIcon: { marginTop: Spacing.xxl, marginBottom: Spacing.lg },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: Spacing.sm },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xl },
+  title: { ...Typography.h1, color: colors.text, marginBottom: Spacing.sm },
+  subtitle: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xl },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     width: '100%',
@@ -89,10 +93,11 @@ const styles = StyleSheet.create({
   },
   note: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: Spacing.lg,
   },
   buttons: { padding: Spacing.lg },
-});
+  });
+}

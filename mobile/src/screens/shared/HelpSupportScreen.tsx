@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
@@ -16,13 +17,15 @@ const FAQS = [
 ];
 
 export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Help & Support</Text>
         <View style={{ width: 40 }} />
@@ -30,7 +33,7 @@ export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
 
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.contactCard}>
-          <Ionicons name="mail-outline" size={28} color={Colors.primary} />
+          <Ionicons name="mail-outline" size={28} color={colors.primary} />
           <View style={styles.contactInfo}>
             <Text style={styles.contactTitle}>Email Support</Text>
             <Text style={styles.contactSub}>support@bengkillah.com</Text>
@@ -38,7 +41,7 @@ export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <View style={styles.contactCard}>
-          <Ionicons name="logo-whatsapp" size={28} color={Colors.success} />
+          <Ionicons name="logo-whatsapp" size={28} color={colors.success} />
           <View style={styles.contactInfo}>
             <Text style={styles.contactTitle}>WhatsApp</Text>
             <Text style={styles.contactSub}>+60 12-345 6789 (Mon–Fri, 9AM–6PM)</Text>
@@ -59,7 +62,7 @@ export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
               <Ionicons
                 name={expanded === i ? 'chevron-up' : 'chevron-down'}
                 size={18}
-                color={Colors.textSecondary}
+                color={colors.textSecondary}
               />
             </View>
             {expanded === i && <Text style={styles.faqA}>{faq.a}</Text>}
@@ -75,34 +78,36 @@ export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   body: { padding: Spacing.lg },
   contactCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: Spacing.md,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   contactInfo: { marginLeft: Spacing.md },
-  contactTitle: { ...Typography.body, fontWeight: '600', color: Colors.text },
-  contactSub: { ...Typography.bodySmall, color: Colors.textSecondary, marginTop: 2 },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginTop: Spacing.lg, marginBottom: Spacing.md },
+  contactTitle: { ...Typography.body, fontWeight: '600', color: colors.text },
+  contactSub: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginTop: Spacing.lg, marginBottom: Spacing.md },
   faqItem: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
     padding: Spacing.md, marginBottom: Spacing.sm,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   faqRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  faqQ: { ...Typography.body, fontWeight: '600', color: Colors.text, flex: 1, marginRight: 8 },
-  faqA: { ...Typography.body, color: Colors.textSecondary, marginTop: Spacing.sm, lineHeight: 22 },
+  faqQ: { ...Typography.body, fontWeight: '600', color: colors.text, flex: 1, marginRight: 8 },
+  faqA: { ...Typography.body, color: colors.textSecondary, marginTop: Spacing.sm, lineHeight: 22 },
   footer: { alignItems: 'center', marginTop: Spacing.xxl, gap: 4 },
-  footerText: { ...Typography.caption, color: Colors.textLight },
-});
+  footerText: { ...Typography.caption, color: colors.textLight },
+  });
+}

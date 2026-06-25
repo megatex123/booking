@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
 } from 'react-native';
@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Loading } from '../../components/common/Loading';
 import { reviewAPI } from '../../services/api';
 import { useAppSelector } from '../../store';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatDate } from '../../utils/helpers';
 
 interface Props { navigation: any }
@@ -22,6 +23,8 @@ interface Review {
 }
 
 export const WorkshopReviewsScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { myWorkshop } = useAppSelector((s) => s.workshops);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ export const WorkshopReviewsScreen: React.FC<Props> = ({ navigation }) => {
           key={i}
           name={i < rating ? 'star' : 'star-outline'}
           size={size}
-          color={i < rating ? '#FBBC04' : Colors.border}
+          color={i < rating ? '#FBBC04' : colors.border}
         />
       ))}
     </View>
@@ -94,11 +97,11 @@ export const WorkshopReviewsScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Customer Reviews</Text>
         <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
-          <Ionicons name="refresh-outline" size={22} color={Colors.primary} />
+          <Ionicons name="refresh-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -137,12 +140,12 @@ export const WorkshopReviewsScreen: React.FC<Props> = ({ navigation }) => {
           contentContainerStyle={[styles.list, reviews.length === 0 && styles.listEmpty]}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="star-outline" size={40} color={Colors.textLight} />
+                <Ionicons name="star-outline" size={40} color={colors.textLight} />
               </View>
               <Text style={styles.emptyTitle}>No reviews yet</Text>
               <Text style={styles.emptyText}>
@@ -157,24 +160,25 @@ export const WorkshopReviewsScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   refreshBtn: { padding: 4 },
 
   summary: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     margin: Spacing.lg,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
@@ -185,29 +189,29 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   summaryLeft: { alignItems: 'center', justifyContent: 'center', paddingRight: Spacing.md, gap: 6 },
-  avgNumber: { fontSize: 40, fontWeight: '700', color: Colors.text, lineHeight: 44 },
-  totalText: { ...Typography.caption, color: Colors.textSecondary },
-  summaryDivider: { width: 1, backgroundColor: Colors.border, marginHorizontal: Spacing.md },
+  avgNumber: { fontSize: 40, fontWeight: '700', color: colors.text, lineHeight: 44 },
+  totalText: { ...Typography.caption, color: colors.textSecondary },
+  summaryDivider: { width: 1, backgroundColor: colors.border, marginHorizontal: Spacing.md },
   stars: { flexDirection: 'row', gap: 2 },
 
   ratingBreakdown: { flex: 1, justifyContent: 'center', gap: 5 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  barLabel: { ...Typography.caption, color: Colors.textSecondary, width: 10 },
+  barLabel: { ...Typography.caption, color: colors.textSecondary, width: 10 },
   barTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
   barFill: { height: '100%', backgroundColor: '#FBBC04', borderRadius: 3 },
-  barCount: { ...Typography.caption, color: Colors.textSecondary, width: 16, textAlign: 'right' },
+  barCount: { ...Typography.caption, color: colors.textSecondary, width: 16, textAlign: 'right' },
 
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 32, gap: 12, paddingTop: 4 },
   listEmpty: { flex: 1 },
 
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     shadowColor: '#000',
@@ -222,15 +226,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  avatarText: { ...Typography.body, fontWeight: '700', color: Colors.primary },
+  avatarText: { ...Typography.body, fontWeight: '700', color: colors.primary },
   cardInfo: { flex: 1 },
-  customerName: { ...Typography.body, fontWeight: '600', color: Colors.text },
-  date: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  customerName: { ...Typography.body, fontWeight: '600', color: colors.text },
+  date: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -243,24 +247,25 @@ const styles = StyleSheet.create({
   ratingBadgeText: { fontSize: 12, fontWeight: '700', color: '#B8860B' },
   comment: {
     ...Typography.body,
-    color: Colors.text,
+    color: colors.text,
     fontStyle: 'italic',
     lineHeight: 22,
   },
-  noComment: { ...Typography.caption, color: Colors.textLight, fontStyle: 'italic' },
+  noComment: { ...Typography.caption, color: colors.textLight, fontStyle: 'italic' },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyIcon: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
-  emptyTitle: { ...Typography.h3, color: Colors.text, marginBottom: 8 },
+  emptyTitle: { ...Typography.h3, color: colors.text, marginBottom: 8 },
   emptyText: {
     ...Typography.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: Spacing.xl,
   },
-});
+  });
+}

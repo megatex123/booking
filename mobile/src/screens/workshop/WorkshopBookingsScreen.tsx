@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ScrollView,
@@ -9,7 +9,8 @@ import { Loading } from '../../components/common/Loading';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchMyBookings } from '../../store/bookingSlice';
-import { Colors, StatusColors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, StatusColors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, formatDate, formatTime } from '../../utils/helpers';
 import { Booking } from '../../types';
 
@@ -25,13 +26,15 @@ const FILTERS = [
 ];
 
 const STATS = [
-  { key: 'pending',     label: 'Pending',  icon: 'time',         color: StatusColors.pending },
-  { key: 'in_progress', label: 'Active',   icon: 'construct',    color: StatusColors.in_progress },
-  { key: 'completed',   label: 'Done',     icon: 'ribbon',       color: StatusColors.completed },
-  { key: 'rejected',    label: 'Rejected', icon: 'close-circle', color: StatusColors.rejected },
+  { key: 'pending',     label: 'Pending',  icon: 'time',         color: Statuscolors.pending },
+  { key: 'in_progress', label: 'Active',   icon: 'construct',    color: Statuscolors.in_progress },
+  { key: 'completed',   label: 'Done',     icon: 'ribbon',       color: Statuscolors.completed },
+  { key: 'rejected',    label: 'Rejected', icon: 'close-circle', color: Statuscolors.rejected },
 ];
 
 export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { bookings, loading } = useAppSelector((s) => s.bookings);
   const [filter, setFilter] = useState('all');
@@ -62,7 +65,7 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
     key === 'all' ? bookings.length : bookings.filter((b) => b.status === key).length;
 
   const renderItem = ({ item }: { item: Booking }) => {
-    const accent = StatusColors[item.status] || Colors.textLight;
+    const accent = StatusColors[item.status] || colors.textLight;
     const isPending = item.status === 'pending';
     const isConfirmed = item.status === 'confirmed';
     const isInProgress = item.status === 'in_progress';
@@ -92,15 +95,15 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
           {/* Info */}
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
-              <Ionicons name="person-outline" size={13} color={Colors.textSecondary} />
+              <Ionicons name="person-outline" size={13} color={colors.textSecondary} />
               <Text style={styles.infoText}>{item.vehicle_plate}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} />
+              <Ionicons name="calendar-outline" size={13} color={colors.textSecondary} />
               <Text style={styles.infoText}>{formatDate(item.scheduled_date)}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
+              <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
               <Text style={styles.infoText}>{formatTime(item.scheduled_time)}</Text>
             </View>
           </View>
@@ -111,7 +114,7 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
             <View style={styles.actions}>
               {(isPending || isConfirmed || isInProgress) && (
                 <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: Colors.primary }]}
+                  style={[styles.actionBtn, { backgroundColor: colors.primary }]}
                   onPress={(e) => {
                     e.stopPropagation();
                     navigation.navigate('Chat', { bookingId: item.id, customerName: item.customer_name });
@@ -123,7 +126,7 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
               )}
               <TouchableOpacity
                 style={[styles.actionBtn, {
-                  backgroundColor: isPending ? Colors.success : Colors.textSecondary,
+                  backgroundColor: isPending ? colors.success : colors.textSecondary,
                 }]}
                 onPress={() => navigation.navigate('WorkshopBookingDetail', { bookingId: item.id })}
               >
@@ -142,7 +145,7 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
       <View style={styles.header}>
         <Text style={styles.title}>Bookings</Text>
         <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
-          <Ionicons name="refresh-outline" size={22} color={Colors.primary} />
+          <Ionicons name="refresh-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -182,7 +185,7 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
               style={[styles.chip, active && styles.chipActive]}
               onPress={() => setFilter(f.key)}
             >
-              <Ionicons name={f.icon as any} size={13} color={active ? '#fff' : Colors.textSecondary} />
+              <Ionicons name={f.icon as any} size={13} color={active ? '#fff' : colors.textSecondary} />
               <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
               {count > 0 && (
                 <View style={[styles.badge, active && styles.badgeActive]}>
@@ -205,11 +208,11 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
           keyExtractor={(i) => i.id}
           contentContainerStyle={[styles.list, filtered.length === 0 && { flex: 1 }]}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="receipt-outline" size={40} color={Colors.textLight} />
+                <Ionicons name="receipt-outline" size={40} color={colors.textLight} />
               </View>
               <Text style={styles.emptyTitle}>No bookings found</Text>
               <Text style={styles.emptyText}>
@@ -226,8 +229,9 @@ export const WorkshopBookingsScreen: React.FC<Props> = ({ navigation, route }) =
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -236,7 +240,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
   },
-  title: { ...Typography.h2, color: Colors.text },
+  title: { ...Typography.h2, color: colors.text },
   refreshBtn: { padding: 4 },
 
   statsRow: {
@@ -247,7 +251,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.sm,
     alignItems: 'center',
@@ -259,8 +263,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   statIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statCount: { ...Typography.h3, color: Colors.text },
-  statLabel: { ...Typography.caption, color: Colors.textSecondary },
+  statCount: { ...Typography.h3, color: colors.text },
+  statLabel: { ...Typography.caption, color: colors.textSecondary },
 
   filterScroll: { maxHeight: 44, marginBottom: 8 },
   filterList: { paddingHorizontal: Spacing.lg, gap: 8, alignItems: 'center' },
@@ -272,25 +276,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: '#fff' },
   badge: {
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 8, minWidth: 18, height: 18,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   badgeActive: { backgroundColor: 'rgba(255,255,255,0.3)' },
-  badgeText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
+  badgeText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   badgeTextActive: { color: '#fff' },
 
   resultCount: {
     ...Typography.caption,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     paddingHorizontal: Spacing.lg,
     marginBottom: 8,
   },
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 32, gap: 12 },
 
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     flexDirection: 'row',
     overflow: 'hidden',
@@ -311,15 +315,15 @@ const styles = StyleSheet.create({
   accent: { width: 4 },
   cardBody: { flex: 1, padding: Spacing.md },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  customerName: { ...Typography.body, fontWeight: '700', color: Colors.text },
-  services: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  customerName: { ...Typography.body, fontWeight: '700', color: colors.text },
+  services: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
 
   infoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 10 },
   infoItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  infoText: { ...Typography.caption, color: Colors.textSecondary },
+  infoText: { ...Typography.caption, color: colors.textSecondary },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  price: { ...Typography.body, fontWeight: '700', color: Colors.primary },
+  price: { ...Typography.body, fontWeight: '700', color: colors.primary },
   actions: { flexDirection: 'row', gap: 6 },
   actionBtn: {
     flexDirection: 'row',
@@ -334,9 +338,10 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyIcon: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
-  emptyTitle: { ...Typography.h3, color: Colors.text, marginBottom: 6 },
-  emptyText: { ...Typography.body, color: Colors.textSecondary },
-});
+  emptyTitle: { ...Typography.h3, color: colors.text, marginBottom: 6 },
+  emptyText: { ...Typography.body, color: colors.textSecondary },
+  });
+}

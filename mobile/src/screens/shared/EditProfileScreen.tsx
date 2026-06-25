@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
   TouchableOpacity, Platform, Alert,
@@ -9,11 +9,14 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { updateUser } from '../../store/authSlice';
 import { api } from '../../services/api';
 import { saveUser } from '../../services/storage';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
 export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((s) => s.auth);
   const [name, setName] = useState(user?.name || '');
@@ -42,7 +45,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Edit Profile</Text>
         <View style={{ width: 40 }} />
@@ -63,7 +66,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           value={name}
           onChangeText={setName}
           placeholder="Your full name"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={colors.textLight}
         />
 
         <Text style={styles.label}>Phone Number</Text>
@@ -72,7 +75,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           value={phone}
           onChangeText={setPhone}
           placeholder="e.g. 0123456789"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={colors.textLight}
           keyboardType="phone-pad"
         />
 
@@ -81,7 +84,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           style={[styles.input, styles.inputDisabled]}
           value={user?.email || ''}
           editable={false}
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={colors.textLight}
         />
         <Text style={styles.hint}>Email cannot be changed</Text>
 
@@ -98,40 +101,42 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   body: { padding: Spacing.lg },
   avatarWrap: { alignItems: 'center', marginBottom: Spacing.xl },
   avatar: {
     width: 90, height: 90, borderRadius: 45,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { fontSize: 36, fontWeight: '700', color: '#fff' },
-  label: { ...Typography.bodySmall, color: Colors.textSecondary, marginBottom: 6, marginTop: Spacing.md },
+  label: { ...Typography.bodySmall, color: colors.textSecondary, marginBottom: 6, marginTop: Spacing.md },
   input: {
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
     borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: 12,
-    ...Typography.body, color: Colors.text,
+    ...Typography.body, color: colors.text,
   },
-  inputDisabled: { backgroundColor: Colors.divider, color: Colors.textLight },
-  hint: { ...Typography.caption, color: Colors.textLight, marginTop: 4 },
+  inputDisabled: { backgroundColor: colors.divider, color: colors.textLight },
+  hint: { ...Typography.caption, color: colors.textLight, marginTop: 4 },
   errorText: {
-    color: Colors.danger, ...Typography.bodySmall,
-    backgroundColor: Colors.danger + '15', padding: Spacing.md,
+    color: colors.danger, ...Typography.bodySmall,
+    backgroundColor: colors.danger + '15', padding: Spacing.md,
     borderRadius: BorderRadius.sm, marginBottom: Spacing.md,
   },
   saveBtn: {
-    backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
+    backgroundColor: colors.primary, borderRadius: BorderRadius.md,
     paddingVertical: 14, alignItems: 'center', marginTop: Spacing.xl,
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { ...Typography.button, color: '#fff' },
-});
+  });
+}

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { loyaltyAPI } from '../../services/api';
 
 interface Props {
@@ -33,6 +34,8 @@ interface HistoryItem {
 }
 
 export const LoyaltyScreen: React.FC<Props> = ({ navigation }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [balance, setBalance] = useState<Balance | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +90,8 @@ export const LoyaltyScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.sectionTitle}>How It Works</Text>
           <View style={styles.infoCard}>
             {[
-              { icon: 'car-outline', color: Colors.primary, text: 'Earn 1 point for every RM1 spent on completed bookings' },
-              { icon: 'gift-outline', color: Colors.success, text: '100 points = RM1 discount on your next booking' },
+              { icon: 'car-outline', color: colors.primary, text: 'Earn 1 point for every RM1 spent on completed bookings' },
+              { icon: 'gift-outline', color: colors.success, text: '100 points = RM1 discount on your next booking' },
               { icon: 'time-outline', color: '#F59E0B', text: 'Points never expire — keep earning and saving' },
             ].map((item, i) => (
               <View key={i} style={[styles.infoRow, i < 2 && styles.infoRowBorder]}>
@@ -105,10 +108,10 @@ export const LoyaltyScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Activity</Text>
           {loading ? (
-            <ActivityIndicator color={Colors.primary} />
+            <ActivityIndicator color={colors.primary} />
           ) : history.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Ionicons name="star-outline" size={36} color={Colors.textLight} />
+              <Ionicons name="star-outline" size={36} color={colors.textLight} />
               <Text style={styles.emptyText}>No activity yet. Complete a booking to earn your first points!</Text>
             </View>
           ) : (
@@ -118,7 +121,7 @@ export const LoyaltyScreen: React.FC<Props> = ({ navigation }) => {
               return (
                 <View key={item.booking_id} style={styles.historyCard}>
                   <View style={styles.historyIcon}>
-                    <Ionicons name={hasEarned ? 'add-circle' : 'remove-circle'} size={22} color={hasEarned ? Colors.success : Colors.danger} />
+                    <Ionicons name={hasEarned ? 'add-circle' : 'remove-circle'} size={22} color={hasEarned ? colors.success : colors.danger} />
                   </View>
                   <View style={styles.historyBody}>
                     <Text style={styles.historyWorkshop} numberOfLines={1}>{item.workshop_name}</Text>
@@ -146,8 +149,9 @@ export const LoyaltyScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
@@ -178,44 +182,45 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.25)' },
 
   section: { padding: Spacing.lg },
-  sectionTitle: { ...Typography.h3, color: Colors.text, marginBottom: Spacing.md },
+  sectionTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.md },
 
   infoCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: Spacing.md },
-  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
+  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
   infoIcon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  infoText: { ...Typography.bodySmall, color: Colors.text, flex: 1, lineHeight: 20 },
+  infoText: { ...Typography.bodySmall, color: colors.text, flex: 1, lineHeight: 20 },
 
   emptyCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xl,
     alignItems: 'center',
     gap: 12,
   },
-  emptyText: { ...Typography.bodySmall, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptyText: { ...Typography.bodySmall, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
 
   historyCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   historyIcon: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   historyBody: { flex: 1 },
-  historyWorkshop: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text },
-  historyDate: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  historyWorkshop: { ...Typography.bodySmall, fontWeight: '600', color: colors.text },
+  historyDate: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
   historyRight: { alignItems: 'flex-end', gap: 2 },
-  historyEarned: { ...Typography.bodySmall, fontWeight: '700', color: Colors.success },
-  historyUsed: { ...Typography.bodySmall, fontWeight: '700', color: Colors.danger },
-  historySaved: { ...Typography.caption, color: Colors.textSecondary },
-});
+  historyEarned: { ...Typography.bodySmall, fontWeight: '700', color: colors.success },
+  historyUsed: { ...Typography.bodySmall, fontWeight: '700', color: colors.danger },
+  historySaved: { ...Typography.caption, color: colors.textSecondary },
+  });
+}

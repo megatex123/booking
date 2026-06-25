@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
@@ -65,11 +66,14 @@ const SECTIONS = [
   },
 ];
 
-export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => (
+export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
   <SafeAreaView style={styles.container}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={styles.title}>Workshop Management</Text>
       <View style={{ width: 24 }} />
@@ -94,37 +98,39 @@ export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => (
             <Text style={styles.cardTitle}>{s.title}</Text>
             <Text style={styles.cardDesc}>{s.description}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
         </TouchableOpacity>
       ))}
     </ScrollView>
   </SafeAreaView>
-);
+  );
+}
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   content: { padding: Spacing.lg, gap: 14 },
   subtitle: {
     ...Typography.body,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 8,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     gap: 14,
@@ -142,6 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardText: { flex: 1 },
-  cardTitle: { ...Typography.body, fontWeight: '700', color: Colors.text, marginBottom: 4 },
-  cardDesc: { ...Typography.caption, color: Colors.textSecondary, lineHeight: 18 },
-});
+  cardTitle: { ...Typography.body, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  cardDesc: { ...Typography.caption, color: colors.textSecondary, lineHeight: 18 },
+  });
+}

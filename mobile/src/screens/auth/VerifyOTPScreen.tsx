@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, Animated,
@@ -8,13 +8,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { authAPI } from '../../services/api';
 import { showAlert } from '../../utils/webAlert';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any; route: any }
 
 const OTP_LENGTH = 6;
 
 export const VerifyOTPScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { email, demoOtp } = route.params as { email: string; demoOtp: string | null };
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -79,12 +82,12 @@ export const VerifyOTPScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.iconWrap}>
           <View style={styles.iconCircle}>
-            <Ionicons name="mail-unread-outline" size={38} color={Colors.primary} />
+            <Ionicons name="mail-unread-outline" size={38} color={colors.primary} />
           </View>
         </View>
 
@@ -160,19 +163,20 @@ export const VerifyOTPScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: Spacing.lg },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
   back: { marginTop: Spacing.sm, marginBottom: Spacing.lg },
   iconWrap: { alignItems: 'center', marginBottom: Spacing.lg },
   iconCircle: {
     width: 84, height: 84, borderRadius: 42,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     alignItems: 'center', justifyContent: 'center',
   },
   header: { marginBottom: Spacing.lg, alignItems: 'center' },
-  title: { ...Typography.h1, color: Colors.text, marginBottom: 10, textAlign: 'center' },
-  subtitle: { ...Typography.body, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22 },
-  emailHighlight: { color: Colors.text, fontWeight: '600' },
+  title: { ...Typography.h1, color: colors.text, marginBottom: 10, textAlign: 'center' },
+  subtitle: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
+  emailHighlight: { color: colors.text, fontWeight: '600' },
 
   demoBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -189,20 +193,21 @@ const styles = StyleSheet.create({
   },
   otpBox: {
     width: 46, height: 56, borderRadius: BorderRadius.md,
-    borderWidth: 2, borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderWidth: 2, borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
-  otpBoxActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '08' },
-  otpBoxFilled: { borderColor: Colors.primary },
-  otpDigit: { ...Typography.h2, color: Colors.text },
+  otpBoxActive: { borderColor: colors.primary, backgroundColor: colors.primary + '08' },
+  otpBoxFilled: { borderColor: colors.primary },
+  otpDigit: { ...Typography.h2, color: colors.text },
 
   hiddenInput: { position: 'absolute', opacity: 0, height: 1 },
   otpTapTarget: { height: 56, marginBottom: Spacing.lg },
 
   verifyBtn: { marginBottom: Spacing.lg },
   resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  resendLabel: { ...Typography.body, color: Colors.textSecondary },
-  countdown: { ...Typography.body, color: Colors.textLight },
-  resendLink: { ...Typography.body, color: Colors.primary, fontWeight: '600' },
-});
+  resendLabel: { ...Typography.body, color: colors.textSecondary },
+  countdown: { ...Typography.body, color: colors.textLight },
+  resendLink: { ...Typography.body, color: colors.primary, fontWeight: '600' },
+  });
+}

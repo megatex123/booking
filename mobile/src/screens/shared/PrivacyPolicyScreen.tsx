@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 
 interface Props { navigation: any }
 
@@ -45,11 +46,14 @@ const SECTIONS = [
   },
 ];
 
-export const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => (
+export const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
   <SafeAreaView style={styles.container}>
     <View style={styles.header}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </TouchableOpacity>
       <Text style={styles.title}>Privacy Policy</Text>
       <View style={{ width: 40 }} />
@@ -71,21 +75,24 @@ export const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => (
       <View style={{ height: 32 }} />
     </ScrollView>
   </SafeAreaView>
-);
+  );
+}
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: Colors.text },
+  title: { ...Typography.h3, color: colors.text },
   body: { padding: Spacing.lg },
-  updated: { ...Typography.caption, color: Colors.textLight, marginBottom: Spacing.md },
-  intro: { ...Typography.body, color: Colors.textSecondary, lineHeight: 24, marginBottom: Spacing.lg },
+  updated: { ...Typography.caption, color: colors.textLight, marginBottom: Spacing.md },
+  intro: { ...Typography.body, color: colors.textSecondary, lineHeight: 24, marginBottom: Spacing.lg },
   section: { marginBottom: Spacing.lg },
-  sectionTitle: { ...Typography.body, fontWeight: '700', color: Colors.text, marginBottom: 6 },
-  sectionBody: { ...Typography.body, color: Colors.textSecondary, lineHeight: 24 },
-});
+  sectionTitle: { ...Typography.body, fontWeight: '700', color: colors.text, marginBottom: 6 },
+  sectionBody: { ...Typography.body, color: colors.textSecondary, lineHeight: 24 },
+  });
+}

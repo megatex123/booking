@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Alert, Platform, TextInput, Image, ActivityIndicator, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ import { Loading } from '../../components/common/Loading';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchBookingById, updateBookingStatus } from '../../store/bookingSlice';
-import { Colors, Typography, Spacing, BorderRadius } from '../../utils/theme';
+import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, formatDate, formatTime } from '../../utils/helpers';
 import { showAlert } from '../../utils/webAlert';
 import { api, uploadAPI, workshopAPI, bookingAPI } from '../../services/api';
@@ -56,6 +57,8 @@ function nextServiceLabel(months: number) {
 }
 
 export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const bookingId: string = route.params?.bookingId;
   const dispatch = useAppDispatch();
   const { selectedBooking: booking, loading } = useAppSelector((s) => s.bookings);
@@ -396,11 +399,11 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Booking #{bookingId.slice(-6).toUpperCase()}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Chat', { bookingId, customerName: booking.customer_name })}>
-          <Ionicons name="chatbubble-outline" size={22} color={Colors.primary} />
+          <Ionicons name="chatbubble-outline" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -420,7 +423,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
               <View style={styles.statusRow}>
                 <Text style={styles.sectionTitle}>Bay</Text>
                 <View style={styles.bayStatusChip}>
-                  <Ionicons name="car-sport-outline" size={12} color={Colors.primary} />
+                  <Ionicons name="car-sport-outline" size={12} color={colors.primary} />
                   <Text style={styles.bayStatusName}>{s ? s.name : booking.station_id}</Text>
                 </View>
               </View>
@@ -430,7 +433,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
             <View style={styles.statusRow}>
               <Text style={styles.sectionTitle}>Mechanic</Text>
               <View style={styles.bayStatusChip}>
-                <Ionicons name="person-outline" size={12} color={Colors.secondary} />
+                <Ionicons name="person-outline" size={12} color={colors.secondary} />
                 <Text style={styles.bayStatusName}>{(booking as any).mechanic_name}</Text>
               </View>
             </View>
@@ -460,7 +463,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
               { label: 'Incident', value: (booking as any).insurance_details?.incident_date },
             ].filter(f => f.value).map((f) => (
               <View key={f.label} style={styles.metaRow}>
-                <Text style={[styles.metaText, { width: 80, color: Colors.textSecondary }]}>{f.label}:</Text>
+                <Text style={[styles.metaText, { width: 80, color: colors.textSecondary }]}>{f.label}:</Text>
                 <Text style={styles.metaText}>{f.value}</Text>
               </View>
             ))}
@@ -471,7 +474,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
           <Text style={styles.sectionTitle}>Customer</Text>
           <Text style={styles.customerName}>{booking.customer_name}</Text>
           <View style={styles.metaRow}>
-            <Ionicons name="call-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="call-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.metaText}>{booking.customer_phone}</Text>
           </View>
         </Card>
@@ -479,11 +482,11 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Schedule</Text>
           <View style={styles.metaRow}>
-            <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.metaText}>{formatDate(booking.scheduled_date)}</Text>
           </View>
           <View style={styles.metaRow}>
-            <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.metaText}>{formatTime(booking.scheduled_time)}</Text>
           </View>
         </Card>
@@ -491,7 +494,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Vehicle</Text>
           <View style={styles.metaRow}>
-            <Ionicons name="car-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="car-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.metaText}>
               {booking.vehicle_brand} {booking.vehicle_name} · {booking.vehicle_plate}
             </Text>
@@ -524,7 +527,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         {booking.status === 'in_progress' && (
           <Card style={styles.bayCard}>
             <View style={styles.bayHeader}>
-              <Ionicons name="car-sport-outline" size={16} color={Colors.primary} />
+              <Ionicons name="car-sport-outline" size={16} color={colors.primary} />
               <Text style={styles.bayTitle}>Workshop Bay</Text>
               {booking.station_id && !showBaySelector && (
                 <TouchableOpacity onPress={() => setShowBaySelector(true)} style={styles.changeBayBtn}>
@@ -539,7 +542,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
               return (
                 <View style={styles.assignedBayRow}>
                   <View style={styles.assignedBayChip}>
-                    <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+                    <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                     <Text style={styles.assignedBayName}>
                       {assigned ? assigned.name : booking.station_id}
                     </Text>
@@ -554,7 +557,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
             {/* No bay prompt */}
             {!booking.station_id && !showBaySelector && (
               <TouchableOpacity style={styles.selectBayPrompt} onPress={() => setShowBaySelector(true)}>
-                <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
+                <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
                 <Text style={styles.selectBayPromptText}>Select a bay for this vehicle</Text>
               </TouchableOpacity>
             )}
@@ -585,7 +588,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                         <Ionicons
                           name={occupied ? 'car' : isCurrent ? 'checkmark-circle' : 'car-outline'}
                           size={22}
-                          color={isCurrent ? Colors.success : occupied ? Colors.textLight : Colors.primary}
+                          color={isCurrent ? colors.success : occupied ? colors.textLight : colors.primary}
                         />
                         <Text style={[
                           styles.bayTileName,
@@ -603,7 +606,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                 )}
                 {assigningBay && (
                   <View style={styles.bayLoadingOverlay}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <ActivityIndicator color={colors.primary} />
                   </View>
                 )}
                 {(stations.length > 0 || booking.station_id) && (
@@ -620,7 +623,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         {['confirmed', 'in_progress', 'pending'].includes(booking.status) && (
           <Card style={styles.bayCard}>
             <View style={styles.bayHeader}>
-              <Ionicons name="person-outline" size={16} color={Colors.secondary} />
+              <Ionicons name="person-outline" size={16} color={colors.secondary} />
               <Text style={styles.bayTitle}>Assigned Mechanic</Text>
               {(booking as any).mechanic_id && !showMechanicSelector && (
                 <TouchableOpacity onPress={() => setShowMechanicSelector(true)} style={styles.changeBayBtn}>
@@ -632,7 +635,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
             {(booking as any).mechanic_id && !showMechanicSelector && (
               <View style={styles.assignedBayRow}>
                 <View style={styles.assignedBayChip}>
-                  <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+                  <Ionicons name="checkmark-circle" size={16} color={colors.success} />
                   <Text style={styles.assignedBayName}>{(booking as any).mechanic_name || (booking as any).mechanic_id}</Text>
                 </View>
                 <TouchableOpacity onPress={() => handleAssignMechanic(null)} disabled={assigningMechanic}>
@@ -643,8 +646,8 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
 
             {!(booking as any).mechanic_id && !showMechanicSelector && (
               <TouchableOpacity style={styles.selectBayPrompt} onPress={() => setShowMechanicSelector(true)}>
-                <Ionicons name="person-add-outline" size={18} color={Colors.secondary} />
-                <Text style={[styles.selectBayPromptText, { color: Colors.secondary }]}>Assign a mechanic</Text>
+                <Ionicons name="person-add-outline" size={18} color={colors.secondary} />
+                <Text style={[styles.selectBayPromptText, { color: colors.secondary }]}>Assign a mechanic</Text>
               </TouchableOpacity>
             )}
 
@@ -665,7 +668,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                         disabled={assigningMechanic}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name="person" size={22} color={isCurrent ? Colors.success : Colors.secondary} />
+                        <Ionicons name="person" size={22} color={isCurrent ? colors.success : colors.secondary} />
                         <Text style={[styles.bayTileName, isCurrent && styles.bayTileNameCurrent]} numberOfLines={2}>{m.name}</Text>
                         <Text style={styles.bayTileStatus}>{m.specialty || 'Mechanic'}</Text>
                       </TouchableOpacity>
@@ -674,7 +677,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                 )}
                 {assigningMechanic && (
                   <View style={styles.bayLoadingOverlay}>
-                    <ActivityIndicator color={Colors.secondary} />
+                    <ActivityIndicator color={colors.secondary} />
                   </View>
                 )}
                 <TouchableOpacity style={styles.cancelBayBtn} onPress={() => setShowMechanicSelector(false)}>
@@ -689,8 +692,8 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         {booking.status === 'completed' && (hasServiceReports || booking.completion_notes) && (
           <Card style={styles.reportCard}>
             <View style={styles.reportHeader}>
-              <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
-              <Text style={[styles.sectionTitle, { color: Colors.success, marginBottom: 0 }]}>Service Report</Text>
+              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+              <Text style={[styles.sectionTitle, { color: colors.success, marginBottom: 0 }]}>Service Report</Text>
             </View>
 
             {hasServiceReports && booking.service_reports.map((sr: any, idx: number) => (
@@ -721,7 +724,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                     <Text style={styles.reportLabel}>Products Used</Text>
                     {sr.products_used.map((pu: any) => (
                       <View key={pu.product_id} style={styles.puReadRow}>
-                        <Ionicons name="cube-outline" size={12} color={Colors.textSecondary} />
+                        <Ionicons name="cube-outline" size={12} color={colors.textSecondary} />
                         <Text style={styles.puReadText}>
                           {pu.product_name}{pu.brand ? ` (${pu.brand})` : ''} — {pu.quantity} {pu.unit}
                         </Text>
@@ -731,7 +734,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                 )}
                 {sr.next_service_months ? (
                   <View style={styles.nextServiceChip}>
-                    <Ionicons name="calendar-outline" size={13} color={Colors.primary} />
+                    <Ionicons name="calendar-outline" size={13} color={colors.primary} />
                     <Text style={styles.nextServiceChipText}>
                       Next service in {nextServiceLabel(sr.next_service_months)}
                     </Text>
@@ -749,7 +752,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
 
             {booking.next_service_months && !hasServiceReports && (
               <View style={[styles.nextServiceChip, { marginTop: 12 }]}>
-                <Ionicons name="calendar-outline" size={14} color={Colors.primary} />
+                <Ionicons name="calendar-outline" size={14} color={colors.primary} />
                 <Text style={styles.nextServiceChipText}>
                   Next service in {nextServiceLabel(booking.next_service_months)}
                 </Text>
@@ -762,15 +765,15 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
         {showCompleteForm && booking.status === 'in_progress' && (
           <Card style={styles.section}>
             <View style={styles.reportHeader}>
-              <Ionicons name="clipboard-outline" size={18} color={Colors.primary} />
-              <Text style={[styles.sectionTitle, { color: Colors.primary, marginBottom: 0 }]}>Completion Report</Text>
+              <Ionicons name="clipboard-outline" size={18} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: 0 }]}>Completion Report</Text>
             </View>
 
             {/* Per-service cards */}
             {serviceReports.map((sr, idx) => (
               <View key={sr.service_id} style={styles.svcFormCard}>
                 <View style={styles.svcFormHeader}>
-                  <Ionicons name="construct-outline" size={14} color={Colors.primary} />
+                  <Ionicons name="construct-outline" size={14} color={colors.primary} />
                   <Text style={styles.svcFormName}>{sr.service_name}</Text>
                 </View>
 
@@ -779,7 +782,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                   value={sr.work_done}
                   onChangeText={(v) => updateServiceReport(idx, 'work_done', v)}
                   placeholder="What was done for this service..."
-                  placeholderTextColor={Colors.textLight}
+                  placeholderTextColor={colors.textLight}
                   multiline
                   numberOfLines={3}
                   style={styles.textArea}
@@ -820,7 +823,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                     />
                     <Text style={styles.puUnit}>{pu.unit}</Text>
                     <TouchableOpacity onPress={() => removeProductFromReport(idx, pu.product_id)}>
-                      <Ionicons name="close-circle" size={18} color={Colors.danger} />
+                      <Ionicons name="close-circle" size={18} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -831,7 +834,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                   setProductSearch('');
                   setProductFilter(hasSuggested ? 'suggested' : 'all');
                 }}>
-                  <Ionicons name="add-circle-outline" size={15} color={Colors.primary} />
+                  <Ionicons name="add-circle-outline" size={15} color={colors.primary} />
                   <Text style={styles.addProductBtnText}>Add Product</Text>
                 </TouchableOpacity>
 
@@ -850,18 +853,18 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                           <Image source={{ uri: uploadAPI.mediaUrl(url) }} style={styles.imageThumbnail} resizeMode="cover" />
                         )}
                         <TouchableOpacity style={styles.removeMedia} onPress={() => removeMedia(idx, url)}>
-                          <Ionicons name="close-circle" size={18} color={Colors.danger} />
+                          <Ionicons name="close-circle" size={18} color={colors.danger} />
                         </TouchableOpacity>
                       </View>
                     );
                   })}
                   {sr.uploading ? (
                     <View style={styles.uploadingThumb}>
-                      <ActivityIndicator size="small" color={Colors.primary} />
+                      <ActivityIndicator size="small" color={colors.primary} />
                     </View>
                   ) : (
                     <TouchableOpacity style={styles.addMediaBtn} onPress={() => pickMedia(idx)}>
-                      <Ionicons name="camera-outline" size={20} color={Colors.primary} />
+                      <Ionicons name="camera-outline" size={20} color={colors.primary} />
                       <Text style={styles.addMediaText}>Add</Text>
                     </TouchableOpacity>
                   )}
@@ -872,14 +875,14 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
             {/* General / overall notes */}
             <View style={styles.svcFormCard}>
               <View style={styles.svcFormHeader}>
-                <Ionicons name="document-text-outline" size={14} color={Colors.textSecondary} />
-                <Text style={[styles.svcFormName, { color: Colors.textSecondary }]}>General Report</Text>
+                <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.svcFormName, { color: colors.textSecondary }]}>General Report</Text>
               </View>
               <TextInput
                 value={generalNotes}
                 onChangeText={setGeneralNotes}
                 placeholder="Overall observations, recommendations, or notes for the customer..."
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 multiline
                 numberOfLines={4}
                 style={styles.textArea}
@@ -940,7 +943,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
               onPress={() => setShowCompleteForm(true)}
               fullWidth
               size="lg"
-              style={{ backgroundColor: Colors.success }}
+              style={{ backgroundColor: colors.success }}
             />
           )}
           {booking.status === 'completed' && (
@@ -957,21 +960,21 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
       {/* Product picker modal */}
       {productPickerIdx !== null && (
         <Modal visible animationType="slide" presentationStyle="formSheet">
-          <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Select Product</Text>
               <TouchableOpacity onPress={() => { setProductPickerIdx(null); setProductSearch(''); setProductFilter('suggested'); }}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             <View style={styles.pickerSearchWrap}>
-              <Ionicons name="search-outline" size={15} color={Colors.textSecondary} />
+              <Ionicons name="search-outline" size={15} color={colors.textSecondary} />
               <TextInput
                 style={styles.pickerSearchInput}
                 value={productSearch}
                 onChangeText={setProductSearch}
                 placeholder="Search products..."
-                placeholderTextColor={Colors.textLight}
+                placeholderTextColor={colors.textLight}
                 autoFocus
               />
             </View>
@@ -999,7 +1002,7 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                     <Ionicons
                       name={c.icon as any}
                       size={13}
-                      color={active ? '#fff' : Colors.textSecondary}
+                      color={active ? '#fff' : colors.textSecondary}
                     />
                     <Text style={[styles.pickerChipText, active && styles.pickerChipTextActive]}>{c.label}</Text>
                     <View style={[styles.pickerBadge, active && styles.pickerBadgeActive]}>
@@ -1031,15 +1034,15 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                       </Text>
                     </View>
                     {already
-                      ? <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                      : <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
+                      ? <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                      : <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
                     }
                   </TouchableOpacity>
                 );
               }}
               ListEmptyComponent={
                 <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                  <Text style={{ color: Colors.textSecondary }}>No products found</Text>
+                  <Text style={{ color: colors.textSecondary }}>No products found</Text>
                 </View>
               }
             />
@@ -1050,26 +1053,26 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
       {/* Insurance Claim Status Modal */}
       <Modal visible={showClaimStatusModal} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: Colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, paddingBottom: 40 }}>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, paddingBottom: 40 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <Text style={{ ...Typography.h3, color: Colors.text }}>Update Claim Status</Text>
+              <Text style={{ ...Typography.h3, color: colors.text }}>Update Claim Status</Text>
               <TouchableOpacity onPress={() => setShowClaimStatusModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             {(['submitted', 'processing', 'approved', 'rejected'] as const).map((status) => {
-              const colors: Record<string, string> = { submitted: '#0EA5E9', processing: Colors.warning, approved: Colors.success, rejected: Colors.danger };
+              const colors: Record<string, string> = { submitted: '#0EA5E9', processing: colors.warning, approved: colors.success, rejected: colors.danger };
               const labels: Record<string, string> = { submitted: 'Submitted', processing: 'In Processing', approved: 'Approved', rejected: 'Rejected' };
               const current = (booking as any)?.claim_status === status;
               return (
                 <TouchableOpacity
                   key={status}
-                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 10, marginBottom: 10, backgroundColor: current ? colors[status] + '15' : Colors.background, borderWidth: current ? 2 : 1, borderColor: current ? colors[status] : Colors.border }}
+                  style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 10, marginBottom: 10, backgroundColor: current ? colors[status] + '15' : colors.background, borderWidth: current ? 2 : 1, borderColor: current ? colors[status] : colors.border }}
                   onPress={() => handleUpdateClaimStatus(status)}
                   disabled={updatingClaimStatus || current}
                 >
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors[status], marginRight: 12 }} />
-                  <Text style={{ ...Typography.body, color: current ? colors[status] : Colors.text, fontWeight: current ? '700' : '400', flex: 1 }}>{labels[status]}</Text>
+                  <Text style={{ ...Typography.body, color: current ? colors[status] : colors.text, fontWeight: current ? '700' : '400', flex: 1 }}>{labels[status]}</Text>
                   {current && <Ionicons name="checkmark-circle" size={20} color={colors[status]} />}
                   {updatingClaimStatus && !current && <ActivityIndicator size="small" color={colors[status]} />}
                 </TouchableOpacity>
@@ -1082,8 +1085,9 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+function makeStyles(colors: AppTheme) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   invoiceBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     borderWidth: 1.5, borderColor: '#2563EB', borderRadius: BorderRadius.md,
@@ -1097,31 +1101,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
-  headerTitle: { ...Typography.h3, color: Colors.text },
+  headerTitle: { ...Typography.h3, color: colors.text },
   content: { padding: Spacing.lg, gap: 12 },
   section: {},
-  sectionTitle: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  sectionTitle: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   bayStatusChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: Colors.primary + '12', borderRadius: BorderRadius.full,
+    backgroundColor: colors.primary + '12', borderRadius: BorderRadius.full,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  bayStatusName: { ...Typography.caption, color: Colors.primary, fontWeight: '700' },
-  customerName: { ...Typography.body, fontWeight: '600', color: Colors.text, marginBottom: 6 },
+  bayStatusName: { ...Typography.caption, color: colors.primary, fontWeight: '700' },
+  customerName: { ...Typography.body, fontWeight: '600', color: colors.text, marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  metaText: { ...Typography.bodySmall, color: Colors.textSecondary },
+  metaText: { ...Typography.bodySmall, color: colors.textSecondary },
   serviceRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
-  serviceName: { ...Typography.bodySmall, color: Colors.text },
-  servicePrice: { ...Typography.bodySmall, color: Colors.text, fontWeight: '500' },
-  divider: { height: 1, backgroundColor: Colors.divider, marginVertical: 8 },
-  totalLabel: { ...Typography.body, color: Colors.text, fontWeight: '600' },
-  totalAmount: { ...Typography.body, color: Colors.primary, fontWeight: '700' },
-  notes: { ...Typography.bodySmall, color: Colors.textSecondary, lineHeight: 20 },
+  serviceName: { ...Typography.bodySmall, color: colors.text },
+  servicePrice: { ...Typography.bodySmall, color: colors.text, fontWeight: '500' },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 8 },
+  totalLabel: { ...Typography.body, color: colors.text, fontWeight: '600' },
+  totalAmount: { ...Typography.body, color: colors.primary, fontWeight: '700' },
+  notes: { ...Typography.bodySmall, color: colors.textSecondary, lineHeight: 20 },
   actions: { gap: 10 },
   actionBtn: {},
 
@@ -1129,216 +1133,216 @@ const styles = StyleSheet.create({
   bayCard: { gap: 10 },
   bayHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bayTitle: {
-    ...Typography.caption, fontWeight: '700', color: Colors.textSecondary,
+    ...Typography.caption, fontWeight: '700', color: colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.5, flex: 1,
   },
   changeBayBtn: {
     paddingHorizontal: 10, paddingVertical: 4,
-    backgroundColor: Colors.primary + '15', borderRadius: BorderRadius.full,
+    backgroundColor: colors.primary + '15', borderRadius: BorderRadius.full,
   },
-  changeBayText: { ...Typography.caption, color: Colors.primary, fontWeight: '600' },
+  changeBayText: { ...Typography.caption, color: colors.primary, fontWeight: '600' },
   assignedBayRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   assignedBayChip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: Colors.success + '12', borderRadius: BorderRadius.md,
-    paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: Colors.success + '30',
+    backgroundColor: colors.success + '12', borderRadius: BorderRadius.md,
+    paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: colors.success + '30',
   },
-  assignedBayName: { ...Typography.body, fontWeight: '700', color: Colors.success },
-  unassignText: { ...Typography.caption, color: Colors.danger, fontWeight: '600' },
+  assignedBayName: { ...Typography.body, fontWeight: '700', color: colors.success },
+  unassignText: { ...Typography.caption, color: colors.danger, fontWeight: '600' },
   selectBayPrompt: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    borderWidth: 1.5, borderColor: Colors.primary + '50', borderStyle: 'dashed',
+    borderWidth: 1.5, borderColor: colors.primary + '50', borderStyle: 'dashed',
     borderRadius: BorderRadius.md, padding: 14,
-    backgroundColor: Colors.primary + '05',
+    backgroundColor: colors.primary + '05',
   },
-  selectBayPromptText: { ...Typography.bodySmall, color: Colors.primary, fontWeight: '600' },
+  selectBayPromptText: { ...Typography.bodySmall, color: colors.primary, fontWeight: '600' },
   bayGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, position: 'relative' },
   bayTile: {
     width: '30%', minWidth: 90,
-    backgroundColor: Colors.background, borderRadius: BorderRadius.md,
-    borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.background, borderRadius: BorderRadius.md,
+    borderWidth: 1.5, borderColor: colors.border,
     padding: 10, alignItems: 'center', gap: 4,
   },
-  bayTileCurrent: { borderColor: Colors.success, backgroundColor: Colors.success + '08' },
-  bayTileOccupied: { borderColor: Colors.border, backgroundColor: Colors.border + '40', opacity: 0.65 },
-  bayTileName: { ...Typography.caption, fontWeight: '700', color: Colors.text, textAlign: 'center' },
-  bayTileNameCurrent: { color: Colors.success },
-  bayTileNameOccupied: { color: Colors.textLight },
-  bayTileStatus: { ...Typography.caption, color: Colors.primary, fontSize: 10 },
-  bayTileStatusOccupied: { color: Colors.textLight },
+  bayTileCurrent: { borderColor: colors.success, backgroundColor: colors.success + '08' },
+  bayTileOccupied: { borderColor: colors.border, backgroundColor: colors.border + '40', opacity: 0.65 },
+  bayTileName: { ...Typography.caption, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  bayTileNameCurrent: { color: colors.success },
+  bayTileNameOccupied: { color: colors.textLight },
+  bayTileStatus: { ...Typography.caption, color: colors.primary, fontSize: 10 },
+  bayTileStatusOccupied: { color: colors.textLight },
   noBaysWrap: { padding: 12 },
-  noBaysText: { ...Typography.bodySmall, color: Colors.textSecondary, lineHeight: 20 },
+  noBaysText: { ...Typography.bodySmall, color: colors.textSecondary, lineHeight: 20 },
   bayLoadingOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.surface + 'cc',
+    backgroundColor: colors.surface + 'cc',
   },
   cancelBayBtn: {
     width: '100%', paddingVertical: 10, alignItems: 'center',
-    borderRadius: BorderRadius.sm, borderWidth: 1, borderColor: Colors.border,
+    borderRadius: BorderRadius.sm, borderWidth: 1, borderColor: colors.border,
     marginTop: 4,
   },
-  cancelBayText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  cancelBayText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
 
   // Read-only report
-  reportCard: { backgroundColor: Colors.success + '08', borderWidth: 1, borderColor: Colors.success + '30', gap: 8 },
+  reportCard: { backgroundColor: colors.success + '08', borderWidth: 1, borderColor: colors.success + '30', gap: 8 },
   reportHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  reportLabel: { ...Typography.caption, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  reportText: { ...Typography.bodySmall, color: Colors.text, lineHeight: 20 },
+  reportLabel: { ...Typography.caption, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  reportText: { ...Typography.bodySmall, color: colors.text, lineHeight: 20 },
   svcReportCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.sm,
     padding: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     gap: 4,
     marginTop: 8,
   },
-  svcReportName: { ...Typography.bodySmall, fontWeight: '700', color: Colors.text, marginBottom: 4 },
+  svcReportName: { ...Typography.bodySmall, fontWeight: '700', color: colors.text, marginBottom: 4 },
   nextServiceChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: colors.primary + '15',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 10,
     paddingVertical: 5,
     marginTop: 6,
   },
-  nextServiceChipText: { ...Typography.caption, fontWeight: '600', color: Colors.primary },
+  nextServiceChipText: { ...Typography.caption, fontWeight: '600', color: colors.primary },
 
   // Completion form
   svcFormCard: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: BorderRadius.sm,
     padding: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginTop: 12,
     gap: 4,
   },
   svcFormHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  svcFormName: { ...Typography.bodySmall, fontWeight: '700', color: Colors.primary },
-  formLabel: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text, marginBottom: 6, marginTop: 4 },
+  svcFormName: { ...Typography.bodySmall, fontWeight: '700', color: colors.primary },
+  formLabel: { ...Typography.bodySmall, fontWeight: '600', color: colors.text, marginBottom: 6, marginTop: 4 },
   textArea: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: BorderRadius.sm,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: 10,
     ...Typography.bodySmall,
-    color: Colors.text,
+    color: colors.text,
     minHeight: 80,
   },
-  charCount: { ...Typography.caption, color: Colors.textLight, textAlign: 'right', marginTop: 3 },
+  charCount: { ...Typography.caption, color: colors.textLight, textAlign: 'right', marginTop: 3 },
   optionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
   optionChip: {
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  optionChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  optionText: { ...Typography.caption, fontWeight: '600', color: Colors.textSecondary },
+  optionChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionText: { ...Typography.caption, fontWeight: '600', color: colors.textSecondary },
   optionTextActive: { color: '#fff' },
   mediaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   mediaThumbnailWrap: { position: 'relative' },
-  imageThumbnail: { width: 72, height: 72, borderRadius: BorderRadius.sm, backgroundColor: Colors.border },
+  imageThumbnail: { width: 72, height: 72, borderRadius: BorderRadius.sm, backgroundColor: colors.border },
   videoThumb: {
     width: 72, height: 72, borderRadius: BorderRadius.sm,
     backgroundColor: '#333', alignItems: 'center', justifyContent: 'center',
   },
   removeMedia: {
     position: 'absolute', top: -6, right: -6,
-    backgroundColor: Colors.surface, borderRadius: 10,
+    backgroundColor: colors.surface, borderRadius: 10,
   },
   uploadingThumb: {
     width: 72, height: 72, borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.background, borderWidth: 1.5, borderColor: Colors.border,
+    backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
   addMediaBtn: {
     width: 72, height: 72, borderRadius: BorderRadius.sm,
-    borderWidth: 1.5, borderColor: Colors.primary + '60',
+    borderWidth: 1.5, borderColor: colors.primary + '60',
     borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Colors.primary + '08', gap: 4,
+    backgroundColor: colors.primary + '08', gap: 4,
   },
-  addMediaText: { ...Typography.caption, color: Colors.primary, fontWeight: '600' },
+  addMediaText: { ...Typography.caption, color: colors.primary, fontWeight: '600' },
 
   // Products used in form
   puRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.sm,
-    borderWidth: 1, borderColor: Colors.border, padding: 8, marginBottom: 6,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.sm,
+    borderWidth: 1, borderColor: colors.border, padding: 8, marginBottom: 6,
   },
   puInfo: { flex: 1 },
-  puName: { ...Typography.caption, fontWeight: '600', color: Colors.text },
-  puBrand: { ...Typography.caption, color: Colors.textSecondary, fontSize: 10 },
+  puName: { ...Typography.caption, fontWeight: '600', color: colors.text },
+  puBrand: { ...Typography.caption, color: colors.textSecondary, fontSize: 10 },
   puQtyInput: {
-    width: 48, borderWidth: 1.5, borderColor: Colors.border,
+    width: 48, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: BorderRadius.sm, paddingHorizontal: 6, paddingVertical: 4,
-    ...Typography.caption, color: Colors.text, textAlign: 'center',
-    backgroundColor: Colors.background,
+    ...Typography.caption, color: colors.text, textAlign: 'center',
+    backgroundColor: colors.background,
   },
-  puUnit: { ...Typography.caption, color: Colors.textSecondary, minWidth: 26 },
+  puUnit: { ...Typography.caption, color: colors.textSecondary, minWidth: 26 },
   addProductBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
-    borderWidth: 1.5, borderColor: Colors.primary + '50', borderStyle: 'dashed',
-    borderRadius: BorderRadius.sm, padding: 9, backgroundColor: Colors.primary + '05',
+    borderWidth: 1.5, borderColor: colors.primary + '50', borderStyle: 'dashed',
+    borderRadius: BorderRadius.sm, padding: 9, backgroundColor: colors.primary + '05',
     marginTop: 4,
   },
-  addProductBtnText: { ...Typography.caption, color: Colors.primary, fontWeight: '600' },
+  addProductBtnText: { ...Typography.caption, color: colors.primary, fontWeight: '600' },
 
   // Products used read-only
   puReadSection: { marginTop: 6, gap: 4 },
   puReadRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  puReadText: { ...Typography.caption, color: Colors.textSecondary, flex: 1 },
+  puReadText: { ...Typography.caption, color: colors.textSecondary, flex: 1 },
 
   // Product picker modal
   pickerHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.surface,
+    borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface,
   },
-  pickerTitle: { ...Typography.h3, color: Colors.text },
+  pickerTitle: { ...Typography.h3, color: colors.text },
   pickerSearchWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginHorizontal: Spacing.md, marginTop: Spacing.md, marginBottom: 6,
     paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: colors.border,
   },
-  pickerSearchInput: { flex: 1, ...Typography.bodySmall, color: Colors.text },
+  pickerSearchInput: { flex: 1, ...Typography.bodySmall, color: colors.text },
   pickerFilterScroll: { maxHeight: 48, flexGrow: 0, flexShrink: 0 },
   pickerFilterList: { paddingHorizontal: Spacing.md, gap: 8, alignItems: 'center', paddingVertical: 4, flexDirection: 'row', flexWrap: 'nowrap' },
   pickerChip: {
     flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 5,
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
   },
-  pickerChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  pickerChipText: { ...Typography.caption, color: Colors.textSecondary, fontWeight: '600' },
+  pickerChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  pickerChipText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
   pickerChipTextActive: { color: '#fff' },
   pickerBadge: {
-    backgroundColor: Colors.border, borderRadius: 8, minWidth: 18, height: 18,
+    backgroundColor: colors.border, borderRadius: 8, minWidth: 18, height: 18,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   pickerBadgeActive: { backgroundColor: 'rgba(255,255,255,0.3)' },
-  pickerBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
+  pickerBadgeText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   pickerBadgeTextActive: { color: '#fff' },
-  pickerResultCount: { ...Typography.caption, color: Colors.textSecondary, paddingHorizontal: Spacing.lg, marginVertical: 6, flexShrink: 0 },
+  pickerResultCount: { ...Typography.caption, color: colors.textSecondary, paddingHorizontal: Spacing.lg, marginVertical: 6, flexShrink: 0 },
   pickerList: { paddingHorizontal: Spacing.md, paddingBottom: 32, paddingTop: 4 },
   pickerSeparator: { height: 8 },
   pickerRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.sm,
-    borderWidth: 1, borderColor: Colors.border, padding: 12, gap: 10,
+    backgroundColor: colors.surface, borderRadius: BorderRadius.sm,
+    borderWidth: 1, borderColor: colors.border, padding: 12, gap: 10,
   },
-  pickerName: { ...Typography.bodySmall, fontWeight: '600', color: Colors.text },
-  pickerMeta: { ...Typography.caption, color: Colors.textSecondary, marginTop: 2 },
+  pickerName: { ...Typography.bodySmall, fontWeight: '600', color: colors.text },
+  pickerMeta: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
 
   formActions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
   cancelFormBtn: {
@@ -1347,8 +1351,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
-  cancelFormText: { ...Typography.button, color: Colors.textSecondary },
+  cancelFormText: { ...Typography.button, color: colors.textSecondary },
   submitBtn: { flex: 2 },
-});
+  });
+}
