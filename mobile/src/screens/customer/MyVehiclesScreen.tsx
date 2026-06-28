@@ -1,69 +1,105 @@
-import React, { useState, useMemo} from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Platform, Alert,
+  TextInput, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
+import { Typography, Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { userAPI } from '../../services/api';
+import { showAlert, showConfirm } from '../../utils/webAlert';
 
-interface Vehicle { id: string; plate: string; model: string; year: string; color: string }
+interface Vehicle {
+  name: string;    // model name e.g. "Bezza"
+  plate: string;
+  brand: string;   // manufacturer e.g. "Perodua"
+  year?: number;
+  color?: string;
+}
+
 interface Props { navigation: any }
-
-const STORAGE_KEY = 'my_vehicles';
 
 export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Form fields
   const [plate, setPlate] = useState('');
-  const [model, setModel] = useState('');
+  const [brand, setBrand] = useState('');
+  const [name, setName] = useState('');
   const [year, setYear] = useState('');
   const [color, setColor] = useState('');
-  const [loaded, setLoaded] = useState(false);
 
-  React.useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-      if (raw) setVehicles(JSON.parse(raw));
-      setLoaded(true);
-    });
+  const load = useCallback(async () => {
+    try {
+      const res = await userAPI.getVehicles();
+      setVehicles(res.data || []);
+    } catch {
+      showAlert('Failed to load vehicles.');
+    }
+    setLoading(false);
   }, []);
 
-  const save = async (list: Vehicle[]) => {
-    setVehicles(list);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  useEffect(() => { load(); }, []);
+
+  const syncToAPI = async (list: Vehicle[]) => {
+    setSaving(true);
+    try {
+      await userAPI.updateProfile({ vehicles: list } as any);
+      setVehicles(list);
+    } catch {
+      showAlert('Failed to save. Please try again.');
+    }
+    setSaving(false);
   };
 
-  const addVehicle = () => {
-    if (!plate.trim() || !model.trim()) return;
-    const v: Vehicle = {
-      id: Date.now().toString(),
-      plate: plate.trim().toUpperCase(),
-      model: model.trim(),
-      year: year.trim(),
-      color: color.trim(),
-    };
-    save([...vehicles, v]);
-    setPlate(''); setModel(''); setYear(''); setColor('');
+  const resetForm = () => {
+    setPlate(''); setBrand(''); setName(''); setYear(''); setColor('');
     setShowForm(false);
   };
 
-  const removeVehicle = (id: string) => {
-    const doRemove = () => save(vehicles.filter((v) => v.id !== id));
-    if (Platform.OS === 'web') {
-      if (window.confirm('Remove this vehicle?')) doRemove();
-    } else {
-      Alert.alert('Remove Vehicle', 'Remove this vehicle?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: doRemove },
-      ]);
+  const addVehicle = async () => {
+    if (!plate.trim() || !brand.trim() || !name.trim()) {
+      showAlert('Plate, brand, and model name are required.');
+      return;
     }
+    const v: Vehicle = {
+      plate: plate.trim().toUpperCase(),
+      brand: brand.trim(),
+      name: name.trim(),
+      year: year ? parseInt(year, 10) : undefined,
+      color: color.trim() || undefined,
+    };
+    await syncToAPI([...vehicles, v]);
+    resetForm();
   };
 
-  if (!loaded) return null;
+  const removeVehicle = async (plate: string) => {
+    const confirmed = await showConfirm('Remove Vehicle', 'Remove this vehicle?');
+    if (!confirmed) return;
+    await syncToAPI(vehicles.filter((v) => v.plate !== plate));
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>My Vehicles</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,7 +108,7 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>My Vehicles</Text>
-        <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn}>
+        <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn} disabled={saving}>
           <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -80,10 +116,12 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.body}>
         {vehicles.length === 0 && !showForm && (
           <View style={styles.empty}>
-            <Ionicons name="car-outline" size={64} color={colors.textLight} />
+            <Ionicons name="car-outline" size={64} color={colors.textSecondary} />
             <Text style={styles.emptyTitle}>No vehicles added</Text>
-            <Text style={styles.emptyText}>Add your car details so workshops know what to service</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => setShowForm(true)}>
+            <Text style={styles.emptyText}>
+              Register your car so workshops know what to service and to track your Car Health Score.
+            </Text>
+            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setShowForm(true)}>
               <Text style={styles.emptyBtnText}>Add Vehicle</Text>
             </TouchableOpacity>
           </View>
@@ -91,46 +129,88 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
 
         {vehicles.map((v) => (
           <TouchableOpacity
-            key={v.id}
+            key={v.plate}
             style={styles.card}
-            onPress={() => navigation.navigate('VehicleServiceHistory', { vehicle: v })}
+            onPress={() => navigation.navigate('VehicleServiceHistory', {
+              vehicle: { id: v.plate, plate: v.plate, model: `${v.brand} ${v.name}`, year: String(v.year ?? ''), color: v.color ?? '' }
+            })}
             activeOpacity={0.75}
           >
-            <View style={styles.cardIcon}>
+            <View style={[styles.cardIcon, { backgroundColor: colors.primary + '15' }]}>
               <Ionicons name="car" size={28} color={colors.primary} />
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardPlate}>{v.plate}</Text>
-              <Text style={styles.cardModel}>{v.model}{v.year ? ` • ${v.year}` : ''}{v.color ? ` • ${v.color}` : ''}</Text>
-              <Text style={styles.cardHint}>Tap to view service history</Text>
+              <Text style={styles.cardModel}>
+                {v.brand} {v.name}{v.year ? ` • ${v.year}` : ''}{v.color ? ` • ${v.color}` : ''}
+              </Text>
+              <Text style={[styles.cardHint, { color: colors.primary }]}>Tap to view service history</Text>
             </View>
             <View style={styles.cardRight}>
-              <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
-              <TouchableOpacity onPress={() => removeVehicle(v.id)} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              <TouchableOpacity
+                onPress={() => removeVehicle(v.plate)}
+                style={styles.removeBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                disabled={saving}
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))}
 
         {showForm && (
-          <View style={styles.form}>
-            <Text style={styles.formTitle}>Add Vehicle</Text>
-            <TextInput style={styles.input} value={plate} onChangeText={setPlate}
-              placeholder="Plate number (e.g. WXX1234)" placeholderTextColor={colors.textLight} />
-            <TextInput style={styles.input} value={model} onChangeText={setModel}
-              placeholder="Make & Model (e.g. Proton Saga)" placeholderTextColor={colors.textLight} />
-            <TextInput style={styles.input} value={year} onChangeText={setYear}
-              placeholder="Year (e.g. 2020)" placeholderTextColor={colors.textLight} keyboardType="numeric" />
-            <TextInput style={styles.input} value={color} onChangeText={setColor}
-              placeholder="Color (e.g. White)" placeholderTextColor={colors.textLight} />
+          <View style={[styles.form, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.formTitle, { color: colors.text }]}>Add Vehicle</Text>
+
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Plate Number *</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              value={plate} onChangeText={setPlate}
+              placeholder="e.g. WXX 1234" placeholderTextColor={colors.textSecondary}
+              autoCapitalize="characters"
+            />
+
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Brand / Manufacturer *</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              value={brand} onChangeText={setBrand}
+              placeholder="e.g. Perodua, Proton, Toyota" placeholderTextColor={colors.textSecondary}
+            />
+
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Model Name *</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              value={name} onChangeText={setName}
+              placeholder="e.g. Bezza, Saga, Vios" placeholderTextColor={colors.textSecondary}
+            />
+
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Year</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              value={year} onChangeText={setYear}
+              placeholder="e.g. 2023" placeholderTextColor={colors.textSecondary}
+              keyboardType="numeric" maxLength={4}
+            />
+
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Color</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              value={color} onChangeText={setColor}
+              placeholder="e.g. White, Red, Silver" placeholderTextColor={colors.textSecondary}
+            />
+
             <View style={styles.formBtns}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowForm(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+              <TouchableOpacity style={[styles.cancelBtn, { borderColor: colors.border }]} onPress={resetForm} disabled={saving}>
+                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.saveBtn, (!plate || !model) && styles.saveBtnDisabled]}
-                onPress={addVehicle} disabled={!plate || !model}>
-                <Text style={styles.saveBtnText}>Add</Text>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.primary }, (!plate || !brand || !name) && styles.saveBtnDisabled]}
+                onPress={addVehicle}
+                disabled={!plate || !brand || !name || saving}
+              >
+                {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Add</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -142,62 +222,58 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md, paddingVertical: 12,
-    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
-  },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  addBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { ...Typography.h3, color: colors.text },
-  body: { padding: Spacing.lg, flexGrow: 1 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyTitle: { ...Typography.h3, color: colors.text, marginTop: Spacing.lg, marginBottom: 8 },
-  emptyText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: Spacing.xl },
-  emptyBtn: {
-    backgroundColor: colors.primary, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.xl, paddingVertical: 12,
-  },
-  emptyBtnText: { ...Typography.button, color: '#fff' },
-  card: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md, padding: Spacing.md, marginBottom: Spacing.md,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  cardIcon: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  cardInfo: { flex: 1 },
-  cardPlate: { ...Typography.h3, color: colors.text },
-  cardModel: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
-  cardHint: { ...Typography.caption, color: colors.primary, marginTop: 4 },
-  cardRight: { alignItems: 'center', gap: 6 },
-  removeBtn: { padding: 4 },
-  form: {
-    backgroundColor: colors.surface, borderRadius: BorderRadius.md,
-    padding: Spacing.lg, marginTop: Spacing.md,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  formTitle: { ...Typography.h3, color: colors.text, marginBottom: Spacing.md },
-  input: {
-    backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border,
-    borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.md, paddingVertical: 10,
-    ...Typography.body, color: colors.text, marginBottom: Spacing.sm,
-  },
-  formBtns: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  cancelBtn: {
-    flex: 1, borderWidth: 1, borderColor: colors.border,
-    borderRadius: BorderRadius.sm, paddingVertical: 12, alignItems: 'center',
-  },
-  cancelBtnText: { ...Typography.button, color: colors.textSecondary },
-  saveBtn: {
-    flex: 1, backgroundColor: colors.primary,
-    borderRadius: BorderRadius.sm, paddingVertical: 12, alignItems: 'center',
-  },
-  saveBtnDisabled: { opacity: 0.5 },
-  saveBtnText: { ...Typography.button, color: '#fff' },
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: Spacing.md, paddingVertical: 12,
+      backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    addBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    title: { ...Typography.h3, color: colors.text },
+    body: { padding: Spacing.lg, flexGrow: 1 },
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+    emptyTitle: { ...Typography.h3, color: colors.text, marginTop: Spacing.lg, marginBottom: 8 },
+    emptyText: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: Spacing.xl, paddingHorizontal: 16, lineHeight: 22 },
+    emptyBtn: { borderRadius: BorderRadius.md, paddingHorizontal: Spacing.xl, paddingVertical: 12 },
+    emptyBtnText: { ...Typography.button, color: '#fff' },
+    card: {
+      flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
+      borderRadius: BorderRadius.md, padding: Spacing.md, marginBottom: Spacing.md,
+      borderWidth: 1, borderColor: colors.border,
+    },
+    cardIcon: {
+      width: 50, height: 50, borderRadius: 25,
+      alignItems: 'center', justifyContent: 'center', marginRight: Spacing.md,
+    },
+    cardInfo: { flex: 1 },
+    cardPlate: { ...Typography.h3, color: colors.text },
+    cardModel: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
+    cardHint: { ...Typography.caption, marginTop: 4 },
+    cardRight: { alignItems: 'center', gap: 6 },
+    removeBtn: { padding: 4 },
+    form: {
+      borderRadius: BorderRadius.md, padding: Spacing.lg,
+      marginTop: Spacing.md, borderWidth: 1,
+    },
+    formTitle: { ...Typography.h3, marginBottom: Spacing.md },
+    fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 6 },
+    input: {
+      borderWidth: 1, borderRadius: BorderRadius.sm,
+      paddingHorizontal: Spacing.md, paddingVertical: 10,
+      ...Typography.body, marginBottom: Spacing.md,
+    },
+    formBtns: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+    cancelBtn: {
+      flex: 1, borderWidth: 1, borderRadius: BorderRadius.sm,
+      paddingVertical: 12, alignItems: 'center',
+    },
+    cancelBtnText: { ...Typography.button },
+    saveBtn: {
+      flex: 1, borderRadius: BorderRadius.sm,
+      paddingVertical: 12, alignItems: 'center',
+    },
+    saveBtnDisabled: { opacity: 0.5 },
+    saveBtnText: { ...Typography.button, color: '#fff' },
   });
 }
