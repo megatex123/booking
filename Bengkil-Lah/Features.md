@@ -66,9 +66,10 @@ Status of every major feature in the app.
 
 | Feature | Status | Notes |
 |---|---|---|
-| My Vehicles list | ✅ Complete | Derived from booking history |
-| Vehicle service history | ✅ Complete | Per-vehicle booking timeline |
-| Car Health Score | ✅ Complete | Score (0–100) per vehicle based on elapsed time since last service vs. next service interval; `GET /bookings/vehicle-health`; `CarHealthScreen` with SVG circular gauge; dashboard widget on `CustomerDashboardScreen`; fleet average banner |
+| My Vehicles list | ✅ Complete | Saved to `users.vehicles` in MongoDB via `PATCH /users/me`; `MyVehiclesScreen` fields: Plate, Brand, Model Name, Year, Color |
+| Vehicle service history | ✅ Complete | Unified timeline: completed bookings + self-logged manual entries merged chronologically; workshop bookings (blue) vs manual logs (amber/wrench icon); supports edit & delete of manual entries |
+| Manual service logging | ✅ Complete | Customers can self-log services done outside the app (DIY, local mechanic, any workshop); `POST /service-logs/`; `manual_service_logs` MongoDB collection; form: date, location, services (comma list + quick-pick chips), notes, mileage, cost, next service interval |
+| Car Health Score | ✅ Complete | Score (0–100) per vehicle based on elapsed time since last service vs. next service interval; `GET /bookings/vehicle-health`; merges completed bookings AND manual logs — uses whichever record is most recent; `CarHealthScreen` with SVG circular gauge; dashboard widget on `CustomerDashboardScreen`; fleet average banner |
 
 ## Workshop — Dashboard
 

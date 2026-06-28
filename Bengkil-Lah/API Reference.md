@@ -169,6 +169,41 @@ Bookings under a corporate account: pass `payment_type: "corporate"` in `POST /b
 `claim_status` flow: `submitted → processing → approved / rejected`.
 `GET /workshops/nearby` accepts `?panel_provider=<value>` to filter panel workshops.
 
+## Manual Service Logs
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/service-logs/` | Customer | List own logs; `?plate=JWD8726` to filter |
+| POST | `/service-logs/` | Customer | Create log — see body below |
+| PATCH | `/service-logs/{id}` | Customer | Update any field |
+| DELETE | `/service-logs/{id}` | Customer | Remove log |
+
+Body for `POST /service-logs/`:
+```json
+{
+  "vehicle_plate": "JWD8726",
+  "service_date": "2026-06-29",
+  "location": "Home Garage",
+  "services": ["Oil Change", "Air Filter"],
+  "notes": "Used Castrol 5W-30",
+  "mileage": 45000,
+  "cost": 80.00,
+  "next_service_months": 3
+}
+```
+Response includes `"source": "manual"`. The `vehicle-health` endpoint merges these logs with completed bookings, using whichever is more recent.
+
+## Vehicle Reminders
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/reminders/` | Customer | List own reminders |
+| POST | `/reminders/` | Customer | Create `{ vehicle_plate, reminder_date (YYYY-MM-DD), vehicle_name?, label? }` |
+| PATCH | `/reminders/{id}` | Customer | Update — date change resets `notified` flag |
+| DELETE | `/reminders/{id}` | Customer | Remove |
+
+APScheduler fires `check_custom_reminders()` at 08:00 UTC daily; sends `custom_reminder` notification when date matches today.
+
 ## Notifications
 
 | Method | Path | Auth | Description |

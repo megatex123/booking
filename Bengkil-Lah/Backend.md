@@ -35,7 +35,9 @@ backend/
     ├── reviews.py
     ├── payments.py
     ├── uploads.py
-    └── notifications.py
+    ├── notifications.py
+    ├── reminders.py      vehicle reminders CRUD (vehicle_reminders collection)
+    └── service_logs.py   manual service log CRUD (manual_service_logs collection)
 ```
 
 ## Routers
@@ -89,6 +91,22 @@ See [[Booking Flow]] for the full lifecycle.
 | PATCH | `/bookings/{id}/reschedule` | Change date/time (customer) |
 | PATCH | `/bookings/{id}/station` | Assign repair station (workshop) |
 | PATCH | `/bookings/{id}/mechanic` | Assign mechanic (workshop) |
+
+### service-logs (manual service history)
+| Method | Path | Description |
+|---|---|---|
+| GET | `/service-logs/` | Customer's manual logs (`?plate=` to filter by vehicle) |
+| POST | `/service-logs/` | Create log (`vehicle_plate`, `service_date`, `location`, `services[]`, `notes?`, `mileage?`, `cost?`, `next_service_months?`) |
+| PATCH | `/service-logs/{id}` | Update log |
+| DELETE | `/service-logs/{id}` | Remove log |
+
+### reminders (vehicle reminders)
+| Method | Path | Description |
+|---|---|---|
+| GET | `/reminders/` | Customer's vehicle reminders |
+| POST | `/reminders/` | Create reminder (`vehicle_plate`, `reminder_date`, `vehicle_name?`, `label?`) |
+| PATCH | `/reminders/{id}` | Update reminder — resets `notified: false` if date changes |
+| DELETE | `/reminders/{id}` | Remove reminder |
 
 ### chat
 | Method | Path | Description |
