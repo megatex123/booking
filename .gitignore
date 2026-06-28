@@ -47,6 +47,7 @@ investment-agent/
 qr-generator/
 vtt-app/
 dashboard/
+voice-model/
 
 # Claude internal
 .claude/
