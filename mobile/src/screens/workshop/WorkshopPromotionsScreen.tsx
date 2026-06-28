@@ -21,6 +21,8 @@ interface Promo {
   ends_at: string;
   is_active: boolean;
   is_expired: boolean;
+  discount_type: 'percentage' | 'fixed' | null;
+  discount_value: number | null;
   created_at: string;
 }
 
@@ -42,6 +44,8 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [endsAt, setEndsAt] = useState('');
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed' | null>(null);
+  const [discountValue, setDiscountValue] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -59,6 +63,8 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
     setTitle('');
     setDescription('');
     setEndsAt(MIN_ENDS_AT());
+    setDiscountType(null);
+    setDiscountValue('');
     setShowModal(true);
   };
 
@@ -67,6 +73,8 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
     setTitle(p.title);
     setDescription(p.description);
     setEndsAt(p.ends_at.slice(0, 16));
+    setDiscountType(p.discount_type);
+    setDiscountValue(p.discount_value != null ? String(p.discount_value) : '');
     setShowModal(true);
   };
 
@@ -75,7 +83,14 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
     if (!endsAt) { showAlert('Missing Info', 'Please set an end date/time.'); return; }
     setSaving(true);
     try {
-      const payload = { title: title.trim(), description: description.trim(), ends_at: endsAt };
+      const payload: any = { title: title.trim(), description: description.trim(), ends_at: endsAt };
+      if (discountType) {
+        payload.discount_type = discountType;
+        payload.discount_value = discountValue ? parseFloat(discountValue) : null;
+      } else {
+        payload.discount_type = null;
+        payload.discount_value = null;
+      }
       if (editingId) {
         await workshopAPI.updatePromotion(editingId, payload);
       } else {
@@ -156,6 +171,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
       {/* Create / Edit Modal */}
       <Modal visible={showModal} transparent animationType="slide">
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setShowModal(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>{editingId ? 'Edit Promotion' : 'New Promotion'}</Text>
             <Text style={styles.fieldLabel}>Title *</Text>
@@ -187,10 +203,37 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
               placeholderTextColor={colors.textLight}
             />
             <Text style={styles.fieldHint}>Format: 2025-12-31T23:59</Text>
+
+            <Text style={styles.fieldLabel}>Discount (optional)</Text>
+            <View style={styles.discountTypeRow}>
+              {([null, 'percentage', 'fixed'] as const).map((t) => (
+                <TouchableOpacity
+                  key={String(t)}
+                  style={[styles.discountTypeBtn, discountType === t && styles.discountTypeBtnActive]}
+                  onPress={() => { setDiscountType(t); if (!t) setDiscountValue(''); }}
+                >
+                  <Text style={[styles.discountTypeBtnText, discountType === t && styles.discountTypeBtnTextActive]}>
+                    {t === null ? 'None' : t === 'percentage' ? '% Off' : 'RM Off'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {discountType !== null && (
+              <TextInput
+                style={styles.input}
+                value={discountValue}
+                onChangeText={setDiscountValue}
+                placeholder={discountType === 'percentage' ? 'e.g. 15  (means 15% off)' : 'e.g. 20  (means RM20 off)'}
+                placeholderTextColor={colors.textLight}
+                keyboardType="decimal-pad"
+              />
+            )}
+
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>{editingId ? 'Save Changes' : 'Create Promotion'}</Text>}
             </TouchableOpacity>
           </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     </SafeAreaView>
@@ -205,7 +248,16 @@ const PromoCard: React.FC<{ promo: Promo; onEdit: () => void; onToggle: () => vo
     <View style={[cardStyles.card, (promo.is_expired || !promo.is_active) && cardStyles.cardDim]}>
       <View style={cardStyles.top}>
         <Ionicons name="flame" size={16} color={promo.is_active && !promo.is_expired ? '#F97316' : colors.textLight} />
-        <Text style={cardStyles.title} numberOfLines={2}>{promo.title}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={cardStyles.title} numberOfLines={2}>{promo.title}</Text>
+          {promo.discount_type && promo.discount_value != null && (
+            <View style={cardStyles.discountBadge}>
+              <Text style={cardStyles.discountBadgeText}>
+                {promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `RM${promo.discount_value.toFixed(0)} OFF`}
+              </Text>
+            </View>
+          )}
+        </View>
         <Switch
           value={promo.is_active && !promo.is_expired}
           onValueChange={onToggle}
@@ -275,6 +327,14 @@ function makeStyles(colors: AppTheme) {
   },
   textArea: { height: 80, textAlignVertical: 'top', paddingTop: 10 },
   fieldHint: { ...Typography.caption, color: colors.textSecondary, marginTop: 4 },
+  discountTypeRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  discountTypeBtn: {
+    flex: 1, paddingVertical: 9, borderRadius: BorderRadius.sm,
+    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center',
+  },
+  discountTypeBtnActive: { borderColor: colors.primary, backgroundColor: colors.primary + '12' },
+  discountTypeBtnText: { ...Typography.caption, color: colors.textSecondary, fontWeight: '600' },
+  discountTypeBtnTextActive: { color: colors.primary },
   saveBtn: {
     backgroundColor: colors.primary, borderRadius: BorderRadius.md,
     paddingVertical: 14, alignItems: 'center', marginTop: Spacing.lg,
@@ -297,6 +357,11 @@ function makePromoCardStyles(colors: AppTheme) {
     footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     expiry: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
     expiryText: { ...Typography.caption, color: colors.textSecondary },
+    discountBadge: {
+      alignSelf: 'flex-start', marginTop: 4,
+      backgroundColor: '#F97316', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2,
+    },
+    discountBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
     actions: { flexDirection: 'row', gap: 4 },
     actionBtn: { padding: 6 },
   });

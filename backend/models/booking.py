@@ -20,6 +20,7 @@ class BookingCreate(BaseModel):
     scheduled_time: str  # HH:MM
     notes: Optional[str] = ""
     referral_code: Optional[str] = None
+    promotion_id: Optional[str] = None   # active workshop promotion to apply
     loyalty_points_used: Optional[int] = 0
     payment_type: Optional[str] = "self_pay"   # "self_pay" | "insurance" | "corporate"
     insurance_details: Optional[InsuranceDetails] = None

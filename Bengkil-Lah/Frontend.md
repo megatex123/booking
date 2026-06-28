@@ -144,6 +144,35 @@ Must have `maxHeight: 44` and chips need `alignSelf: 'flex-start'` to prevent he
 - Chat screen joins `booking_{id}` room and listens for `new_message`
 - Booking detail listens for `booking_status_updated`
 
+## UI Design System
+
+### Visual Design Language
+Cards use a consistent style across the app:
+- `borderRadius: 16` (was `BorderRadius.md`)
+- `borderWidth: 1, borderColor: colors.border` — subtle outline
+- Shadow: `shadowOpacity: 0.07–0.08, shadowRadius: 8–10, elevation: 2–3`
+
+### WelcomeScreen (`src/screens/auth/WelcomeScreen.tsx`)
+Two-zone split layout:
+- **Hero (top, flex 1):** `colors.primary` background, 96px logo ring with `car-sport` icon, brand name (38px/800), tagline
+- **Sheet (bottom):** `colors.background` with `borderTopLeftRadius/RightRadius: 32`, 3 feature rows (icon circle + label + description), Get Started button, Sign In link
+
+### HomeScreen workshop cards
+Each card has:
+- **Avatar circle (50px):** colored by `getAvatarColor(name)` (palette of 8 colors hashed from first char), shows 2-letter initials
+- No left accent strip — open/closed status shown as badge in top-right
+- Fav heart icon stacked above open/closed badge on the right
+
+### BookingHistoryScreen booking cards
+- **Left accent strip: 5px** (was 4px) colored by `StatusColors[status]`
+- Info row (date/time/plate) rendered as chip-style items with `colors.background` fill
+- Workshop name: 16px/800 weight
+- Price: 17px/800 weight
+
+### DashboardScreen (vendor)
+- Header greeting: 20px/800, workshop name 13px subtitle
+- Stat cards and revenue card: `borderRadius: 16`, `borderWidth: 1`
+
 ## Related Notes
 - [[Architecture]] — system diagram
 - [[Realtime]] — Socket.IO event map

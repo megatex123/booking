@@ -233,10 +233,27 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
           <View style={styles.divider} />
-          <View style={styles.serviceRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
-          </View>
+          {booking.products_total != null && booking.products_total > 0 ? (
+            <>
+              <View style={styles.serviceRow}>
+                <Text style={styles.totalLabel}>Services</Text>
+                <Text style={styles.servicePrice}>{formatPrice(booking.services_total ?? 0)}</Text>
+              </View>
+              <View style={styles.serviceRow}>
+                <Text style={styles.totalLabel}>Parts &amp; Products</Text>
+                <Text style={styles.servicePrice}>{formatPrice(booking.products_total)}</Text>
+              </View>
+              <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                <Text style={[styles.totalLabel, { fontWeight: '800' }]}>Total</Text>
+                <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.serviceRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
+            </View>
+          )}
         </Card>
 
         {booking.notes ? (
@@ -389,7 +406,12 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           {canPay && (
             <Button
               title={booking.status === 'completed' ? 'Pay Now to Continue' : 'Pay Now'}
-              onPress={() => navigation.navigate('Payment', { bookingId: booking.id, totalPrice: booking.total_price })}
+              onPress={() => navigation.navigate('Payment', {
+                bookingId: booking.id,
+                totalPrice: booking.total_price,
+                servicesTotal: booking.services_total,
+                productsTotal: booking.products_total,
+              })}
               fullWidth
               size="lg"
               style={styles.actionBtn}
@@ -416,7 +438,7 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               {review.comment ? <Text style={styles.reviewComment}>{review.comment}</Text> : null}
             </Card>
           )}
-          {booking.status === 'completed' && (
+          {booking.status === 'completed' && booking.payment_status === 'paid' && (
             <TouchableOpacity style={styles.invoiceBtn} onPress={handleDownloadInvoice} activeOpacity={0.8}>
               <Ionicons name="document-text-outline" size={18} color="#2563EB" />
               <Text style={styles.invoiceBtnText}>Download Invoice (PDF)</Text>

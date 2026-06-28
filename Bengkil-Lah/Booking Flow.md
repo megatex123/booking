@@ -75,8 +75,15 @@ Workshop calls `PATCH /bookings/{id}/status` with `status: "completed"`.
    ```
    products.$.quantity -= quantity
    ```
-3. `booking_status_updated` Socket.IO event → customer
-4. Push notification → customer: "Service Completed ✅"
+3. **Product costs added to `total_price`**: If any `products_used` entry has `unit_price > 0`, the backend calculates:
+   ```
+   products_total = Σ (unit_price × quantity)
+   total_price    = original services_total + products_total
+   ```
+   Booking fields `services_total` and `products_total` are saved for breakdown display.
+4. `booking_status_updated` Socket.IO event → customer
+5. Push notification → customer: "Service Completed ✅"
+6. Loyalty points awarded = 1 pt per RM1 of **final** `total_price` (includes products)
 
 ## Reschedule
 

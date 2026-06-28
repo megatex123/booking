@@ -31,6 +31,7 @@ import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 import { HelpSupportScreen } from '../screens/shared/HelpSupportScreen';
 import { PrivacyPolicyScreen } from '../screens/shared/PrivacyPolicyScreen';
 import { Colors } from '../utils/theme';
+import { ENIGMA_FOOTER_HEIGHT } from '../../App';
 
 const Tab = createBottomTabNavigator();
 const DashboardStack = createStackNavigator();
@@ -107,6 +108,7 @@ export function WorkshopNavigator() {
           paddingBottom: 6,
           paddingTop: 6,
           height: 62,
+          marginBottom: ENIGMA_FOOTER_HEIGHT,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         tabBarIcon: ({ focused, color, size }) => {

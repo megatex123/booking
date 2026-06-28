@@ -27,6 +27,7 @@ import { CorporateRegistrationScreen } from '../screens/customer/CorporateRegist
 import { CorporateManagementScreen } from '../screens/customer/CorporateManagementScreen';
 import { LoyaltyScreen } from '../screens/customer/LoyaltyScreen';
 import { Colors } from '../utils/theme';
+import { ENIGMA_FOOTER_HEIGHT } from '../../App';
 
 const Tab = createBottomTabNavigator();
 const DashboardStack = createStackNavigator();
@@ -106,6 +107,7 @@ export function CustomerNavigator() {
           paddingBottom: 6,
           paddingTop: 6,
           height: 62,
+          marginBottom: ENIGMA_FOOTER_HEIGHT,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         tabBarIcon: ({ focused, color, size }) => {

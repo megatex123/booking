@@ -213,56 +213,128 @@ def build_invoice_pdf(b: dict, workshop_phone: str = "") -> bytes:
     pdf.line(MARGIN, y, PAGE_W - MARGIN, y)
     y += 4
 
-    # Total row
+    has_product_pricing = b.get("products_total", 0) and b.get("products_total", 0) > 0
+    services_total_val  = b.get("services_total", b.get("total_price", 0))
+
+    # Services subtotal (when products also charged, show subtotal label; else show TOTAL DUE)
     pdf.set_text_color(*C_GREY)
     pdf.set_font("Helvetica", "", 8)
     pdf.set_xy(MARGIN, y)
-    pdf.cell(CW - 38, 6, "TOTAL DUE", align="R")
+    pdf.cell(CW - 38, 6, "SERVICES SUBTOTAL" if has_product_pricing else "TOTAL DUE", align="R")
 
     pdf.set_text_color(*C_BLUE)
-    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_font("Helvetica", "B", 12 if has_product_pricing else 14)
     pdf.set_xy(MARGIN + CW - 38, y - 1)
-    pdf.cell(35, 8, _price(b.get("total_price", 0)), align="R")
-
-    if payment == "paid":
-        pdf.set_text_color(*C_GREEN)
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.set_xy(MARGIN, y)
-        pdf.cell(60, 6, "Payment Received", align="L")
-    y += 14
+    pdf.cell(35, 8, _price(services_total_val), align="R")
+    y += 10
 
     # ── 5. PARTS & PRODUCTS ──────────────────────────────────────────────────
     all_products = [
         (sr.get("service_name", ""), pu)
-        for sr in b.get("service_reports", [])
-        for pu in sr.get("products_used", [])
+        for sr in (b.get("service_reports") or [])
+        for pu in (sr.get("products_used") or [])
         if pu.get("product_name")
     ]
 
     if all_products:
-        if y > 250:
+        if y > 240:
             pdf.add_page(); y = 15
         y = section_bar(y, "Parts & Products Used")
 
-        for svc_name, pu in all_products:
+        # Column header
+        pdf.set_fill_color(*C_BLUE_L)
+        pdf.rect(MARGIN, y, CW, 7, style="F")
+        pdf.set_text_color(*C_BLUE)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_xy(MARGIN + 3, y + 1.5)
+        pdf.cell(95, 4, "Description", align="L")
+        pdf.set_xy(MARGIN + 98, y + 1.5)
+        pdf.cell(28, 4, "Qty / Unit", align="C")
+        pdf.set_xy(MARGIN + 126, y + 1.5)
+        pdf.cell(28, 4, "Unit Price", align="R")
+        pdf.set_xy(MARGIN + CW - 35, y + 1.5)
+        pdf.cell(32, 4, "Amount", align="R")
+        y += 8
+
+        parts_computed_total = 0.0
+        for i, (svc_name, pu) in enumerate(all_products):
+            row_fill = C_BG if i % 2 == 0 else C_WHITE
+            pdf.set_fill_color(*row_fill)
+            pdf.rect(MARGIN, y, CW, 8, style="F")
+
             name  = pu.get("product_name", "")
             brand = pu.get("brand", "")
-            qty   = pu.get("quantity", 0)
+            qty   = float(pu.get("quantity", 0) or 0)
             unit  = pu.get("unit", "")
-            label = name + (f" ({brand})" if brand else "") + (f"  x{qty} {unit}" if qty else "")
+            unit_price = float(pu.get("unit_price", 0) or 0)
+            line_total = qty * unit_price
+            parts_computed_total += line_total
+
+            label = name + (f" ({brand})" if brand else "")
+            qty_str = f"{qty:g} {unit}".strip()
+
             pdf.set_text_color(*C_DARK)
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.set_xy(MARGIN + 3, y + 2)
+            pdf.cell(95, 4, label, align="L")
+
             pdf.set_font("Helvetica", "", 8)
-            pdf.set_xy(MARGIN + 3, y + 1)
-            pdf.cell(5, 5, "-", align="C")
-            pdf.set_xy(MARGIN + 9, y + 1)
-            pdf.cell(CW - 12, 5, label, align="L")
-            y += 6
+            pdf.set_text_color(*C_GREY)
+            pdf.set_xy(MARGIN + 98, y + 2)
+            pdf.cell(28, 4, qty_str, align="C")
+
+            pdf.set_text_color(*C_DARK)
+            pdf.set_xy(MARGIN + 126, y + 2)
+            pdf.cell(28, 4, _price(unit_price) if unit_price > 0 else "-", align="R")
+
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.set_xy(MARGIN + CW - 35, y + 2)
+            pdf.cell(32, 4, _price(line_total) if unit_price > 0 else "-", align="R")
+            y += 8
+
+        # Parts subtotal row
+        pdf.set_draw_color(*C_BORDER)
+        pdf.line(MARGIN, y, PAGE_W - MARGIN, y)
+        y += 4
+        pdf.set_text_color(*C_GREY)
+        pdf.set_font("Helvetica", "", 8)
+        pdf.set_xy(MARGIN, y)
+        pdf.cell(CW - 38, 6, "PARTS SUBTOTAL", align="R")
+        products_total_val = b.get("products_total") or parts_computed_total
+        pdf.set_text_color(*C_BLUE)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_xy(MARGIN + CW - 38, y - 1)
+        pdf.cell(35, 8, _price(products_total_val), align="R")
+        y += 10
+
+        # Grand total row (only when products were charged)
+        pdf.set_fill_color(*C_BLUE)
+        pdf.rect(MARGIN, y, CW, 11, style="F")
+        pdf.set_text_color(*C_WHITE)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_xy(MARGIN + 3, y + 1.5)
+        if payment == "paid":
+            pdf.cell(60, 4, "Payment Received", align="L")
+        pdf.set_xy(MARGIN, y + 1.5)
+        pdf.cell(CW - 38, 4, "TOTAL DUE", align="R")
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.set_xy(MARGIN + CW - 38, y + 0.5)
+        pdf.cell(35, 10, _price(b.get("total_price", 0)), align="R")
+        y += 17
+    else:
+        # No products — show payment received note and grand total (already drawn as TOTAL DUE above)
+        if payment == "paid":
+            pdf.set_text_color(*C_GREEN)
+            pdf.set_font("Helvetica", "B", 8)
+            pdf.set_xy(MARGIN, y - 10)
+            pdf.cell(60, 6, "Payment Received", align="L")
+        # Grand total already shown; just add spacing
         y += 4
 
     # ── 6. WORK COMPLETED ────────────────────────────────────────────────────
     all_notes = [
         (sr.get("service_name", ""), sr["work_done"])
-        for sr in b.get("service_reports", [])
+        for sr in (b.get("service_reports") or [])
         if sr.get("work_done")
     ]
     if b.get("completion_notes"):

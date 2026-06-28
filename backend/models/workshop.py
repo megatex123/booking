@@ -146,6 +146,8 @@ class PromotionCreate(BaseModel):
     title: str
     description: Optional[str] = ""
     ends_at: str  # ISO 8601 datetime e.g. "2024-12-31T23:59:59"
+    discount_type: Optional[str] = None   # "percentage" | "fixed"
+    discount_value: Optional[float] = None  # e.g. 15 (%) or 20 (RM)
 
 
 class PromotionUpdate(BaseModel):
@@ -153,3 +155,5 @@ class PromotionUpdate(BaseModel):
     description: Optional[str] = None
     ends_at: Optional[str] = None
     is_active: Optional[bool] = None
+    discount_type: Optional[str] = None
+    discount_value: Optional[float] = None

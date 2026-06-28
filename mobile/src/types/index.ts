@@ -39,6 +39,8 @@ export interface Promotion {
   title: string;
   description: string;
   ends_at: string;
+  discount_type?: 'percentage' | 'fixed' | null;
+  discount_value?: number | null;
 }
 
 export interface WorkshopImage {
@@ -116,7 +118,11 @@ export interface Booking {
   notes?: string;
   status: BookingStatus;
   total_price: number;
+  services_total?: number;
+  products_total?: number;
   referral_discount?: number;
+  promotion_discount?: number;
+  promotion_title?: string;
   loyalty_points_used?: number;
   loyalty_discount?: number;
   loyalty_points_earned?: number;

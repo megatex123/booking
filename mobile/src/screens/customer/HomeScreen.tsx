@@ -52,6 +52,11 @@ const SORTS = [
   { key: 'reviews',  label: 'Most Reviewed', icon: 'chatbubbles-outline' },
 ];
 
+const AVATAR_PALETTE = ['#1A73E8','#EA4335','#34A853','#F59E0B','#FF6B35','#9333EA','#0EA5E9','#10B981'];
+function getAvatarColor(name: string): string {
+  return AVATAR_PALETTE[name.charCodeAt(0) % AVATAR_PALETTE.length];
+}
+
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -132,17 +137,20 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
     const isInCompare = compareItems.some((c) => c.id === w.id);
     const compareDisabled = compareItems.length >= 3 && !isInCompare;
     const waitInfo = formatWait(w.queue_snapshot);
+    const initials = w.workshop_name
+      .split(' ')
+      .slice(0, 2)
+      .map((word: string) => word[0])
+      .join('')
+      .toUpperCase();
 
     return (
     <TouchableOpacity style={styles.card} onPress={() => goToWorkshop(w)} activeOpacity={0.88}>
-      {/* Color bar based on open status */}
-      <View style={[styles.cardAccent, { backgroundColor: w.is_open ? colors.success : colors.textLight }]} />
-
       <View style={styles.cardBody}>
-        {/* Top row */}
+        {/* Header: avatar + name/address + fav/status */}
         <View style={styles.cardTop}>
-          <View style={styles.workshopIcon}>
-            <Ionicons name="build" size={22} color={colors.primary} />
+          <View style={[styles.workshopIcon, { backgroundColor: getAvatarColor(w.workshop_name) }]}>
+            <Text style={styles.workshopInitials}>{initials}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.workshopName} numberOfLines={1}>{w.workshop_name}</Text>
@@ -151,27 +159,23 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.addressText} numberOfLines={1}>{w.address}</Text>
             </View>
           </View>
-          <View style={[styles.openBadge, !w.is_open && styles.closedBadge]}>
-            <Text style={[styles.openText, !w.is_open && styles.closedText]}>
-              {w.is_open ? t('home.openNow') : t('home.closed')}
-            </Text>
-          </View>
-          {isFav && (
-            <View style={styles.favPinBadge}>
-              <Ionicons name="bookmark" size={10} color={colors.primary} />
+          <View style={{ alignItems: 'flex-end', gap: 6 }}>
+            <TouchableOpacity
+              onPress={() => dispatch(toggleFavourite(w.id))}
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+            >
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFav ? '#EF4444' : colors.textLight}
+              />
+            </TouchableOpacity>
+            <View style={[styles.openBadge, !w.is_open && styles.closedBadge]}>
+              <Text style={[styles.openText, !w.is_open && styles.closedText]}>
+                {w.is_open ? t('home.openNow') : t('home.closed')}
+              </Text>
             </View>
-          )}
-          <TouchableOpacity
-            style={styles.heartBtn}
-            onPress={() => dispatch(toggleFavourite(w.id))}
-            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-          >
-            <Ionicons
-              name={isFav ? 'heart' : 'heart-outline'}
-              size={20}
-              color={isFav ? '#EF4444' : colors.textLight}
-            />
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Stats row */}
@@ -626,28 +630,35 @@ function makeStyles(colors: AppTheme) {
 
   card: {
     backgroundColor: colors.surface,
-    borderRadius: BorderRadius.md,
-    flexDirection: 'row',
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  cardAccent: { width: 4 },
-  cardBody: { flex: 1, padding: Spacing.md },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
+  cardAccent: { width: 0 },
+  cardBody: { padding: 18 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   workshopIcon: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: colors.primary + '15',
+    width: 50, height: 50, borderRadius: 25,
     alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
   },
-  workshopName: { ...Typography.body, fontWeight: '700', color: colors.text },
+  workshopInitials: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
+  workshopName: { fontSize: 16, fontWeight: '700', color: colors.text, flexShrink: 1 },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
   addressText: { ...Typography.caption, color: colors.textSecondary, flex: 1 },
   openBadge: {
-    backgroundColor: colors.success + '15',
+    backgroundColor: colors.success + '18',
     borderRadius: BorderRadius.full,
     paddingHorizontal: 8, paddingVertical: 3,
   },

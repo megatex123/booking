@@ -87,6 +87,8 @@ def serialize_workshop(w: dict, distance_km: float = None) -> dict:
                 "title": p["title"],
                 "description": p.get("description", ""),
                 "ends_at": ends.isoformat(),
+                "discount_type": p.get("discount_type"),
+                "discount_value": p.get("discount_value"),
             })
     d = {
         "id": w["_id"],
@@ -560,6 +562,8 @@ async def list_promotions(user=Depends(require_workshop), db=Depends(get_db)):
             "ends_at": ends.isoformat() if isinstance(ends, datetime) else ends,
             "is_active": p.get("is_active", True),
             "is_expired": isinstance(ends, datetime) and ends <= now,
+            "discount_type": p.get("discount_type"),
+            "discount_value": p.get("discount_value"),
             "created_at": p["created_at"].isoformat() if isinstance(p.get("created_at"), datetime) else "",
         })
     return sorted(result, key=lambda x: x["created_at"], reverse=True)
@@ -576,12 +580,18 @@ async def create_promotion(data: PromotionCreate, user=Depends(require_workshop)
         raise HTTPException(status_code=400, detail="Invalid ends_at — use ISO 8601 format")
     if ends_at <= datetime.utcnow():
         raise HTTPException(status_code=400, detail="ends_at must be in the future")
+    if data.discount_type and data.discount_type not in ("percentage", "fixed"):
+        raise HTTPException(status_code=400, detail="discount_type must be 'percentage' or 'fixed'")
+    if data.discount_type == "percentage" and data.discount_value and data.discount_value > 100:
+        raise HTTPException(status_code=400, detail="Percentage discount cannot exceed 100%")
     promo = {
         "_id": str(ObjectId()),
         "title": data.title.strip(),
         "description": data.description or "",
         "ends_at": ends_at,
         "is_active": True,
+        "discount_type": data.discount_type,
+        "discount_value": data.discount_value,
         "created_at": datetime.utcnow(),
     }
     await db.workshops.update_one({"_id": w["_id"]}, {"$push": {"promotions": promo}})
@@ -609,6 +619,10 @@ async def update_promotion(promo_id: str, data: PromotionUpdate, user=Depends(re
         fields["promotions.$.ends_at"] = ends_at
     if data.is_active is not None:
         fields["promotions.$.is_active"] = data.is_active
+    if data.discount_type is not None:
+        fields["promotions.$.discount_type"] = data.discount_type
+    if data.discount_value is not None:
+        fields["promotions.$.discount_value"] = data.discount_value
     if fields:
         await db.workshops.update_one(
             {"_id": w["_id"], "promotions._id": promo_id},

@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { paymentAPI } from '../../services/api';
+import { useAppDispatch } from '../../store';
+import { fetchBookingById } from '../../store/bookingSlice';
 import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatPrice } from '../../utils/helpers';
@@ -18,7 +20,8 @@ interface Props {
 export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { bookingId, totalPrice } = route.params;
+  const { bookingId, totalPrice, servicesTotal, productsTotal } = route.params;
+  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'processing' | 'done'>('select');
   const [method, setMethod] = useState<'card' | 'google_pay'>('card');
@@ -35,6 +38,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
       await paymentAPI.createIntent(bookingId);
       await new Promise((r) => setTimeout(r, 1500));
       await paymentAPI.confirmPayment(bookingId);
+      await dispatch(fetchBookingById(bookingId));
       setStep('done');
     } catch (e: any) {
       setStep('select');
@@ -55,7 +59,7 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
           </Text>
           <Button
             title="View Booking"
-            onPress={() => navigation.navigate('BookingDetail', { bookingId })}
+            onPress={() => navigation.goBack()}
             fullWidth
             size="lg"
             style={{ marginTop: 32 }}
@@ -80,6 +84,18 @@ export const PaymentScreen: React.FC<Props> = ({ navigation, route }) => {
         <Card style={styles.amountCard}>
           <Text style={styles.amountLabel}>Total Amount</Text>
           <Text style={styles.amount}>{formatPrice(totalPrice)}</Text>
+          {productsTotal != null && productsTotal > 0 && (
+            <View style={styles.breakdownBox}>
+              <View style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>Services</Text>
+                <Text style={styles.breakdownValue}>{formatPrice(servicesTotal ?? 0)}</Text>
+              </View>
+              <View style={styles.breakdownRow}>
+                <Text style={styles.breakdownLabel}>Parts &amp; Products</Text>
+                <Text style={styles.breakdownValue}>{formatPrice(productsTotal)}</Text>
+              </View>
+            </View>
+          )}
           <View style={styles.secureRow}>
             <Ionicons name="shield-checkmark" size={14} color={colors.success} />
             <Text style={styles.secureText}>Secured payment</Text>
@@ -147,6 +163,17 @@ function makeStyles(colors: AppTheme) {
   amount: { fontSize: 42, fontWeight: '800', color: colors.text, letterSpacing: -1 },
   secureRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 12 },
   secureText: { ...Typography.caption, color: colors.success },
+  breakdownBox: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    gap: 6,
+  },
+  breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  breakdownLabel: { ...Typography.caption, color: colors.textSecondary },
+  breakdownValue: { ...Typography.caption, color: colors.text, fontWeight: '600' },
   sectionTitle: { ...Typography.h3, color: colors.text, marginTop: 8 },
   methodCard: {
     flexDirection: 'row',

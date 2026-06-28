@@ -1,47 +1,78 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
-import { Colors, Typography, Spacing, AppTheme} from '../../utils/theme';
+import { Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
-
-const { width } = Dimensions.get('window');
 
 interface Props {
   navigation: any;
 }
 
+const FEATURES = [
+  { icon: 'location-outline' as const,  label: 'Workshops Near You',  desc: 'Discover trusted mechanics around you' },
+  { icon: 'calendar-outline' as const,  label: 'Instant Booking',     desc: 'Book appointments in seconds' },
+  { icon: 'construct-outline' as const, label: 'Live Updates',        desc: 'Track your car repair in real-time' },
+];
+
 export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.outer}>
+      {/* Hero — primary background */}
       <View style={styles.hero}>
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>🔧</Text>
+        <View style={styles.logoRing}>
+          <Ionicons name="car-sport" size={52} color="#fff" />
         </View>
         <Text style={styles.brand}>Bengkil Lah</Text>
         <Text style={styles.tagline}>Your trusted car service companion</Text>
-        <Text style={styles.description}>
-          Find nearby workshops, book services, and track your car's repair — all in one place.
-        </Text>
       </View>
 
-      <View style={styles.buttons}>
+      {/* Sheet — surface background, rounded top */}
+      <View style={styles.sheet}>
+        <View style={styles.features}>
+          {FEATURES.map((f) => (
+            <View key={f.icon} style={styles.featureRow}>
+              <View style={[styles.featureIcon, { backgroundColor: colors.primary + '18' }]}>
+                <Ionicons name={f.icon} size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureLabel}>{f.label}</Text>
+                <Text style={styles.featureDesc}>{f.desc}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
         <Button
           title="Get Started"
           onPress={() => navigation.navigate('UserType')}
           fullWidth
           size="lg"
-          style={styles.primaryBtn}
         />
-        <Button
-          title="I already have an account"
+
+        <TouchableOpacity
+          style={styles.signInRow}
           onPress={() => navigation.navigate('Login')}
-          variant="ghost"
-          fullWidth
-          size="lg"
-        />
+          activeOpacity={0.7}
+        >
+          <Text style={styles.signInText}>Already have an account?  </Text>
+          <Text style={styles.signInLink}>Sign In</Text>
+        </TouchableOpacity>
+
+        <View style={styles.enigmaRow}>
+          <Image
+            source={require('../../assets/enigma-logo.jpg')}
+            style={styles.enigmaLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.enigmaText}>
+            Developed by <Text style={styles.enigmaBrand}>Enigma Code Solution</Text>
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -49,33 +80,112 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
 
 function makeStyles(colors: AppTheme) {
   return StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: Spacing.lg },
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  icon: { fontSize: 44 },
-  brand: { ...Typography.h1, color: colors.text, fontSize: 34, letterSpacing: -0.5 },
-  tagline: { ...Typography.h3, color: colors.primary, marginTop: 8, marginBottom: Spacing.lg },
-  description: {
-    ...Typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: Spacing.lg,
-  },
-  buttons: { paddingBottom: Spacing.xl, gap: 8 },
-  primaryBtn: { marginBottom: 8 },
+    outer: { flex: 1, backgroundColor: colors.primary },
+
+    hero: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+    },
+    logoRing: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      borderWidth: 2,
+      borderColor: 'rgba(255,255,255,0.35)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: Spacing.lg,
+    },
+    brand: {
+      fontSize: 38,
+      fontWeight: '800',
+      color: '#fff',
+      letterSpacing: -1,
+      marginBottom: 8,
+    },
+    tagline: {
+      fontSize: 16,
+      color: 'rgba(255,255,255,0.82)',
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+
+    sheet: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.lg,
+    },
+    features: { marginBottom: Spacing.xl },
+    featureRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      marginBottom: 18,
+    },
+    featureIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    featureLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 2,
+    },
+    featureDesc: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
+    signInRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: Spacing.md,
+      paddingBottom: 8,
+    },
+    signInText: {
+      fontSize: 15,
+      color: colors.textSecondary,
+    },
+    signInLink: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    enigmaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+      marginTop: Spacing.md,
+      paddingTop: Spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    enigmaLogo: {
+      width: 18,
+      height: 18,
+      borderRadius: 4,
+      backgroundColor: '#fff',
+    },
+    enigmaText: {
+      fontSize: 11,
+      color: colors.textLight,
+    },
+    enigmaBrand: {
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
   });
 }

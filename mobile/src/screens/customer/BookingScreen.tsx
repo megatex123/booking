@@ -107,6 +107,23 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
   const totalPrice = services.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = services.reduce((sum, s) => sum + s.duration_minutes, 0);
 
+  // Auto-pick the best active promotion that has a discount value
+  const activePromoWithDiscount = (workshop.active_promotions || [])
+    .filter((p) => p.discount_type && p.discount_value != null && p.discount_value > 0)
+    .reduce<(typeof workshop.active_promotions)[0] | null>((best, p) => {
+      const calcDiscount = (promo: typeof p) =>
+        promo.discount_type === 'percentage'
+          ? Math.min(totalPrice * (promo.discount_value ?? 0) / 100, totalPrice)
+          : Math.min(promo.discount_value ?? 0, totalPrice);
+      if (!best) return p;
+      return calcDiscount(p) >= calcDiscount(best) ? p : best;
+    }, null);
+  const promotionDiscount = activePromoWithDiscount
+    ? activePromoWithDiscount.discount_type === 'percentage'
+      ? Math.min(totalPrice * (activePromoWithDiscount.discount_value ?? 0) / 100, totalPrice)
+      : Math.min(activePromoWithDiscount.discount_value ?? 0, totalPrice)
+    : 0;
+
   // Load and merge vehicles from Redux (backend) and AsyncStorage (local)
   useEffect(() => {
     const mergeVehicles = async () => {
@@ -214,7 +231,8 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Loyalty points computation
   const referralDiscount = referralInfo ? Math.min(totalPrice * referralInfo.discount_pct / 100, referralInfo.discount_cap) : 0;
-  const priceAfterReferral = Math.max(totalPrice - referralDiscount, 0);
+  const priceAfterDiscounts = Math.max(totalPrice - promotionDiscount - referralDiscount, 0);
+  const priceAfterReferral = priceAfterDiscounts; // kept for loyalty calc below
   const maxLoyaltyPts = loyaltyBalance ? Math.min(Math.floor(loyaltyBalance.points / 100) * 100, Math.floor(priceAfterReferral / 0.01 / 100) * 100) : 0;
   const loyaltyPtsToUse = useLoyaltyPoints ? maxLoyaltyPts : 0;
   const loyaltyDiscount = loyaltyPtsToUse * 0.01;
@@ -245,6 +263,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
       notes: notes.trim(),
       payment_type: paymentType,
     };
+    if (activePromoWithDiscount) payload.promotion_id = activePromoWithDiscount.id;
     if (referralInfo && referralCode) payload.referral_code = referralCode.trim().toUpperCase();
     if (loyaltyPtsToUse >= 100) payload.loyalty_points_used = loyaltyPtsToUse;
     if (bookedForOther) {
@@ -646,6 +665,24 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         )}
 
+        {/* Active Promotion Banner */}
+        {activePromoWithDiscount && (
+          <View style={styles.promoBanner}>
+            <Ionicons name="flame" size={18} color="#F97316" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.promoBannerTitle}>{activePromoWithDiscount.title}</Text>
+              <Text style={styles.promoBannerSaving}>
+                {activePromoWithDiscount.discount_type === 'percentage'
+                  ? `${activePromoWithDiscount.discount_value}% off — you save ${formatPrice(promotionDiscount)}`
+                  : `RM${activePromoWithDiscount.discount_value?.toFixed(0)} off — auto applied`}
+              </Text>
+            </View>
+            <View style={styles.promoBadge}>
+              <Text style={styles.promoBadgeText}>AUTO</Text>
+            </View>
+          </View>
+        )}
+
         {/* Referral Code */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Referral Code <Text style={styles.optional}>(optional)</Text></Text>
@@ -709,7 +746,7 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <View style={styles.section}>
           <Text style={styles.paymentNote}>
-            {`💳 Payment (${formatPrice(Math.max(totalPrice - referralDiscount - loyaltyDiscount, 0))}${referralInfo ? ` · ${referralInfo.discount_pct}% referral discount` : ''}${loyaltyPtsToUse >= 100 ? ` · ${loyaltyPtsToUse} pts off` : ''}) will be collected after the workshop confirms your booking.`}
+            {`💳 Payment (${formatPrice(Math.max(totalPrice - promotionDiscount - referralDiscount - loyaltyDiscount, 0))}${activePromoWithDiscount ? ` · promo -${formatPrice(promotionDiscount)}` : ''}${referralInfo ? ` · ${referralInfo.discount_pct}% referral` : ''}${loyaltyPtsToUse >= 100 ? ` · ${loyaltyPtsToUse} pts off` : ''}) will be collected after the workshop confirms your booking.`}
           </Text>
           <Button
             title="Confirm Booking"
@@ -904,6 +941,19 @@ function makeStyles(colors: AppTheme) {
   payTypeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   payTypeLabel: { ...Typography.body, color: colors.textSecondary, flex: 1 },
   payTypeLabelActive: { color: colors.primary, fontWeight: '600' },
+
+  // Promotion banner
+  promoBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#F9731610', borderWidth: 1, borderColor: '#F9731640',
+    borderRadius: BorderRadius.md, padding: Spacing.md, marginBottom: 4,
+  },
+  promoBannerTitle: { ...Typography.bodySmall, fontWeight: '700', color: colors.text },
+  promoBannerSaving: { ...Typography.caption, color: '#F97316', marginTop: 2 },
+  promoBadge: {
+    backgroundColor: '#F97316', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3,
+  },
+  promoBadgeText: { fontSize: 9, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
 
   // Referral
   referralRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },

@@ -53,7 +53,11 @@ def serialize_booking(b: dict) -> dict:
         "mechanic_id": b.get("mechanic_id"),
         "mechanic_name": b.get("mechanic_name"),
         "total_price": b["total_price"],
+        "services_total": b.get("services_total"),
+        "products_total": b.get("products_total"),
         "referral_discount": b.get("referral_discount", 0.0),
+        "promotion_discount": b.get("promotion_discount", 0.0),
+        "promotion_title": b.get("promotion_title"),
         "loyalty_points_used": b.get("loyalty_points_used", 0),
         "loyalty_discount": b.get("loyalty_discount", 0.0),
         "loyalty_points_earned": b.get("loyalty_points_earned", 0),
@@ -116,6 +120,30 @@ async def create_booking(data: BookingCreate, user=Depends(require_customer), db
 
     discounted_total = max(total - referral_discount, 0)
 
+    # ── Promotion discount ───────────────────────────────────────────────────
+    promotion_discount = 0.0
+    promotion_title = None
+    if data.promotion_id:
+        now_utc = datetime.utcnow()
+        matched = next(
+            (p for p in workshop.get("promotions", [])
+             if p["_id"] == data.promotion_id
+             and p.get("is_active", True)
+             and isinstance(p.get("ends_at"), datetime)
+             and p["ends_at"] > now_utc
+             and p.get("discount_type")
+             and p.get("discount_value")),
+            None,
+        )
+        if matched:
+            if matched["discount_type"] == "percentage":
+                promotion_discount = min(discounted_total * matched["discount_value"] / 100, discounted_total)
+            else:  # fixed
+                promotion_discount = min(matched["discount_value"], discounted_total)
+            promotion_discount = round(promotion_discount, 2)
+            promotion_title = matched["title"]
+    discounted_total = max(discounted_total - promotion_discount, 0)
+
     # ── Loyalty points redemption ────────────────────────────────────────────
     loyalty_discount = 0.0
     loyalty_points_used = 0
@@ -166,6 +194,8 @@ async def create_booking(data: BookingCreate, user=Depends(require_customer), db
         "status": "pending",
         "total_price": final_total,
         "referral_discount": referral_discount,
+        "promotion_discount": promotion_discount,
+        "promotion_title": promotion_title,
         "loyalty_points_used": loyalty_points_used,
         "loyalty_discount": loyalty_discount,
         "loyalty_points_earned": 0,
@@ -293,12 +323,25 @@ async def update_booking_status(
         update["completion_notes"] = (data.completion_notes or "").strip()
         if data.service_reports:
             update["service_reports"] = [r.dict() for r in data.service_reports]
-            # Use the shortest next_service_months across all services as the overall recommendation
             months = [r.next_service_months for r in data.service_reports if r.next_service_months]
             update["next_service_months"] = min(months) if months else data.next_service_months
         else:
             update["next_service_months"] = data.next_service_months
             update["service_reports"] = []
+
+        # Add product costs to total_price
+        products_total = sum(
+            pu.unit_price * pu.quantity
+            for r in (data.service_reports or [])
+            if r.products_used
+            for pu in r.products_used
+            if pu.unit_price > 0
+        )
+        if products_total > 0:
+            services_total = b.get("total_price", 0)
+            update["services_total"] = round(services_total, 2)
+            update["products_total"] = round(products_total, 2)
+            update["total_price"] = round(services_total + products_total, 2)
 
     await db.bookings.update_one({"_id": booking_id}, {"$set": update})
 

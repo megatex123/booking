@@ -62,6 +62,13 @@ def mech(name, phone, specialty, active=True):
     }
 
 
+def bay(name, desc="", active=True):
+    return {
+        "_id": oid(), "name": name, "description": desc,
+        "is_active": active, "created_at": NOW.isoformat(),
+    }
+
+
 async def seed():
     client = AsyncIOMotorClient(MONGO_URL)
     db = client[DB_NAME]
@@ -191,6 +198,11 @@ async def seed():
                 mech("Ridhwan Azri",           "+60112345672", "Brakes & Tyres"),
                 mech("Muthu Krishnan",         "+60112345673", "Air-Con & Electrical"),
             ],
+            "repair_stations": [
+                bay("Bay A — Oil & Filter",   "Express oil change, filter service and fluid top-ups"),
+                bay("Bay B — Brakes & Tyres", "Brake pad, disc, tyre rotation and balancing"),
+                bay("Bay C — Engine & Air-Con","Engine tune-up, diagnostics and air-con service"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -228,6 +240,12 @@ async def seed():
                 mech("Shahril Nizam",          "+60167654322", "Tyres & Alignment"),
                 mech("Suresh Selvam",          "+60167654323", "Electrical & Battery"),
             ],
+            "repair_stations": [
+                bay("Bay 1 — Express Service",    "30-min oil change and light maintenance"),
+                bay("Bay 2 — Tyre & Wheel",       "Tyre fitting, balancing and wheel alignment"),
+                bay("Bay 3 — Engine & Diagnostics","Full service, computerised diagnostics and engine work"),
+                bay("Bay 4 — Electrical & Body",  "Battery, electrical faults and windscreen"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -259,6 +277,10 @@ async def seed():
                 mech("Zulkifli Hamdan",        "+60121122331", "Express Service & Oil Change"),
                 mech("Tan Boon Huat",           "+60121122332", "Inspection & Fluids"),
             ],
+            "repair_stations": [
+                bay("Lube Bay 1", "Dedicated 30-minute express oil change lane"),
+                bay("Lube Bay 2", "Extended service, inspection and coolant work"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -289,6 +311,11 @@ async def seed():
             "mechanics": [
                 mech("Amirul Faiz",            "+60132233441", "Preventive Maintenance"),
                 mech("Ramesh Kumar",            "+60132233442", "Timing Belt & Engine"),
+            ],
+            "repair_stations": [
+                bay("Bay 1 — Service",     "Routine oil change and filter service"),
+                bay("Bay 2 — Engine Work", "Timing belt, fuel system and major engine jobs"),
+                bay("Bay 3 — Inspection",  "Pre-purchase and 40-point inspection bay"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -325,6 +352,11 @@ async def seed():
                 mech("Hasrul Nizam",            "+60111122332", "Engine Diagnostics & Repair"),
                 mech("Faizal Kamarudin",        "+60111122333", "Clutch & Drivetrain"),
             ],
+            "repair_stations": [
+                bay("Engine Bay 1 — Overhaul",  "Engine strip-down, machining and top-end rebuild"),
+                bay("Engine Bay 2 — Assembly",  "Clean assembly, torque and engine testing"),
+                bay("Lift Bay — Mechanical",    "Clutch, gearbox removal and drivetrain work"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -358,6 +390,10 @@ async def seed():
             "mechanics": [
                 mech("Hairul Anuar",           "+60122233441", "Auto Transmission & Gearbox"),
                 mech("Cindy Ong Siew Lin",     "+60122233442", "CV Joint & Differential"),
+            ],
+            "repair_stations": [
+                bay("Transmission Bay 1", "Auto gearbox ATF service and full rebuild"),
+                bay("Transmission Bay 2", "Manual gearbox, differential and CV joint work"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -394,6 +430,10 @@ async def seed():
                 mech("Azri bin Rahman",        "+60133344551", "Battery & Alternator"),
                 mech("Sandra Lim Hui Ying",    "+60133344552", "Wiring & Fault Diagnosis"),
             ],
+            "repair_stations": [
+                bay("Electrical Bay 1", "Battery load test, alternator and starter motor service"),
+                bay("Electrical Bay 2", "Wiring fault diagnosis, harness repair and lighting"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -426,6 +466,10 @@ async def seed():
             "mechanics": [
                 mech("Hafidz Azrul",           "+60144455661", "ECU Tuning & Diagnostics"),
                 mech("Suraya Malik",            "+60144455662", "Air-Con & Refrigerant Systems"),
+            ],
+            "repair_stations": [
+                bay("Diagnostic Bay", "ECU OBD scan, remapping and engine management light reset"),
+                bay("A/C Bay",        "Refrigerant regas, compressor replacement and evaporator clean"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -460,6 +504,11 @@ async def seed():
                 mech("Nurul Ain Hanisah",      "+60134455662", "Spray Painting & Finishing"),
                 mech("Wong Chee Keong",        "+60134455663", "Bumper Repair & Prep"),
             ],
+            "repair_stations": [
+                bay("Panel Bay",    "Panel beating, dent removal and bumper repair"),
+                bay("Prep Bay",     "Surface sanding, filler and primer — pre-paint preparation"),
+                bay("Paint Booth",  "Spray painting, clear coat and colour-matched finishing"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -493,6 +542,10 @@ async def seed():
                 mech("Eric Lau Weng Fatt",     "+60155566771", "Windscreen & Glass Fitting"),
                 mech("Norzahra binti Bakar",   "+60155566772", "Vinyl Wrap & Film"),
             ],
+            "repair_stations": [
+                bay("Glass Bay", "Windscreen and side/rear glass removal and fitting"),
+                bay("Wrap Bay",  "Full vehicle vinyl wrap and partial accent pieces"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -523,6 +576,11 @@ async def seed():
             "mechanics": [
                 mech("Marcus Teo Jun Hao",     "+60166677881", "Spray Painting & Colour Match"),
                 mech("Farhana binti Idris",    "+60166677882", "Panel Prep & Rust Treatment"),
+            ],
+            "repair_stations": [
+                bay("Prep & Sanding Bay", "Panel preparation, rust treatment and primer application"),
+                bay("Paint Booth 1",      "Single panel and spot respray with colour matching"),
+                bay("Paint Booth 2",      "Full body respray — climate-controlled and dust-free"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -560,6 +618,12 @@ async def seed():
                 mech("Jenny Teoh Mei Lin",     "+60177788992", "Alignment & Rotation"),
                 mech("Ramesh Pillai",          "+60177788993", "Tyre Sales & Puncture Repair"),
             ],
+            "repair_stations": [
+                bay("Tyre Bay 1",  "Tyre fitting, mounting and dynamic balancing"),
+                bay("Tyre Bay 2",  "Tyre fitting, mounting and dynamic balancing"),
+                bay("Tyre Bay 3",  "4-wheel computerised alignment and tyre rotation"),
+                bay("Tyre Bay 4",  "Puncture repair, nitrogen inflation and valve service"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -590,6 +654,10 @@ async def seed():
             "mechanics": [
                 mech("Hazwan Rosli",           "+60188899002", "Rim Straightening & CNC"),
                 mech("Alicia Chai Pei Shan",   "+60188899003", "Powder Coating & Finishing"),
+            ],
+            "repair_stations": [
+                bay("CNC Bay",     "CNC wheel straightening and rim restoration"),
+                bay("Coating Bay", "Powder coating, custom paint and finishing"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -626,6 +694,10 @@ async def seed():
                 mech("Faruq Izwan",            "+60199900113", "Brake Pads & Discs"),
                 mech("Lim Siew Meng",          "+60199900114", "Caliper Service & Fluid"),
             ],
+            "repair_stations": [
+                bay("Brake Bay 1", "Front brake pads, discs and caliper service"),
+                bay("Brake Bay 2", "Rear brakes, drum service and brake fluid flush"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -658,6 +730,10 @@ async def seed():
             "mechanics": [
                 mech("Irfan Mustafar",         "+60110011224", "Suspension & Coilovers"),
                 mech("Kevin Yong Kah Hoe",     "+60110011225", "Steering & Power Steering"),
+            ],
+            "repair_stations": [
+                bay("Suspension Bay", "Shock absorber, coilover, spring and bushing replacement"),
+                bay("Alignment Bay",  "4-wheel laser alignment and steering geometry setup"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -695,6 +771,11 @@ async def seed():
                 mech("Raymond Goh Teck Lim",   "+60143344552", "Turbo & Forced Induction"),
                 mech("Hafiz Ismail",           "+60143344553", "Exhaust & Intake Systems"),
             ],
+            "repair_stations": [
+                bay("Dyno Bay",          "4WD rolling-road dynamometer — power runs and live ECU tuning"),
+                bay("Fabrication Bay",   "Turbo installation, exhaust fabrication and intake work"),
+                bay("Tuning Station",    "Static ECU mapping, data logging and boost controller setup"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -726,6 +807,10 @@ async def seed():
             "mechanics": [
                 mech("Dr. Chong Wei Lun",      "+60154455661", "HV Battery & EV Systems"),
                 mech("Azlinda binti Nordin",   "+60154455662", "Hybrid Inverter & Diagnostics"),
+            ],
+            "repair_stations": [
+                bay("HV Bay 1 — Battery",     "High-voltage battery reconditioning and replacement — fully insulated"),
+                bay("HV Bay 2 — Inverter",    "Hybrid inverter, OBC and EV charging system diagnostics"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -762,6 +847,10 @@ async def seed():
                 mech("Khairul Amir Zainudin",  "+60165566771", "Head Unit & Audio"),
                 mech("Tracy Wong Xiu Ying",    "+60165566772", "Dashcam, Camera & Security"),
             ],
+            "repair_stations": [
+                bay("Audio Bay",             "Head unit, speakers, amplifier and subwoofer installation"),
+                bay("Security & Camera Bay", "Car alarm, dashcam, reverse camera and immobiliser fitting"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -793,6 +882,10 @@ async def seed():
             "mechanics": [
                 mech("Norhafizan Ahmad",       "+60176677881", "Window Tint & PPF"),
                 mech("Sean Lim Jia Wei",       "+60176677882", "Vinyl Wrap & Interior Trim"),
+            ],
+            "repair_stations": [
+                bay("Tint Bay",        "Window film application — climate-controlled and dust-free"),
+                bay("Wrap & PPF Bay",  "Full vehicle vinyl wrap and paint protection film fitting"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
@@ -830,6 +923,11 @@ async def seed():
                 mech("Michelle Lau Sze Yee",   "+60187788992", "Full Detailing & Headlight Restore"),
                 mech("Zaki Hassan",            "+60187788993", "Exterior Wash & Clay Bar"),
             ],
+            "repair_stations": [
+                bay("Ceramic & Correction Bay", "Paint correction, machine polishing and 9H ceramic coating"),
+                bay("Interior Bay",             "Interior shampooing, leather conditioning and ozone treatment"),
+                bay("Wash Bay",                 "Hand wash, clay bar decontamination and quick detail"),
+            ],
             "created_at": NOW, "updated_at": NOW,
         },
 
@@ -862,6 +960,11 @@ async def seed():
             "mechanics": [
                 mech("Aiman Faris Roslan",     "+60198899002", "Interior Deep Clean & Leather"),
                 mech("Poh Bee Lin",            "+60198899003", "Engine Bay & Underbody"),
+            ],
+            "repair_stations": [
+                bay("Engine Bay Station", "Engine bay steam cleaning, degreasing and dressing"),
+                bay("Interior Spa Bay",   "Deep interior clean, seat shampoo and odour treatment"),
+                bay("Grooming Bay",       "Full grooming packages, undercarriage wash and finishing"),
             ],
             "created_at": NOW, "updated_at": NOW,
         },
