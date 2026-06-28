@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 from typing import Optional
 from core.database import get_db
@@ -594,3 +594,115 @@ async def update_insurance_claim_status(booking_id: str, data: InsuranceClaimSta
     )
     updated = await db.bookings.find_one({"_id": booking_id})
     return serialize_booking(updated)
+
+
+@router.get("/vehicle-health")
+async def get_vehicle_health(
+    current_user: dict = Depends(require_customer),
+    db=Depends(get_db),
+):
+    customer_id = str(current_user["_id"])
+    now = datetime.utcnow()
+
+    all_completed = await db.bookings.find(
+        {"customer_id": customer_id, "status": "completed"}
+    ).sort("updated_at", -1).to_list(None)
+
+    # Latest completed booking per plate
+    seen: set = set()
+    latest_per_plate: list = []
+    for b in all_completed:
+        plate = (b.get("vehicle_plate") or "").upper()
+        if plate and plate not in seen:
+            seen.add(plate)
+            latest_per_plate.append(b)
+
+    results = []
+    for b in latest_per_plate:
+        plate = (b.get("vehicle_plate") or "").upper()
+        service_count = sum(
+            1 for bk in all_completed
+            if (bk.get("vehicle_plate") or "").upper() == plate
+        )
+
+        candidates = [
+            r["next_service_months"]
+            for r in (b.get("service_reports") or [])
+            if r.get("next_service_months")
+        ]
+        if b.get("next_service_months"):
+            candidates.append(b["next_service_months"])
+
+        completed_at = b.get("completed_at") or b.get("updated_at")
+
+        if not candidates or not completed_at:
+            results.append({
+                "vehicle_plate": plate,
+                "vehicle_name": b.get("vehicle_name"),
+                "vehicle_brand": b.get("vehicle_brand"),
+                "score": None,
+                "status": "unknown",
+                "last_service": completed_at.isoformat() if completed_at else None,
+                "last_workshop": b.get("workshop_name"),
+                "next_due": None,
+                "days_until_due": None,
+                "days_overdue": None,
+                "service_count": service_count,
+                "next_service_months": None,
+            })
+            continue
+
+        soonest_months = min(candidates)
+        total_days = soonest_months * 30
+        elapsed_days = (now - completed_at).days
+        score = max(0, min(100, round(100 - elapsed_days / total_days * 100)))
+        days_delta = total_days - elapsed_days
+        next_due = completed_at + timedelta(days=total_days)
+
+        if score >= 80:
+            label = "Excellent"
+        elif score >= 60:
+            label = "Good"
+        elif score >= 40:
+            label = "Fair"
+        elif score >= 20:
+            label = "Poor"
+        else:
+            label = "Critical"
+
+        results.append({
+            "vehicle_plate": plate,
+            "vehicle_name": b.get("vehicle_name"),
+            "vehicle_brand": b.get("vehicle_brand"),
+            "score": score,
+            "status": label,
+            "last_service": completed_at.isoformat(),
+            "last_workshop": b.get("workshop_name"),
+            "next_due": next_due.isoformat(),
+            "days_until_due": max(0, days_delta),
+            "days_overdue": max(0, -days_delta),
+            "service_count": service_count,
+            "next_service_months": soonest_months,
+        })
+
+    # Vehicles in profile with no completed booking
+    plated = {r["vehicle_plate"] for r in results}
+    for v in (current_user.get("vehicles") or []):
+        plate = (v.get("plate") or "").upper()
+        if plate and plate not in plated:
+            results.append({
+                "vehicle_plate": plate,
+                "vehicle_name": v.get("name"),
+                "vehicle_brand": v.get("brand"),
+                "score": None,
+                "status": "No History",
+                "last_service": None,
+                "last_workshop": None,
+                "next_due": None,
+                "days_until_due": None,
+                "days_overdue": None,
+                "service_count": 0,
+                "next_service_months": None,
+            })
+
+    return results

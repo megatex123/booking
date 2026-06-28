@@ -1,7 +1,11 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+const isLocal =
+  typeof window === 'undefined' || window.location.hostname === 'localhost';
+const BASE_URL = isLocal
+  ? 'http://localhost:8000/api/v1'
+  : 'https://bengkil-lah-api.percubaan.com/api/v1';
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -99,6 +103,7 @@ export const bookingAPI = {
     api.get(`/bookings/${id}/invoice`, { responseType: 'blob' }),
   submitInsuranceClaim: (id: string, data: object) => api.patch(`/bookings/${id}/insurance`, data),
   updateInsuranceStatus: (id: string, data: object) => api.patch(`/bookings/${id}/insurance-status`, data),
+  getVehicleHealth: () => api.get('/bookings/vehicle-health'),
 };
 
 export const chatAPI = {

@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomerDashboardScreen } from '../screens/customer/CustomerDashboardScreen';
+import { CarHealthScreen } from '../screens/customer/CarHealthScreen';
 import { HomeScreen } from '../screens/customer/HomeScreen';
 import { WorkshopDetailScreen } from '../screens/customer/WorkshopDetailScreen';
 import { BookingScreen } from '../screens/customer/BookingScreen';
@@ -41,6 +42,7 @@ function DashboardStackScreen() {
       <DashboardStack.Screen name="CustomerDashboard" component={CustomerDashboardScreen} />
       <DashboardStack.Screen name="Notifications" component={NotificationsScreen} />
       <DashboardStack.Screen name="MyReviews" component={MyReviewsScreen} />
+      <DashboardStack.Screen name="CarHealth" component={CarHealthScreen} />
     </DashboardStack.Navigator>
   );
 }

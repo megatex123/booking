@@ -9,6 +9,15 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchMyBookings } from '../../store/bookingSlice';
 import { fetchUnreadCount } from '../../store/notificationSlice';
 import { bookingAPI, reviewAPI } from '../../services/api';
+
+function healthColor(score: number | null): string {
+  if (score === null) return '#94A3B8';
+  if (score >= 80) return '#10B981';
+  if (score >= 60) return '#34D399';
+  if (score >= 40) return '#F59E0B';
+  if (score >= 20) return '#F97316';
+  return '#EF4444';
+}
 import { Colors, Typography, Spacing, BorderRadius, StatusColors, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { ShakingBell } from '../../components/common/ShakingBell';
@@ -61,6 +70,7 @@ export const CustomerDashboardScreen: React.FC<Props> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
   const [completedBookings, setCompletedBookings] = useState<any[]>([]);
+  const [fleetHealth, setFleetHealth] = useState<{ score: number | null; count: number } | null>(null);
 
   const load = useCallback(async () => {
     await Promise.all([
@@ -68,12 +78,17 @@ export const CustomerDashboardScreen: React.FC<Props> = ({ navigation }) => {
       dispatch(fetchUnreadCount()),
     ]);
     try {
-      const [reviewsRes, completedRes] = await Promise.all([
+      const [reviewsRes, completedRes, healthRes] = await Promise.all([
         reviewAPI.getMyReviews(),
         bookingAPI.getMyBookings('completed'),
+        bookingAPI.getVehicleHealth(),
       ]);
       setReviewCount(reviewsRes.data?.length ?? 0);
       setCompletedBookings(completedRes.data || []);
+      const healthData: any[] = healthRes.data || [];
+      const scored = healthData.filter((h: any) => h.score !== null);
+      const avg = scored.length ? Math.round(scored.reduce((s: number, h: any) => s + h.score, 0) / scored.length) : null;
+      setFleetHealth({ score: avg, count: healthData.length });
     } catch {}
   }, []);
 
@@ -162,6 +177,42 @@ export const CustomerDashboardScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.statLabel}>Reviews</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Car Health widget */}
+        <TouchableOpacity
+          style={[styles.healthWidget, { borderColor: healthColor(fleetHealth?.score ?? null) + '50' }]}
+          onPress={() => navigation.navigate('CarHealth')}
+          activeOpacity={0.82}
+        >
+          <View style={styles.healthLeft}>
+            <View style={[styles.healthIconWrap, { backgroundColor: healthColor(fleetHealth?.score ?? null) + '18' }]}>
+              <Ionicons name="heart-circle-outline" size={26} color={healthColor(fleetHealth?.score ?? null)} />
+            </View>
+            <View>
+              <Text style={styles.healthTitle}>Car Health Score</Text>
+              <Text style={styles.healthSub}>
+                {fleetHealth === null
+                  ? 'Loading...'
+                  : fleetHealth.count === 0
+                  ? 'No vehicles tracked'
+                  : fleetHealth.score !== null
+                  ? `Fleet avg · ${fleetHealth.count} vehicle${fleetHealth.count !== 1 ? 's' : ''}`
+                  : 'No service history yet'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.healthRight}>
+            {fleetHealth?.score !== null && fleetHealth?.score !== undefined ? (
+              <>
+                <Text style={[styles.healthScore, { color: healthColor(fleetHealth.score) }]}>{fleetHealth.score}</Text>
+                <Text style={styles.healthScoreOf}>/100</Text>
+              </>
+            ) : (
+              <Text style={[styles.healthScore, { color: '#94A3B8', fontSize: 18 }]}>—</Text>
+            )}
+            <Ionicons name="chevron-forward" size={16} color={colors.textLight} style={{ marginTop: 2 }} />
+          </View>
+        </TouchableOpacity>
 
         {/* Active bookings */}
         <View style={styles.section}>
@@ -480,6 +531,20 @@ function makeStyles(colors: AppTheme) {
   serviceCountBadge: { alignItems: 'center' },
   serviceCountText: { ...Typography.bodySmall, fontWeight: '700', color: colors.primary },
   serviceCountLabel: { fontSize: 9, color: colors.textSecondary },
+
+  healthWidget: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.surface, borderRadius: BorderRadius.lg,
+    borderWidth: 1, padding: Spacing.md,
+    marginHorizontal: Spacing.lg, marginBottom: Spacing.lg,
+  },
+  healthLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  healthIconWrap: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  healthTitle: { ...Typography.body, fontWeight: '700', color: colors.text },
+  healthSub: { ...Typography.caption, color: colors.textSecondary, marginTop: 2 },
+  healthRight: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  healthScore: { fontSize: 28, fontWeight: '900', lineHeight: 32 },
+  healthScoreOf: { fontSize: 12, color: colors.textSecondary, fontWeight: '600', marginRight: 4 },
 
   recentList: { marginHorizontal: Spacing.lg, gap: 8 },
   recentCard: {

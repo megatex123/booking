@@ -1,7 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SOCKET_URL = 'http://localhost:8000';
+const isLocal =
+  typeof window === 'undefined' || window.location.hostname === 'localhost';
+const SOCKET_URL = isLocal
+  ? 'http://localhost:8000'
+  : 'https://bengkil-lah-api.percubaan.com';
 
 let socket: Socket | null = null;
 
