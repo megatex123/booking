@@ -64,6 +64,14 @@ const SECTIONS = [
     description: 'Create time-limited offers that appear as badges on your workshop card',
     route: 'Promotions',
   },
+  {
+    icon: 'calendar-outline' as const,
+    iconBg: '#F0FDF4',
+    iconColor: '#16A34A',
+    title: 'Staff Scheduling',
+    description: 'Roster mechanics by day and shift — track who is on duty',
+    route: 'StaffScheduling',
+  },
 ];
 
 export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => {

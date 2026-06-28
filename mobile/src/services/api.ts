@@ -162,6 +162,19 @@ export const reminderAPI = {
   remove: (id: string) => api.delete(`/reminders/${id}`),
 };
 
+export const scheduleAPI = {
+  list: (params?: { date_from?: string; date_to?: string }) =>
+    api.get('/workshops/my/schedules/', { params }),
+  today: () => api.get('/workshops/my/schedules/today'),
+  create: (data: {
+    mechanic_id: string; date: string; shift: string;
+    status?: string; notes?: string;
+  }) => api.post('/workshops/my/schedules/', data),
+  update: (id: string, data: { shift?: string; status?: string; notes?: string }) =>
+    api.patch(`/workshops/my/schedules/${id}`, data),
+  remove: (id: string) => api.delete(`/workshops/my/schedules/${id}`),
+};
+
 export const corporateAPI = {
   register: (data: object) => api.post('/corporate/register', data),
   getMy: () => api.get('/corporate/my'),

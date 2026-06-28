@@ -23,6 +23,7 @@ import { CustomerCRMScreen } from '../screens/workshop/CustomerCRMScreen';
 import { AnalyticsDashboardScreen } from '../screens/workshop/AnalyticsDashboardScreen';
 import { WorkshopPanelSettingsScreen } from '../screens/workshop/WorkshopPanelSettingsScreen';
 import { WorkshopPromotionsScreen } from '../screens/workshop/WorkshopPromotionsScreen';
+import { StaffSchedulingScreen } from '../screens/workshop/StaffSchedulingScreen';
 import { ChatScreen } from '../screens/shared/ChatScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { EditProfileScreen } from '../screens/shared/EditProfileScreen';
@@ -55,6 +56,7 @@ function DashboardStackScreen() {
       <DashboardStack.Screen name="Analytics" component={AnalyticsDashboardScreen} />
       <DashboardStack.Screen name="PanelSettings" component={WorkshopPanelSettingsScreen} />
       <DashboardStack.Screen name="Promotions" component={WorkshopPromotionsScreen} />
+      <DashboardStack.Screen name="StaffScheduling" component={StaffSchedulingScreen} />
       <DashboardStack.Screen name="Notifications" component={NotificationsScreen} />
     </DashboardStack.Navigator>
   );
@@ -86,6 +88,7 @@ function ProfileStackScreen() {
       <ProfileStack.Screen name="Analytics" component={AnalyticsDashboardScreen} />
       <ProfileStack.Screen name="PanelSettings" component={WorkshopPanelSettingsScreen} />
       <ProfileStack.Screen name="Promotions" component={WorkshopPromotionsScreen} />
+      <ProfileStack.Screen name="StaffScheduling" component={StaffSchedulingScreen} />
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
       <ProfileStack.Screen name="Notifications" component={NotificationsScreen} />
       <ProfileStack.Screen name="WorkshopBookingDetail" component={WorkshopBookingDetailScreen} />

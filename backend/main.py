@@ -8,7 +8,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from core.database import connect_db, close_db
 from core.socket_manager import sio
-from routers import auth, users, workshops, bookings, chat, reviews, payments, uploads, notifications, invoices, referrals, corporate, loyalty, reminders, service_logs
+from routers import auth, users, workshops, bookings, chat, reviews, payments, uploads, notifications, invoices, referrals, corporate, loyalty, reminders, service_logs, schedules
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -51,6 +51,7 @@ app.include_router(corporate.router, prefix="/api/v1")
 app.include_router(loyalty.router, prefix="/api/v1")
 app.include_router(reminders.router, prefix="/api/v1")
 app.include_router(service_logs.router, prefix="/api/v1")
+app.include_router(schedules.router, prefix="/api/v1")
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
