@@ -73,3 +73,24 @@ $NODE $PM2 resurrect
 
 # Verify
 $NODE $PM2 status
+
+🔧 For Customers
+
+SOS Breakdown Request — customer taps a button when stranded, nearest available workshop dispatches a mobile mechanic with live GPS tracking
+Car Health Score — based on service history, calculate a score (e.g. 82/100) with a "next service due" countdown
+Price Estimator — before booking, customer selects symptoms ("squeaky brakes", "AC not cold") and gets an estimated price range from nearby workshops
+Insurance Claim Assist — submit panel claim photos + documents directly through the app, workshop handles the paperwork
+Waitlist / Queue Join — join a workshop's live queue remotely, get notified when it's your turn
+
+🔩 For Workshop Vendors
+
+Staff Scheduling & Shift Management — roster mechanics by day/shift, track who is on duty
+WhatsApp Auto-Notification — send booking confirmations and job completion messages via WhatsApp API automatically
+Supplier Order Portal — low stock alert triggers a reorder request to a parts supplier directly from the app
+Workshop Competitor Radar — see anonymised pricing benchmarks vs nearby workshops for the same services
+
+💰 Revenue / Growth
+
+Subscription Service Plans — customer pays RM X/month for 2 oil changes + 1 inspection, auto-books each cycle
+Bengkil Lah Pay Later — BNPL for big repairs (engine, gearbox), partnered with a fintech provider
+Corporate Fleet Dashboard — companies manage 10–100 vehicles, centralised billing and service scheduling
