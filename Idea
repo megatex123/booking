@@ -60,4 +60,16 @@ Dark/light mode — toggle in settings
 Multi-language — Bahasa Malaysia + English, given the target market
 The top 3 I'd prioritize first: Smart Reminders (retention is cheaper than acquisition), Digital Invoice (builds trust and enables B2B), and WhatsApp integration (meets Malaysian users where they already are).
 
-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
+[REDACTED]
+
+NODE="/home/penyahpepijat/.var/app/com.visualstudio.code/config/nvm/versions/node/v20.20.2/bin/node"
+PM2="/home/penyahpepijat/.var/app/com.visualstudio.code/data/node_modules/lib/node_modules/pm2/bin/pm2"
+
+# Start tunnel
+~/.local/bin/cloudflared tunnel run percubaan-tunnel &
+
+# Resurrect all 6 pm2 services
+$NODE $PM2 resurrect
+
+# Verify
+$NODE $PM2 status
