@@ -263,12 +263,14 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.emptyState}>
               <Text style={{ fontSize: 48, marginBottom: 16 }}>🚗</Text>
               <Text style={styles.emptyTitle}>No vehicles found</Text>
-              <Text style={styles.emptySub}>Add vehicles to your profile and complete a service booking to see your health score.</Text>
+              <Text style={styles.emptySub}>
+                Add your vehicles in My Vehicles (Profile → My Vehicles) first. Car Health Score tracks only your registered vehicles.
+              </Text>
               <TouchableOpacity
                 style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
-                onPress={() => navigation.navigate('HomeTab')}
+                onPress={() => navigation.navigate('ProfileTab')}
               >
-                <Text style={styles.emptyBtnText}>Book a Service</Text>
+                <Text style={styles.emptyBtnText}>Go to My Vehicles</Text>
               </TouchableOpacity>
             </View>
           ) : (

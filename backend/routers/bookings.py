@@ -271,48 +271,76 @@ async def get_vehicle_health(
     current_user: dict = Depends(require_customer),
     db=Depends(get_db),
 ):
+    """
+    Returns health score ONLY for vehicles the customer has explicitly registered
+    in their profile (My Vehicles). Service history is looked up per plate.
+    """
+    registered = current_user.get("vehicles") or []
+    if not registered:
+        return []
+
     customer_id = str(current_user["_id"])
     now = datetime.utcnow()
 
+    # Load all completed bookings once, index by plate
     all_completed = await db.bookings.find(
         {"customer_id": customer_id, "status": "completed"}
     ).sort("updated_at", -1).to_list(None)
 
-    seen: set = set()
-    latest_per_plate: list = []
+    bookings_by_plate: dict = {}
     for b in all_completed:
         plate = (b.get("vehicle_plate") or "").upper()
-        if plate and plate not in seen:
-            seen.add(plate)
-            latest_per_plate.append(b)
+        if plate:
+            bookings_by_plate.setdefault(plate, []).append(b)
 
     results = []
-    for b in latest_per_plate:
-        plate = (b.get("vehicle_plate") or "").upper()
-        service_count = sum(
-            1 for bk in all_completed
-            if (bk.get("vehicle_plate") or "").upper() == plate
-        )
+    for v in registered:
+        plate = (v.get("plate") or "").upper()
+        if not plate:
+            continue
+
+        plate_bookings = bookings_by_plate.get(plate, [])
+        service_count = len(plate_bookings)
+
+        # Most recent completed booking for this plate
+        latest = plate_bookings[0] if plate_bookings else None
+
+        if not latest:
+            results.append({
+                "vehicle_plate": plate,
+                "vehicle_name": v.get("name"),
+                "vehicle_brand": v.get("brand"),
+                "score": None,
+                "status": "No History",
+                "last_service": None,
+                "last_workshop": None,
+                "next_due": None,
+                "days_until_due": None,
+                "days_overdue": None,
+                "service_count": 0,
+                "next_service_months": None,
+            })
+            continue
 
         candidates = [
             r["next_service_months"]
-            for r in (b.get("service_reports") or [])
+            for r in (latest.get("service_reports") or [])
             if r.get("next_service_months")
         ]
-        if b.get("next_service_months"):
-            candidates.append(b["next_service_months"])
+        if latest.get("next_service_months"):
+            candidates.append(latest["next_service_months"])
 
-        completed_at = b.get("completed_at") or b.get("updated_at")
+        completed_at = latest.get("completed_at") or latest.get("updated_at")
 
         if not candidates or not completed_at:
             results.append({
                 "vehicle_plate": plate,
-                "vehicle_name": b.get("vehicle_name"),
-                "vehicle_brand": b.get("vehicle_brand"),
+                "vehicle_name": v.get("name") or latest.get("vehicle_name"),
+                "vehicle_brand": v.get("brand") or latest.get("vehicle_brand"),
                 "score": None,
-                "status": "unknown",
+                "status": "Unknown",
                 "last_service": completed_at.isoformat() if completed_at else None,
-                "last_workshop": b.get("workshop_name"),
+                "last_workshop": latest.get("workshop_name"),
                 "next_due": None,
                 "days_until_due": None,
                 "days_overdue": None,
@@ -341,38 +369,18 @@ async def get_vehicle_health(
 
         results.append({
             "vehicle_plate": plate,
-            "vehicle_name": b.get("vehicle_name"),
-            "vehicle_brand": b.get("vehicle_brand"),
+            "vehicle_name": v.get("name") or latest.get("vehicle_name"),
+            "vehicle_brand": v.get("brand") or latest.get("vehicle_brand"),
             "score": score,
             "status": label,
             "last_service": completed_at.isoformat(),
-            "last_workshop": b.get("workshop_name"),
+            "last_workshop": latest.get("workshop_name"),
             "next_due": next_due.isoformat(),
             "days_until_due": max(0, days_delta),
             "days_overdue": max(0, -days_delta),
             "service_count": service_count,
             "next_service_months": soonest_months,
         })
-
-    # Vehicles in profile with no completed booking
-    plated = {r["vehicle_plate"] for r in results}
-    for v in (current_user.get("vehicles") or []):
-        plate = (v.get("plate") or "").upper()
-        if plate and plate not in plated:
-            results.append({
-                "vehicle_plate": plate,
-                "vehicle_name": v.get("name"),
-                "vehicle_brand": v.get("brand"),
-                "score": None,
-                "status": "No History",
-                "last_service": None,
-                "last_workshop": None,
-                "next_due": None,
-                "days_until_due": None,
-                "days_overdue": None,
-                "service_count": 0,
-                "next_service_months": None,
-            })
 
     return results
 
