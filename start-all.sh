@@ -60,22 +60,39 @@ else
   echo "✗ Serve failed — check /tmp/expo.log"
 fi
 
+# ── Pitch deck ───────────────────────────────────────────────────────────────
+PITCH_DIR="$(cd "$(dirname "$0")/pitch-serve" && pwd)"
+echo "→ Serving pitch deck on :8082..."
+python3 -m http.server 8082 --directory "$PITCH_DIR" > /tmp/pitch-serve.log 2>&1 &
+PITCH_PID=$!
+sleep 1
+
+if curl -s http://localhost:8082 &>/dev/null; then
+  echo "✓ Pitch deck running → http://localhost:8082"
+  echo "                       https://pitch.percubaan.com"
+else
+  echo "✗ Pitch server failed — check /tmp/pitch-serve.log"
+fi
+
 echo ""
 echo "════════════════════════════════════════"
 echo "  Backend  → http://localhost:8000/docs"
 echo "  App      → http://localhost:8081"
+echo "  Pitch    → https://pitch.percubaan.com"
 echo "════════════════════════════════════════"
 echo ""
 echo "Logs: tail -f /tmp/backend.log   (backend)"
 echo "      tail -f /tmp/expo-build.log (build)"
+echo "      tail -f /tmp/pitch-serve.log (pitch)"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
 cleanup() {
   echo "Stopping services..."
-  kill $BACKEND_PID $EXPO_PID 2>/dev/null
+  kill $BACKEND_PID $EXPO_PID $PITCH_PID 2>/dev/null
   pkill -f "uvicorn main:socket_app" 2>/dev/null
   pkill -f "serve dist" 2>/dev/null
+  pkill -f "http.server 8082" 2>/dev/null
 }
 trap cleanup EXIT INT TERM
 wait
