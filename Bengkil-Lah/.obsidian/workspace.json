@@ -11,10 +11,14 @@
             "id": "e6ca0058c9ff781b",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "🏠 Home.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "🏠 Home"
             }
           }
         ],
@@ -195,6 +199,14 @@
   },
   "active": "e6ca0058c9ff781b",
   "lastOpenFiles": [
+    "Dev Setup.md.tmp.502.38acdf2245ea",
+    "API Reference.md.tmp.502.da4f54e0d70a",
+    "Backend.md.tmp.502.ec3c242de1f6",
+    "Backend.md.tmp.502.11cb476e606a",
+    "Frontend.md.tmp.502.5958f0bacc78",
+    "Frontend.md.tmp.502.8af5a4a51a16",
+    "Features.md.tmp.502.8739e98fe269",
+    "Features.md.tmp.502.cc0d5aa9dfdc",
     "Architecture.md",
     "Booking Flow.md.tmp.552.352a07052c75",
     "Future Features.md",
@@ -203,14 +215,7 @@
     "Booking Flow.md",
     "Data Models.md",
     "Features.md.tmp.701.a9b9eafcf7c7",
-    "Future Features.md.tmp.701.ebdb577309fc",
-    "Features.md.tmp.688.5a06c3b2818a",
-    "Future Features.md.tmp.688.d1c9871164fc",
-    "Features.md.tmp.688.764010eb02f2",
-    "Future Features.md.tmp.688.9a7ce72da8e4",
     "🏠 Home.md",
-    "🏠 Home.md.tmp.1972.2e724f68eb04",
-    "Features.md.tmp.1972.961de6a8c62f",
     "Finance.md",
     "Features.md",
     "Dev Setup.md",

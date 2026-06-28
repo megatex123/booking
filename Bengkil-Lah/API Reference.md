@@ -71,6 +71,7 @@ Auth: `Authorization: Bearer <JWT>`
 |---|---|---|---|
 | POST | `/bookings/` | Customer | Create booking |
 | GET | `/bookings/my` | Any | `?status=` filter |
+| GET | `/bookings/vehicle-health` | Customer | Car health score per vehicle — `[{ plate, vehicle_name, score, last_service_date, next_service_due, days_until_due }]` |
 | GET | `/bookings/{id}` | Any | Single booking |
 | PATCH | `/bookings/{id}/status` | Workshop | Status transition |
 | PATCH | `/bookings/{id}/cancel` | Customer | Cancel booking |

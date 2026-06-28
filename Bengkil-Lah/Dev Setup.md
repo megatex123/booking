@@ -103,6 +103,24 @@ SMTP_HOST=...   # for OTP emails
 ### Maps on web
 `react-native-maps` is mocked. Map views render as blank containers. HomeScreen defaults to list mode on web.
 
+## Public Deployment (Cloudflare Tunnel)
+
+The app is publicly accessible via Cloudflare Tunnel (`~/.cloudflared/config.yml`):
+
+| URL | Service |
+|---|---|
+| `https://bengkil-lah.percubaan.com` | Web app (`localhost:8081`) |
+| `https://bengkil-lah-api.percubaan.com` | FastAPI backend (`localhost:8000`) |
+
+The tunnel must be running for these URLs to work. Start it with:
+```bash
+cloudflared tunnel run
+```
+
+The mobile app (`src/services/api.ts` and `src/services/socket.ts`) auto-detects the environment:
+- `localhost` → uses `http://localhost:8000`
+- any other hostname → uses `https://bengkil-lah-api.percubaan.com`
+
 ## Related Notes
 - [[Architecture]] — full tech stack
 - [[Backend]] — file structure, router details

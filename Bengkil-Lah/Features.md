@@ -68,6 +68,7 @@ Status of every major feature in the app.
 |---|---|---|
 | My Vehicles list | ✅ Complete | Derived from booking history |
 | Vehicle service history | ✅ Complete | Per-vehicle booking timeline |
+| Car Health Score | ✅ Complete | Score (0–100) per vehicle based on elapsed time since last service vs. next service interval; `GET /bookings/vehicle-health`; `CarHealthScreen` with SVG circular gauge; dashboard widget on `CustomerDashboardScreen`; fleet average banner |
 
 ## Workshop — Dashboard
 
@@ -179,6 +180,12 @@ Status of every major feature in the app.
 | Claim status update (workshop) | ✅ Complete | `WorkshopBookingDetailScreen` — modal to update submitted/processing/approved/rejected |
 | Push notification on claim update | ✅ Complete | `insurance_claim_update` notification type |
 | Adjuster integration / real panel API | ❌ Not implemented | Would require direct API from insurers (Takaful, Etiqa, etc.) |
+
+## Branding
+
+| Feature | Status | Notes |
+|---|---|---|
+| Enigma Code Solution footer | ✅ Complete | Global footer bar (`EnigmaFooter` in `App.tsx`, `ENIGMA_FOOTER_HEIGHT = 22`); both tab navigators offset tab bar by `marginBottom: ENIGMA_FOOTER_HEIGHT`; logo at `src/assets/enigma-logo.jpg` |
 
 ## Shared Features
 

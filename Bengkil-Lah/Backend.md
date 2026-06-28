@@ -82,6 +82,7 @@ See [[Booking Flow]] for the full lifecycle.
 |---|---|---|
 | POST | `/bookings/` | Create booking (customer) |
 | GET | `/bookings/my` | My bookings (customer or workshop) |
+| GET | `/bookings/vehicle-health` | Car health scores per vehicle (customer) |
 | GET | `/bookings/{id}` | Single booking |
 | PATCH | `/bookings/{id}/status` | Confirm / reject / start / complete (workshop) |
 | PATCH | `/bookings/{id}/cancel` | Cancel (customer) |
@@ -145,6 +146,24 @@ db.workshops.update_one(
 )
 ```
 After deduction, any product whose `quantity <= reorder_threshold` (and `reorder_threshold > 0`) triggers a `low_stock` push notification to the workshop owner. `reorder_threshold` is a new optional field on `ProductCreate` / `ProductUpdate` (default `0` = disabled).
+
+### FastAPI route order rule
+**Static routes must be defined before wildcard routes.** In `bookings.py` the route order is:
+```
+POST  /bookings/
+GET   /bookings/my
+GET   /bookings/vehicle-health   ← must come before /{booking_id}
+GET   /bookings/{booking_id}
+```
+If a static path like `/vehicle-health` is registered *after* `/{booking_id}`, FastAPI matches it as a booking ID lookup and returns 404. This is a standard FastAPI gotcha.
+
+### Car Health Score (`GET /bookings/vehicle-health`)
+Groups completed bookings by vehicle plate, picks the most recent per plate, and computes:
+```python
+score = max(0, min(100, round(100 - elapsed_days / total_days * 100)))
+# where total_days = next_service_months * 30
+```
+Falls back to vehicles listed in `current_user["vehicles"]` for unserviced vehicles (score = 100).
 
 ### Password hashing (Python 3.13 workaround)
 `passlib[bcrypt]` is broken on Python 3.13. `security.py` calls `bcrypt.hashpw()` / `bcrypt.checkpw()` directly.

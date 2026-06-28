@@ -100,13 +100,20 @@ Profile tab
 
 ## API Service (`src/services/api.ts`)
 
-Base URL hardcoded: `http://localhost:8000/api/v1`
+Base URL is **dynamic** — switches between local dev and production:
+```ts
+const isLocal = typeof window === 'undefined' || window.location.hostname === 'localhost';
+const BASE_URL = isLocal
+  ? 'http://localhost:8000/api/v1'
+  : 'https://bengkil-lah-api.percubaan.com/api/v1';
+```
+Same pattern in `socket.ts` (`SOCKET_URL`).
 
 API modules:
 - `authAPI` — login, register, forgot/reset/change password
 - `userAPI` — me, update, vehicles, online status
 - `workshopAPI` — nearby, by ID, my profile, services, products, stations
-- `bookingAPI` — create, my bookings, by ID, status update, cancel, reschedule, assign station
+- `bookingAPI` — create, my bookings, by ID, status update, cancel, reschedule, assign station, `getVehicleHealth()`
 - `chatAPI` — get messages, send message
 - `reviewAPI` — create, my reviews, workshop reviews, booking review
 - `notificationAPI` — list, unread count, mark read, mark all read
@@ -172,6 +179,25 @@ Each card has:
 ### DashboardScreen (vendor)
 - Header greeting: 20px/800, workshop name 13px subtitle
 - Stat cards and revenue card: `borderRadius: 16`, `borderWidth: 1`
+
+### CarHealthScreen (`src/screens/customer/CarHealthScreen.tsx`)
+- Fleet average banner at the top, then one card per vehicle
+- Inline `<svg>` circular gauge (no `react-native-svg` needed — works in Expo web because it renders to HTML DOM)
+- Score bands: Excellent 80–100, Good 60–79, Fair 40–59, Poor 20–39, Critical 0–19
+- Red/orange "Book Service Now" CTA when score < 40
+- Accessible from the `CarHealth` route in `DashboardStack` (CustomerNavigator)
+
+### CustomerDashboardScreen health widget
+- Fetches `bookingAPI.getVehicleHealth()` alongside existing stats
+- Shows fleet average score, color-coded badge, and "View Details →" link that navigates to `CarHealth`
+
+## Global Enigma Footer
+
+`App.tsx` exports `ENIGMA_FOOTER_HEIGHT = 22` and renders `<EnigmaFooter />` as a `position: absolute, bottom: 0` bar outside `<SafeAreaProvider>`.
+
+Both `CustomerNavigator` and `WorkshopNavigator` import `ENIGMA_FOOTER_HEIGHT` and apply `marginBottom: ENIGMA_FOOTER_HEIGHT` to `tabBarStyle` so the tab bar floats above the footer.
+
+Logo asset: `src/assets/enigma-logo.jpg`
 
 ## Related Notes
 - [[Architecture]] — system diagram
