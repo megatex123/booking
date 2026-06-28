@@ -1,0 +1,45 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.db
+*.sqlite3
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+.next/
+.cache/
+
+# Logs
+*.log
+start-services.log
+
+# Build output (dashboard uses vite preview of dist/)
+dashboard/dist/
+
+# IDE / OS
+.DS_Store
+.vscode/settings.json
+*.swp
+
+# Voice model weights (large binary files)
+voice-model/models/*.pt
+voice-model/models/*.bin
+voice-model/models/*.safetensors
+voice-model/data/
+
+# Claude internal
+.claude/
