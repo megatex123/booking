@@ -358,6 +358,26 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
                     <Ionicons name="chevron-forward" size={14} color={reminder ? colors.primary : colors.textSecondary} />
                   </TouchableOpacity>
 
+                  {/* View Service History button */}
+                  <TouchableOpacity
+                    style={[styles.historyBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+                    onPress={() =>
+                      navigation.navigate('ProfileTab', {
+                        screen: 'VehicleServiceHistory',
+                        params: {
+                          vehicle: {
+                            plate: item.vehicle_plate,
+                            model: `${item.vehicle_brand ?? ''} ${item.vehicle_name ?? ''}`.trim() || item.vehicle_plate,
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <Ionicons name="time-outline" size={15} color={colors.primary} />
+                    <Text style={[styles.historyBtnText, { color: colors.primary }]}>View Service History</Text>
+                    <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                  </TouchableOpacity>
+
                   {/* CTA if overdue or near due */}
                   {(item.score !== null && item.score < 40) && (
                     <TouchableOpacity
@@ -560,6 +580,13 @@ function makeStyles(colors: AppTheme) {
     },
     reminderLabel: { fontSize: 13, fontWeight: '600' },
     reminderDate: { fontSize: 11, marginTop: 2 },
+
+    historyBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      borderRadius: BorderRadius.md, borderWidth: 1,
+      paddingHorizontal: 14, paddingVertical: 10, marginTop: Spacing.sm,
+    },
+    historyBtnText: { fontSize: 13, fontWeight: '600', flex: 1 },
 
     bookBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
