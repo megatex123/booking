@@ -142,6 +142,17 @@ export const loyaltyAPI = {
   getHistory: () => api.get('/loyalty/history'),
 };
 
+export const serviceLogAPI = {
+  list: (plate?: string) => api.get('/service-logs/', { params: plate ? { plate } : {} }),
+  create: (data: {
+    vehicle_plate: string; service_date: string; location: string;
+    services: string[]; notes?: string; mileage?: number;
+    cost?: number; next_service_months?: number;
+  }) => api.post('/service-logs/', data),
+  update: (id: string, data: object) => api.patch(`/service-logs/${id}`, data),
+  remove: (id: string) => api.delete(`/service-logs/${id}`),
+};
+
 export const reminderAPI = {
   list: () => api.get('/reminders/'),
   create: (data: { vehicle_plate: string; vehicle_name?: string; reminder_date: string; label?: string }) =>

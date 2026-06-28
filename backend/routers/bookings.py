@@ -282,7 +282,7 @@ async def get_vehicle_health(
     customer_id = str(current_user["_id"])
     now = datetime.utcnow()
 
-    # Load all completed bookings once, index by plate
+    # Load all completed bookings, index by plate
     all_completed = await db.bookings.find(
         {"customer_id": customer_id, "status": "completed"}
     ).sort("updated_at", -1).to_list(None)
@@ -293,6 +293,17 @@ async def get_vehicle_health(
         if plate:
             bookings_by_plate.setdefault(plate, []).append(b)
 
+    # Load all manual service logs, index by plate
+    all_logs = await db.manual_service_logs.find(
+        {"user_id": customer_id}
+    ).sort("service_date", -1).to_list(None)
+
+    logs_by_plate: dict = {}
+    for lg in all_logs:
+        plate = (lg.get("vehicle_plate") or "").upper()
+        if plate:
+            logs_by_plate.setdefault(plate, []).append(lg)
+
     results = []
     for v in registered:
         plate = (v.get("plate") or "").upper()
@@ -300,12 +311,33 @@ async def get_vehicle_health(
             continue
 
         plate_bookings = bookings_by_plate.get(plate, [])
-        service_count = len(plate_bookings)
+        plate_logs = logs_by_plate.get(plate, [])
+        service_count = len(plate_bookings) + len(plate_logs)
 
-        # Most recent completed booking for this plate
-        latest = plate_bookings[0] if plate_bookings else None
+        # Pick the most recent record from either source
+        latest_booking = plate_bookings[0] if plate_bookings else None
+        latest_log = plate_logs[0] if plate_logs else None
 
-        if not latest:
+        # Resolve timestamps for comparison
+        booking_dt = None
+        if latest_booking:
+            booking_dt = latest_booking.get("completed_at") or latest_booking.get("updated_at")
+
+        log_dt = None
+        if latest_log:
+            try:
+                log_dt = datetime.strptime(latest_log["service_date"], "%Y-%m-%d")
+            except Exception:
+                pass
+
+        # Determine which is more recent
+        use_log = False
+        if log_dt and booking_dt:
+            use_log = log_dt.date() > booking_dt.date()
+        elif log_dt and not booking_dt:
+            use_log = True
+
+        if not latest_booking and not latest_log:
             results.append({
                 "vehicle_plate": plate,
                 "vehicle_name": v.get("name"),
@@ -322,25 +354,34 @@ async def get_vehicle_health(
             })
             continue
 
-        candidates = [
-            r["next_service_months"]
-            for r in (latest.get("service_reports") or [])
-            if r.get("next_service_months")
-        ]
-        if latest.get("next_service_months"):
-            candidates.append(latest["next_service_months"])
+        if use_log:
+            # Use manual service log as the basis
+            months = latest_log.get("next_service_months")
+            completed_at = log_dt
+            workshop = latest_log.get("location", "Manual Entry")
+        else:
+            # Use completed booking as the basis
+            latest = latest_booking
+            candidates = [
+                r["next_service_months"]
+                for r in (latest.get("service_reports") or [])
+                if r.get("next_service_months")
+            ]
+            if latest.get("next_service_months"):
+                candidates.append(latest["next_service_months"])
+            months = min(candidates) if candidates else None
+            completed_at = booking_dt
+            workshop = latest.get("workshop_name")
 
-        completed_at = latest.get("completed_at") or latest.get("updated_at")
-
-        if not candidates or not completed_at:
+        if not months or not completed_at:
             results.append({
                 "vehicle_plate": plate,
-                "vehicle_name": v.get("name") or latest.get("vehicle_name"),
-                "vehicle_brand": v.get("brand") or latest.get("vehicle_brand"),
+                "vehicle_name": v.get("name"),
+                "vehicle_brand": v.get("brand"),
                 "score": None,
                 "status": "Unknown",
                 "last_service": completed_at.isoformat() if completed_at else None,
-                "last_workshop": latest.get("workshop_name"),
+                "last_workshop": workshop,
                 "next_due": None,
                 "days_until_due": None,
                 "days_overdue": None,
@@ -349,8 +390,7 @@ async def get_vehicle_health(
             })
             continue
 
-        soonest_months = min(candidates)
-        total_days = soonest_months * 30
+        total_days = months * 30
         elapsed_days = (now - completed_at).days
         score = max(0, min(100, round(100 - elapsed_days / total_days * 100)))
         days_delta = total_days - elapsed_days
@@ -369,17 +409,17 @@ async def get_vehicle_health(
 
         results.append({
             "vehicle_plate": plate,
-            "vehicle_name": v.get("name") or latest.get("vehicle_name"),
-            "vehicle_brand": v.get("brand") or latest.get("vehicle_brand"),
+            "vehicle_name": v.get("name"),
+            "vehicle_brand": v.get("brand"),
             "score": score,
             "status": label,
             "last_service": completed_at.isoformat(),
-            "last_workshop": latest.get("workshop_name"),
+            "last_workshop": workshop,
             "next_due": next_due.isoformat(),
             "days_until_due": max(0, days_delta),
             "days_overdue": max(0, -days_delta),
             "service_count": service_count,
-            "next_service_months": soonest_months,
+            "next_service_months": months,
         })
 
     return results
