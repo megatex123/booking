@@ -41,5 +41,8 @@ voice-model/models/*.bin
 voice-model/models/*.safetensors
 voice-model/data/
 
+# Other projects — tracked separately
+bengkil-Lah/
+
 # Claude internal
 .claude/
