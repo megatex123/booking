@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
@@ -62,17 +62,6 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.signInText}>Already have an account?  </Text>
           <Text style={styles.signInLink}>Sign In</Text>
         </TouchableOpacity>
-
-        <View style={styles.enigmaRow}>
-          <Image
-            source={require('../../assets/enigma-logo.jpg')}
-            style={styles.enigmaLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.enigmaText}>
-            Developed by <Text style={styles.enigmaBrand}>Enigma Code Solution</Text>
-          </Text>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -162,30 +151,6 @@ function makeStyles(colors: AppTheme) {
       fontSize: 15,
       fontWeight: '700',
       color: colors.primary,
-    },
-    enigmaRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 7,
-      marginTop: Spacing.md,
-      paddingTop: Spacing.sm,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-    },
-    enigmaLogo: {
-      width: 18,
-      height: 18,
-      borderRadius: 4,
-      backgroundColor: '#fff',
-    },
-    enigmaText: {
-      fontSize: 11,
-      color: colors.textLight,
-    },
-    enigmaBrand: {
-      fontWeight: '700',
-      color: colors.textSecondary,
     },
   });
 }
