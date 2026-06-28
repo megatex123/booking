@@ -45,6 +45,8 @@ voice-model/data/
 bengkil-Lah/
 investment-agent/
 qr-generator/
+vtt-app/
+dashboard/
 
 # Claude internal
 .claude/
