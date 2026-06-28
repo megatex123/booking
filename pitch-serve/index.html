@@ -476,8 +476,8 @@
   <!-- 3: FEATURES -->
   <div class="slide" id="s3">
     <div class="kicker">Product</div>
-    <h2>50+ Features. All Shipped.</h2>
-    <div class="row" style="width:100%; gap:16px;">
+    <h2>60+ Features. All Shipped.</h2>
+    <div style="display:grid; grid-template-columns: repeat(5,1fr); gap:14px; width:100%;">
       <div class="card">
         <div class="icon">🗺️</div>
         <h3>Smart Discovery</h3>
@@ -497,6 +497,11 @@
         <div class="icon">🏢</div>
         <h3>Enterprise Ready</h3>
         <p>Fleet management, corporate billing, insurance panel claims, multi-mechanic &amp; bay assignment, PDF invoicing.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <div class="icon">❤️</div>
+        <h3>Vehicle Intelligence</h3>
+        <p><strong>Car Health Score</strong> (0–100), service reminders, and full history — including <strong>self-logged</strong> DIY &amp; non-app services.</p>
       </div>
     </div>
   </div>
@@ -666,6 +671,193 @@
         <div class="phone-lbl">Booking Detail</div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- sVehicle: CAR HEALTH & MANUAL SERVICE HISTORY -->
+  <div class="slide" id="sVehicle">
+    <div class="kicker">Live Product</div>
+    <h2>Vehicle Health &amp; Service History</h2>
+    <div style="display:flex; gap:24px; align-items:flex-end; justify-content:center; width:100%;">
+
+      <!-- Phone 1: Car Health Score -->
+      <div class="phone-wrap">
+        <div class="phone" style="height:340px;">
+          <div class="phone-screen">
+            <div class="scr-hdr" style="padding:14px 8px 8px;">
+              <div style="font-size:9px;font-weight:800;">Car Health Score</div>
+              <div style="font-size:12px;">🔔</div>
+            </div>
+            <div class="scr-body">
+              <!-- Fleet banner -->
+              <div style="background:linear-gradient(135deg,#1E6FF5,#1a5fd4);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <div>
+                  <div style="font-size:6px;color:rgba(255,255,255,.7);">Fleet Average</div>
+                  <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-1px;">72</div>
+                </div>
+                <div style="font-size:6px;color:rgba(255,255,255,.6);text-align:right;">2 vehicles<br/>tracked</div>
+              </div>
+              <!-- Vehicle 1 — green -->
+              <div class="scr-card" style="text-align:center;padding:8px 6px;">
+                <div style="font-size:6.5px;font-weight:700;color:#e8eff8;margin-bottom:2px;">WXY 1234 · Produa Bezza</div>
+                <svg viewBox="0 0 80 54" style="width:80px;margin:0 auto 2px;display:block;">
+                  <path d="M10,48 A32,32 0 0,1 70,48" fill="none" stroke="#ffffff15" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M10,48 A32,32 0 0,1 65,22" fill="none" stroke="#10b981" stroke-width="6" stroke-linecap="round"/>
+                  <text x="40" y="39" text-anchor="middle" fill="#10b981" font-size="13" font-weight="900">85</text>
+                  <text x="40" y="47" text-anchor="middle" fill="#7a90a8" font-size="5">Excellent</text>
+                </svg>
+                <div style="font-size:5.5px;color:#7a90a8;">Next service in <span style="color:#10b981;font-weight:700;">47 days</span></div>
+                <div style="font-size:5px;background:#10b98112;border-radius:10px;padding:2px 7px;margin-top:3px;color:#10b981;display:inline-block;">🔔 Reminder: 15 Dec 2026</div>
+              </div>
+              <!-- Vehicle 2 — amber -->
+              <div class="scr-card" style="text-align:center;padding:8px 6px;">
+                <div style="font-size:6.5px;font-weight:700;color:#e8eff8;margin-bottom:2px;">JWD 8726 · Toyota Vios</div>
+                <svg viewBox="0 0 80 54" style="width:80px;margin:0 auto 2px;display:block;">
+                  <path d="M10,48 A32,32 0 0,1 70,48" fill="none" stroke="#ffffff15" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M10,48 A32,32 0 0,1 44,13" fill="none" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+                  <text x="40" y="39" text-anchor="middle" fill="#F59E0B" font-size="13" font-weight="900">52</text>
+                  <text x="40" y="47" text-anchor="middle" fill="#7a90a8" font-size="5">Due Soon</text>
+                </svg>
+                <div style="font-size:5.5px;color:#F59E0B;font-weight:600;">⚠ Service overdue by 12 days</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-lbl">Car Health Score</div>
+      </div>
+
+      <!-- Phone 2: Unified Service History timeline -->
+      <div class="phone-wrap" style="animation-delay:.8s">
+        <div class="phone" style="height:340px;">
+          <div class="phone-screen">
+            <div class="scr-hdr" style="padding:14px 8px 8px;">
+              <div style="font-size:9px;font-weight:800;">Service History</div>
+              <div style="font-size:13px;color:rgba(255,255,255,.6);">＋</div>
+            </div>
+            <div class="scr-body">
+              <!-- Vehicle chip -->
+              <div class="scr-card" style="display:flex;align-items:center;gap:6px;padding:6px 8px;">
+                <div style="width:22px;height:22px;background:#1E6FF515;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🚗</div>
+                <div>
+                  <div style="font-size:7px;font-weight:700;color:#e8eff8;">WXY 1234</div>
+                  <div style="font-size:5.5px;color:#1E6FF5;font-weight:600;">3 records · 1 manual</div>
+                </div>
+              </div>
+              <!-- Timeline entry 1: workshop booking (blue dot) -->
+              <div style="display:flex;gap:6px;margin-top:2px;">
+                <div style="display:flex;flex-direction:column;align-items:center;width:10px;flex-shrink:0;">
+                  <div style="width:9px;height:9px;border-radius:50%;background:#1E6FF5;flex-shrink:0;margin-top:1px;"></div>
+                  <div style="width:1.5px;flex:1;background:#ffffff15;margin-top:2px;"></div>
+                </div>
+                <div style="flex:1;padding-bottom:8px;">
+                  <div style="font-size:6px;color:#7a90a8;margin-bottom:2px;">14 Jun 2026</div>
+                  <div class="scr-card" style="padding:6px 7px;">
+                    <div style="font-size:6.5px;font-weight:700;color:#e8eff8;">🏪 TurboKing Auto</div>
+                    <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;">
+                      <span style="background:#1E6FF510;color:#93C5FD;border-radius:3px;padding:1px 5px;font-size:5.5px;font-weight:600;">Oil Change</span>
+                      <span style="background:#1E6FF510;color:#93C5FD;border-radius:3px;padding:1px 5px;font-size:5.5px;font-weight:600;">Air Filter</span>
+                    </div>
+                    <div style="font-size:6.5px;color:#1E6FF5;font-weight:700;margin-top:3px;text-align:right;">RM 285</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Timeline entry 2: self-logged (amber dot) -->
+              <div style="display:flex;gap:6px;">
+                <div style="display:flex;flex-direction:column;align-items:center;width:10px;flex-shrink:0;">
+                  <div style="width:9px;height:9px;border-radius:50%;background:#F59E0B;flex-shrink:0;margin-top:1px;"></div>
+                  <div style="width:1.5px;flex:1;background:#ffffff15;margin-top:2px;"></div>
+                </div>
+                <div style="flex:1;padding-bottom:8px;">
+                  <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                    <span style="font-size:6px;color:#7a90a8;">10 Mar 2026</span>
+                    <span style="background:#F59E0B15;color:#F59E0B;border-radius:3px;padding:1px 4px;font-size:5px;font-weight:700;">🔧 Self-logged</span>
+                  </div>
+                  <div class="scr-card" style="border-left:2px solid #F59E0B;padding:6px 7px;">
+                    <div style="font-size:6.5px;font-weight:700;color:#e8eff8;">🔧 Home Garage</div>
+                    <div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;">
+                      <span style="background:#F59E0B10;color:#D97706;border-radius:3px;padding:1px 5px;font-size:5.5px;font-weight:600;">Brake Pads</span>
+                      <span style="background:#F59E0B10;color:#D97706;border-radius:3px;padding:1px 5px;font-size:5.5px;font-weight:600;">Coolant</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;">
+                      <span style="font-size:5.5px;color:#7a90a8;">📍 45,000 km</span>
+                      <span style="font-size:6.5px;color:#F59E0B;font-weight:700;">RM 120</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-lbl">Service History</div>
+      </div>
+
+      <!-- Phone 3: Log Service form -->
+      <div class="phone-wrap" style="animation-delay:1.6s">
+        <div class="phone" style="height:340px;">
+          <div class="phone-screen">
+            <div class="scr-hdr" style="padding:14px 8px 8px;">
+              <div style="font-size:9px;font-weight:800;">Log a Service</div>
+            </div>
+            <div class="scr-body">
+              <div style="font-size:6px;color:#7a90a8;margin-bottom:8px;line-height:1.5;">Record any service — DIY, roadside mechanic, or any workshop — even outside the app.</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div>
+                  <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Service Date</div>
+                  <div style="background:#162233;border:1px solid #ffffff18;border-radius:5px;padding:5px 8px;font-size:6.5px;color:#e8eff8;">2026-03-10</div>
+                </div>
+                <div>
+                  <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Workshop / Location</div>
+                  <div style="background:#162233;border:1px solid #ffffff18;border-radius:5px;padding:5px 8px;font-size:6.5px;color:#e8eff8;">Home Garage</div>
+                </div>
+                <div>
+                  <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Services Performed</div>
+                  <div style="background:#162233;border:1px solid #ffffff18;border-radius:5px;padding:5px 8px;font-size:6.5px;color:#e8eff8;">Brake Pads, Coolant Top-up</div>
+                </div>
+                <!-- Quick-pick chips -->
+                <div style="display:flex;gap:3px;flex-wrap:wrap;">
+                  <span style="background:#1E6FF510;color:#60A5FA;border-radius:10px;padding:2px 6px;font-size:5px;font-weight:600;">Oil Change</span>
+                  <span style="background:#1E6FF510;color:#60A5FA;border-radius:10px;padding:2px 6px;font-size:5px;font-weight:600;">Air Filter</span>
+                  <span style="background:#1E6FF510;color:#60A5FA;border-radius:10px;padding:2px 6px;font-size:5px;font-weight:600;">Wiper Blades</span>
+                  <span style="background:#1E6FF510;color:#60A5FA;border-radius:10px;padding:2px 6px;font-size:5px;font-weight:600;">Spark Plugs</span>
+                </div>
+                <div style="display:flex;gap:5px;">
+                  <div style="flex:1;">
+                    <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Mileage (km)</div>
+                    <div style="background:#162233;border:1px solid #ffffff18;border-radius:5px;padding:5px 8px;font-size:6.5px;color:#e8eff8;">45,000</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Cost (RM)</div>
+                    <div style="background:#162233;border:1px solid #ffffff18;border-radius:5px;padding:5px 8px;font-size:6.5px;color:#e8eff8;">120.00</div>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:5.5px;color:#7a90a8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Next Service In (months)</div>
+                  <div style="background:#162233;border:1px solid #1E6FF530;border-radius:5px;padding:5px 8px;font-size:6px;color:#60A5FA;">3 months — feeds Car Health Score</div>
+                </div>
+              </div>
+              <div style="background:#1E6FF5;border-radius:6px;padding:6px;text-align:center;color:#fff;font-size:7.5px;font-weight:800;margin-top:8px;">✓ Save Record</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-lbl">Log Service</div>
+      </div>
+
+    </div>
+
+    <!-- Caption row -->
+    <div style="display:flex;gap:28px;justify-content:center;width:100%;margin-top:20px;">
+      <div style="text-align:center;max-width:200px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">Health Score</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">0–100 per vehicle with bell reminders and fleet average banner</div>
+      </div>
+      <div style="text-align:center;max-width:200px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">Unified Timeline</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">Workshop bookings (blue) + self-logged entries (amber) merged chronologically</div>
+      </div>
+      <div style="text-align:center;max-width:200px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">Self-Service Logging</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">Log DIY or any workshop visit — date, services, cost, mileage, next interval</div>
+      </div>
     </div>
   </div>
 
@@ -980,7 +1172,7 @@
           <div class="lbl">User Roles Built</div>
         </div>
         <div class="stat">
-          <div class="num">50+</div>
+          <div class="num">60+</div>
           <div class="lbl">Features Shipped</div>
         </div>
         <div class="stat">
