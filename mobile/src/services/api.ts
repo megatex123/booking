@@ -142,6 +142,15 @@ export const loyaltyAPI = {
   getHistory: () => api.get('/loyalty/history'),
 };
 
+export const reminderAPI = {
+  list: () => api.get('/reminders/'),
+  create: (data: { vehicle_plate: string; vehicle_name?: string; reminder_date: string; label?: string }) =>
+    api.post('/reminders/', data),
+  update: (id: string, data: { reminder_date?: string; label?: string }) =>
+    api.patch(`/reminders/${id}`, data),
+  remove: (id: string) => api.delete(`/reminders/${id}`),
+};
+
 export const corporateAPI = {
   register: (data: object) => api.post('/corporate/register', data),
   getMy: () => api.get('/corporate/my'),

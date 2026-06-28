@@ -81,3 +81,37 @@ async def check_service_reminders() -> int:
 
     logger.info(f"[reminders] complete — {sent} sent")
     return sent
+
+
+async def check_custom_reminders() -> int:
+    """Fire notifications for user-set vehicle reminders due today."""
+    db = get_db()
+    today = datetime.utcnow().date().isoformat()  # "YYYY-MM-DD"
+
+    docs = await db.vehicle_reminders.find({
+        "reminder_date": today,
+        "notified": {"$ne": True},
+    }).to_list(500)
+
+    sent = 0
+    for r in docs:
+        vehicle = r.get("vehicle_name") or r.get("vehicle_plate", "your vehicle")
+        label = r.get("label", "Service Reminder")
+
+        await push_notification(
+            db,
+            r["user_id"],
+            "custom_reminder",
+            f"Reminder: {label}",
+            f"You set a service reminder for {vehicle} today. Book a workshop to keep your car in shape!",
+            {"vehicle_plate": r["vehicle_plate"]},
+        )
+        await db.vehicle_reminders.update_one(
+            {"_id": r["_id"]},
+            {"$set": {"notified": True, "notified_at": datetime.utcnow()}},
+        )
+        sent += 1
+        logger.info(f"[custom_reminders] plate={r['vehicle_plate']!r} label={label!r}")
+
+    logger.info(f"[custom_reminders] complete — {sent} sent")
+    return sent

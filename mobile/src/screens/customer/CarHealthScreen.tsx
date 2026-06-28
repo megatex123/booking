@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, ActivityIndicator,
+  RefreshControl, ActivityIndicator, Modal, TextInput,
+  Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
-import { bookingAPI } from '../../services/api';
+import { bookingAPI, reminderAPI } from '../../services/api';
+import { showAlert, showConfirm } from '../../utils/webAlert';
 
 interface Props { navigation: any }
 
@@ -24,6 +26,15 @@ interface VehicleHealth {
   days_overdue: number | null;
   service_count: number;
   next_service_months: number | null;
+}
+
+interface VehicleReminder {
+  id: string;
+  vehicle_plate: string;
+  vehicle_name: string | null;
+  reminder_date: string;
+  label: string;
+  notified: boolean;
 }
 
 function scoreColor(score: number | null): string {
@@ -53,40 +64,25 @@ function ScoreGauge({ score, size = 130 }: { score: number | null; size?: number
   return (
     // @ts-ignore — SVG works on Expo web
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
-      {/* Background ring */}
       {/* @ts-ignore */}
-      <circle
-        cx={cx} cy={cy} r={radius}
-        fill="none" stroke="#E2E8F0" strokeWidth={strokeWidth}
-      />
-      {/* Progress arc */}
+      <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={strokeWidth} />
       {score !== null && (
         // @ts-ignore
         <circle
-          cx={cx} cy={cy} r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
+          cx={cx} cy={cy} r={radius} fill="none" stroke={color}
+          strokeWidth={strokeWidth} strokeDasharray={circumference}
+          strokeDashoffset={dashOffset} strokeLinecap="round"
           transform={`rotate(-90 ${cx} ${cy})`}
         />
       )}
-      {/* Score text */}
       {/* @ts-ignore */}
-      <text
-        x="50%" y="44%" textAnchor="middle" dominantBaseline="middle"
-        fontSize="30" fontWeight="800" fill={color}
-      >
+      <text x="50%" y="44%" textAnchor="middle" dominantBaseline="middle"
+        fontSize="30" fontWeight="800" fill={color}>
         {score !== null ? score : '–'}
       </text>
-      {/* "/100" label */}
       {/* @ts-ignore */}
-      <text
-        x="50%" y="66%" textAnchor="middle" dominantBaseline="middle"
-        fontSize="11" fontWeight="600" fill="#94A3B8"
-      >
+      <text x="50%" y="66%" textAnchor="middle" dominantBaseline="middle"
+        fontSize="11" fontWeight="600" fill="#94A3B8">
         {score !== null ? '/100' : 'N/A'}
       </text>
     </svg>
@@ -114,23 +110,106 @@ function fleetAvgScore(items: VehicleHealth[]): number | null {
   return Math.round(scored.reduce((s, i) => s + (i.score ?? 0), 0) / scored.length);
 }
 
+function todayIso(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [health, setHealth] = useState<VehicleHealth[]>([]);
+  const [reminders, setReminders] = useState<Record<string, VehicleReminder>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalPlate, setModalPlate] = useState('');
+  const [modalName, setModalName] = useState('');
+  const [modalDate, setModalDate] = useState('');
+  const [modalLabel, setModalLabel] = useState('');
+  const [modalReminderId, setModalReminderId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
   const load = useCallback(async () => {
     try {
-      const res = await bookingAPI.getVehicleHealth();
-      setHealth(res.data);
+      const [healthRes, remindersRes] = await Promise.all([
+        bookingAPI.getVehicleHealth(),
+        reminderAPI.list(),
+      ]);
+      setHealth(healthRes.data);
+      const map: Record<string, VehicleReminder> = {};
+      for (const r of remindersRes.data) map[r.vehicle_plate] = r;
+      setReminders(map);
     } catch {}
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, []);
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
+
+  const openModal = (item: VehicleHealth) => {
+    const existing = reminders[item.vehicle_plate];
+    setModalPlate(item.vehicle_plate);
+    setModalName(`${item.vehicle_brand ?? ''} ${item.vehicle_name ?? ''}`.trim() || item.vehicle_plate);
+    setModalDate(existing?.reminder_date ?? todayIso());
+    setModalLabel(existing?.label ?? 'Service Reminder');
+    setModalReminderId(existing?.id ?? null);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setModalPlate('');
+    setModalDate('');
+    setModalLabel('');
+    setModalReminderId(null);
+  };
+
+  const saveReminder = async () => {
+    if (!modalDate) { showAlert('Please enter a reminder date.'); return; }
+    setSaving(true);
+    try {
+      let saved: VehicleReminder;
+      if (modalReminderId) {
+        const res = await reminderAPI.update(modalReminderId, { reminder_date: modalDate, label: modalLabel });
+        saved = res.data;
+      } else {
+        const res = await reminderAPI.create({
+          vehicle_plate: modalPlate,
+          vehicle_name: modalName,
+          reminder_date: modalDate,
+          label: modalLabel,
+        });
+        saved = res.data;
+      }
+      setReminders((prev) => ({ ...prev, [modalPlate]: saved }));
+      closeModal();
+    } catch {
+      showAlert('Failed to save reminder. Please try again.');
+    }
+    setSaving(false);
+  };
+
+  const deleteReminder = async () => {
+    if (!modalReminderId) return;
+    const confirmed = await showConfirm('Delete this reminder?', 'This cannot be undone.');
+    if (!confirmed) return;
+    setSaving(true);
+    try {
+      await reminderAPI.remove(modalReminderId);
+      setReminders((prev) => {
+        const next = { ...prev };
+        delete next[modalPlate];
+        return next;
+      });
+      closeModal();
+    } catch {
+      showAlert('Failed to delete reminder.');
+    }
+    setSaving(false);
+  };
 
   const avgScore = fleetAvgScore(health);
   const avgColor = scoreColor(avgScore);
@@ -160,7 +239,9 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.fleetSub}>{health.length} vehicle{health.length !== 1 ? 's' : ''} tracked</Text>
               {avgScore !== null ? (
                 <View style={[styles.fleetBadge, { backgroundColor: avgColor + '18', borderColor: avgColor + '40' }]}>
-                  <Text style={[styles.fleetBadgeText, { color: avgColor }]}>{scoreLabel(avgScore, '')}{avgScore >= 80 ? ' 🟢' : avgScore >= 60 ? ' 🟡' : avgScore >= 40 ? ' 🟠' : ' 🔴'}</Text>
+                  <Text style={[styles.fleetBadgeText, { color: avgColor }]}>
+                    {scoreLabel(avgScore, '')}{avgScore >= 80 ? ' 🟢' : avgScore >= 60 ? ' 🟡' : avgScore >= 40 ? ' 🟠' : ' 🔴'}
+                  </Text>
                 </View>
               ) : (
                 <Text style={styles.fleetNoData}>No service history yet</Text>
@@ -169,11 +250,11 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
             <ScoreGauge score={avgScore} size={110} />
           </View>
 
-          {/* How score is calculated */}
+          {/* Explainer */}
           <View style={styles.explainer}>
             <Ionicons name="information-circle-outline" size={15} color={colors.textSecondary} />
             <Text style={styles.explainerText}>
-              Score is based on time since last service vs recommended interval. 100 = just serviced, 0 = overdue.
+              Score is based on time since last service vs recommended interval. 100 = just serviced, 0 = overdue. Tap the 🔔 bell to set your own reminder.
             </Text>
           </View>
 
@@ -195,6 +276,7 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
               const color = scoreColor(item.score);
               const due = daysLabel(item);
               const progressPct = item.score !== null ? item.score / 100 : 0;
+              const reminder = reminders[item.vehicle_plate];
 
               return (
                 <View key={item.vehicle_plate} style={[styles.card, { borderLeftColor: color }]}>
@@ -204,9 +286,7 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
                       <View style={[styles.plateChip, { backgroundColor: color + '15', borderColor: color + '40' }]}>
                         <Text style={[styles.plateText, { color }]}>{item.vehicle_plate}</Text>
                       </View>
-                      <Text style={styles.vehicleName}>
-                        {item.vehicle_brand} {item.vehicle_name}
-                      </Text>
+                      <Text style={styles.vehicleName}>{item.vehicle_brand} {item.vehicle_name}</Text>
                     </View>
                     <ScoreGauge score={item.score} size={110} />
                   </View>
@@ -253,6 +333,29 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                   )}
 
+                  {/* Self-service reminder row */}
+                  <TouchableOpacity
+                    style={[styles.reminderRow, reminder ? { backgroundColor: colors.primary + '12', borderColor: colors.primary + '40' } : { backgroundColor: colors.background, borderColor: colors.border }]}
+                    onPress={() => openModal(item)}
+                  >
+                    <Ionicons
+                      name={reminder ? 'notifications' : 'notifications-outline'}
+                      size={16}
+                      color={reminder ? colors.primary : colors.textSecondary}
+                    />
+                    {reminder ? (
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.reminderLabel, { color: colors.primary }]}>{reminder.label}</Text>
+                        <Text style={[styles.reminderDate, { color: colors.primary + 'BB' }]}>
+                          Reminder set for {formatDate(reminder.reminder_date)}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={[styles.reminderLabel, { color: colors.textSecondary }]}>Set your own service reminder</Text>
+                    )}
+                    <Ionicons name="chevron-forward" size={14} color={reminder ? colors.primary : colors.textSecondary} />
+                  </TouchableOpacity>
+
                   {/* CTA if overdue or near due */}
                   {(item.score !== null && item.score < 40) && (
                     <TouchableOpacity
@@ -273,6 +376,98 @@ export const CarHealthScreen: React.FC<Props> = ({ navigation }) => {
           <View style={{ height: 32 }} />
         </ScrollView>
       )}
+
+      {/* Reminder modal */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={closeModal}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
+              {/* Handle */}
+              <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {modalReminderId ? 'Edit Reminder' : 'Set Reminder'}
+              </Text>
+              <Text style={[styles.modalSub, { color: colors.textSecondary }]}>
+                {modalName} · {modalPlate}
+              </Text>
+
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Reminder Date</Text>
+              {Platform.OS === 'web' ? (
+                // @ts-ignore — HTML date input on web
+                <input
+                  type="date"
+                  value={modalDate}
+                  min={todayIso()}
+                  onChange={(e: any) => setModalDate(e.target.value)}
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: 10,
+                    border: `1px solid ${colors.border}`,
+                    backgroundColor: colors.background, color: colors.text,
+                    fontSize: 15, outline: 'none', marginBottom: 16,
+                    fontFamily: 'inherit', boxSizing: 'border-box',
+                  } as any}
+                />
+              ) : (
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  value={modalDate}
+                  onChangeText={setModalDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="numeric"
+                />
+              )}
+
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Label (optional)</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                value={modalLabel}
+                onChangeText={setModalLabel}
+                placeholder="e.g. Oil change, Tyre rotation"
+                placeholderTextColor={colors.textSecondary}
+                maxLength={60}
+              />
+
+              <View style={styles.modalActions}>
+                {modalReminderId && (
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { backgroundColor: '#EF444420', borderColor: '#EF444440', borderWidth: 1, flex: 1 }]}
+                    onPress={deleteReminder}
+                    disabled={saving}
+                  >
+                    <Ionicons name="trash-outline" size={15} color="#EF4444" />
+                    <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 14 }}>Delete</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: colors.border, flex: 1 }]}
+                  onPress={closeModal}
+                  disabled={saving}
+                >
+                  <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 2 }]}
+                  onPress={saveReminder}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="notifications" size={15} color="#fff" />
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
+                        {modalReminderId ? 'Update Reminder' : 'Set Reminder'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -355,9 +550,18 @@ function makeStyles(colors: AppTheme) {
     },
     workshopText: { ...Typography.caption, color: colors.textSecondary, flex: 1 },
 
+    reminderRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      borderRadius: BorderRadius.md, borderWidth: 1,
+      paddingHorizontal: 12, paddingVertical: 10,
+      marginTop: Spacing.md,
+    },
+    reminderLabel: { fontSize: 13, fontWeight: '600' },
+    reminderDate: { fontSize: 11, marginTop: 2 },
+
     bookBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 6, borderRadius: BorderRadius.md, padding: 12, marginTop: Spacing.md,
+      gap: 6, borderRadius: BorderRadius.md, padding: 12, marginTop: Spacing.sm,
     },
     bookBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
@@ -366,5 +570,34 @@ function makeStyles(colors: AppTheme) {
     emptySub: { ...Typography.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24, paddingHorizontal: 16 },
     emptyBtn: { paddingHorizontal: 28, paddingVertical: 13, borderRadius: BorderRadius.lg },
     emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+
+    // Modal
+    modalOverlay: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+      justifyContent: 'flex-end',
+    },
+    modalSheet: {
+      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      padding: Spacing.xl, paddingBottom: 36,
+    },
+    modalHandle: {
+      width: 40, height: 4, borderRadius: 2,
+      alignSelf: 'center', marginBottom: Spacing.lg,
+    },
+    modalTitle: { ...Typography.h3, marginBottom: 4 },
+    modalSub: { ...Typography.caption, marginBottom: Spacing.xl },
+    fieldLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 6, textTransform: 'uppercase' },
+    textInput: {
+      borderWidth: 1, borderRadius: 10,
+      paddingHorizontal: 14, paddingVertical: 12,
+      fontSize: 15, marginBottom: 16,
+    },
+    modalActions: {
+      flexDirection: 'row', gap: 10, marginTop: Spacing.sm,
+    },
+    modalBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 6, paddingVertical: 13, borderRadius: BorderRadius.lg,
+    },
   });
 }

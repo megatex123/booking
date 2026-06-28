@@ -8,7 +8,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from core.database import connect_db, close_db
 from core.socket_manager import sio
-from routers import auth, users, workshops, bookings, chat, reviews, payments, uploads, notifications, invoices, referrals, corporate, loyalty
+from routers import auth, users, workshops, bookings, chat, reviews, payments, uploads, notifications, invoices, referrals, corporate, loyalty, reminders
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -17,8 +17,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_db()
-    from core.scheduler import scheduler, check_service_reminders
+    from core.scheduler import scheduler, check_service_reminders, check_custom_reminders
     scheduler.add_job(check_service_reminders, CronTrigger(hour=9, minute=0), id="service_reminders")
+    scheduler.add_job(check_custom_reminders, CronTrigger(hour=8, minute=0), id="custom_reminders")
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -48,6 +49,7 @@ app.include_router(invoices.router, prefix="/api/v1")
 app.include_router(referrals.router, prefix="/api/v1")
 app.include_router(corporate.router, prefix="/api/v1")
 app.include_router(loyalty.router, prefix="/api/v1")
+app.include_router(reminders.router, prefix="/api/v1")
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
