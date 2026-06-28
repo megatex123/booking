@@ -38,7 +38,7 @@
     transition: opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
     transform: translateX(60px);
   }
-  .slide.active  { opacity: 1; pointer-events: all; transform: translateX(0) scale(1); }
+  .slide.active  { opacity: 1; pointer-events: all; transform: translateX(0) scale(1); z-index: 1; }
   .slide.exit    { opacity: 0; transform: translateX(-80px) scale(.97); }
 
   .cols { display: flex; gap: 32px; width: 100%; }
@@ -144,13 +144,15 @@
   /* ── CONTROLS ── */
   .controls {
     position: fixed; bottom: 32px; right: 40px;
-    display: flex; align-items: center; gap: 16px; z-index: 100;
+    display: flex; align-items: center; gap: 16px; z-index: 9999;
+    pointer-events: all;
   }
   .btn {
     background: var(--card); border: 1px solid #ffffff18;
     color: var(--text); padding: 10px 22px; border-radius: 999px;
     font-size: 14px; font-weight: 600; cursor: pointer;
     transition: background .2s;
+    pointer-events: all;
   }
   .btn:hover    { background: var(--blue); border-color: var(--blue); }
   .btn:disabled { opacity: .3; cursor: default; background: var(--card); border-color: #ffffff18; }
@@ -159,12 +161,12 @@
   .progress {
     position: fixed; top: 0; left: 0; height: 3px;
     background: linear-gradient(90deg, var(--blue), var(--accent));
-    transition: width .4s ease; z-index: 100;
+    transition: width .4s ease; z-index: 9999;
     animation: shimmer 2.5s ease-in-out infinite;
   }
   .slide-num {
     position: fixed; top: 24px; right: 40px;
-    font-size: 12px; color: var(--muted); font-weight: 600; z-index: 100;
+    font-size: 12px; color: var(--muted); font-weight: 600; z-index: 9999;
   }
 
   /* ─── PHONE MOCKUP ─── */
