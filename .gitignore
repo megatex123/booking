@@ -41,8 +41,10 @@ voice-model/models/*.bin
 voice-model/models/*.safetensors
 voice-model/data/
 
-# Other projects — tracked separately
+# Projects with their own repos
 bengkil-Lah/
+investment-agent/
+qr-generator/
 
 # Claude internal
 .claude/
