@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, ActivityIndicator, Switch, Platform,
+  TextInput, Modal, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -173,6 +173,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setShowModal(false)}>
           <TouchableOpacity activeOpacity={1} onPress={() => {}}>
           <View style={styles.sheet}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={styles.sheetTitle}>{editingId ? 'Edit Promotion' : 'New Promotion'}</Text>
             <Text style={styles.fieldLabel}>Title *</Text>
             <TextInput
@@ -225,6 +226,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>{editingId ? 'Save Changes' : 'Create Promotion'}</Text>}
             </TouchableOpacity>
+            </ScrollView>
           </View>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -242,6 +244,9 @@ function fmtDateTimeDisplay(iso: string): string {
   }) + ', ' + d.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
+const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAL_DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
 function DateTimePicker({
   value, onChange, min, colors, styles,
 }: {
@@ -251,32 +256,124 @@ function DateTimePicker({
   colors: any;
   styles: any;
 }) {
+  const [open, setOpen] = useState(false);
+  const minDateStr = min ? min.slice(0, 10) : '';
+  const parsed = value ? new Date(value) : null;
+  const [viewYear, setViewYear] = useState(() => parsed ? parsed.getFullYear() : new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(() => parsed ? parsed.getMonth() : new Date().getMonth());
+  const [selDate, setSelDate] = useState(() => value ? value.slice(0, 10) : '');
+  const [hour, setHour] = useState(() => parsed ? String(parsed.getHours()).padStart(2, '0') : '09');
+  const [minute, setMinute] = useState(() => parsed ? String(parsed.getMinutes()).padStart(2, '0') : '00');
+
+  const emit = (date: string, h: string, m: string) => {
+    if (date && h.length === 2 && m.length === 2) onChange(`${date}T${h}:${m}`);
+  };
+
+  const prevMonth = () => viewMonth === 0 ? (setViewMonth(11), setViewYear(y => y - 1)) : setViewMonth(m => m - 1);
+  const nextMonth = () => viewMonth === 11 ? (setViewMonth(0), setViewYear(y => y + 1)) : setViewMonth(m => m + 1);
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  while (cells.length % 7 !== 0) cells.push(null);
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   const display = value ? fmtDateTimeDisplay(value) : 'Pick date & time';
-  const hasValue = !!value;
 
   return (
-    <View style={styles.datePickerWrap}>
-      {/* Visible styled button */}
-      <View style={[styles.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.background }]}>
+    <View>
+      <TouchableOpacity
+        style={[styles.datePickerBtn, { borderColor: open ? colors.primary : colors.border, backgroundColor: colors.background }]}
+        onPress={() => setOpen(o => !o)}
+      >
         <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-        <Text style={[styles.datePickerText, { color: hasValue ? colors.text : colors.textLight }]} numberOfLines={1}>
+        <Text style={[styles.datePickerText, { color: value ? colors.text : colors.textLight }]} numberOfLines={1}>
           {display}
         </Text>
-        <Ionicons name="chevron-down-outline" size={15} color={colors.textSecondary} />
-      </View>
-      {/* Invisible datetime-local input covers the button — clicking it opens the browser calendar */}
-      {Platform.OS === 'web' && (
-        <input
-          type="datetime-local"
-          value={value}
-          min={min}
-          onChange={(e: any) => onChange(e.target.value)}
-          style={{
-            position: 'absolute', inset: 0,
-            opacity: 0, cursor: 'pointer',
-            width: '100%', height: '100%',
-          } as any}
-        />
+        <Ionicons name={open ? 'chevron-up-outline' : 'chevron-down-outline'} size={15} color={colors.textSecondary} />
+      </TouchableOpacity>
+
+      {open && (
+        <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, padding: 12, marginTop: 6 }}>
+          {/* Month nav */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <TouchableOpacity onPress={prevMonth} style={{ padding: 6 }}>
+              <Ionicons name="chevron-back" size={18} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={{ fontWeight: '700', color: colors.text, fontSize: 14 }}>
+              {CAL_MONTHS[viewMonth]} {viewYear}
+            </Text>
+            <TouchableOpacity onPress={nextMonth} style={{ padding: 6 }}>
+              <Ionicons name="chevron-forward" size={18} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Day headers */}
+          <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+            {CAL_DAYS.map(d => (
+              <View key={d} style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600' }}>{d}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Calendar grid */}
+          {Array.from({ length: cells.length / 7 }, (_, row) => (
+            <View key={row} style={{ flexDirection: 'row' }}>
+              {cells.slice(row * 7, row * 7 + 7).map((day, col) => {
+                if (!day) return <View key={col} style={{ flex: 1, height: 34 }} />;
+                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isSelected = dateStr === selDate;
+                const isDisabled = !!minDateStr && dateStr < minDateStr;
+                const isToday = dateStr === todayStr;
+                return (
+                  <TouchableOpacity
+                    key={col}
+                    disabled={isDisabled}
+                    onPress={() => { setSelDate(dateStr); emit(dateStr, hour, minute); }}
+                    style={{ flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: isSelected ? colors.primary : 'transparent', borderRadius: 17, opacity: isDisabled ? 0.3 : 1 }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: isSelected || isToday ? '700' : '400', color: isSelected ? '#fff' : isToday ? colors.primary : colors.text }}>
+                      {day}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+
+          {/* Time row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+            <Ionicons name="time-outline" size={15} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>Time:</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, color: colors.text, width: 44, textAlign: 'center', backgroundColor: colors.surface, fontSize: 15, fontWeight: '600' }}
+              value={hour}
+              onChangeText={v => { const h = v.replace(/\D/g, '').slice(0, 2); setHour(h); emit(selDate, h, minute); }}
+              keyboardType="numeric"
+              maxLength={2}
+              placeholder="HH"
+              placeholderTextColor={colors.textLight}
+            />
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 18 }}>:</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, color: colors.text, width: 44, textAlign: 'center', backgroundColor: colors.surface, fontSize: 15, fontWeight: '600' }}
+              value={minute}
+              onChangeText={v => { const m = v.replace(/\D/g, '').slice(0, 2); setMinute(m); emit(selDate, hour, m); }}
+              keyboardType="numeric"
+              maxLength={2}
+              placeholder="MM"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
+
+          <TouchableOpacity
+            onPress={() => setOpen(false)}
+            style={{ marginTop: 10, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Done</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );

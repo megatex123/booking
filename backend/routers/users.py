@@ -59,8 +59,32 @@ async def update_profile(data: UpdateProfile, user=Depends(get_current_user), db
 
 
 @router.get("/me/vehicles")
-async def get_vehicles(user=Depends(get_current_user)):
-    return user.get("vehicles", [])
+async def get_vehicles(user=Depends(get_current_user), db=Depends(get_db)):
+    stored = user.get("vehicles", [])
+    seen_plates = {v["plate"].upper().replace(" ", "") for v in stored}
+
+    # Also surface vehicles used in past bookings that aren't already in the stored list
+    bookings = await db.bookings.find(
+        {"customer_id": user["_id"], "vehicle_plate": {"$exists": True, "$ne": ""}},
+        {"vehicle_plate": 1, "vehicle_name": 1, "vehicle_brand": 1}
+    ).to_list(None)
+
+    for b in bookings:
+        plate = (b.get("vehicle_plate") or "").strip()
+        if not plate:
+            continue
+        key = plate.upper().replace(" ", "")
+        if key not in seen_plates:
+            seen_plates.add(key)
+            stored.append({
+                "plate": plate,
+                "name": b.get("vehicle_name") or "",
+                "brand": b.get("vehicle_brand") or "",
+                "year": None,
+                "color": None,
+            })
+
+    return stored
 
 
 @router.get("/online-status")

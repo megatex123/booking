@@ -316,10 +316,35 @@ export const BookingScreen: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
           <View style={styles.divider} />
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total ({totalDuration} min est.)</Text>
-            <Text style={styles.totalAmount}>{formatPrice(totalPrice)}</Text>
-          </View>
+          {activePromoWithDiscount && promotionDiscount > 0 ? (
+            <>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Subtotal ({totalDuration} min est.)</Text>
+                <Text style={[styles.totalAmount, { textDecorationLine: 'line-through', color: colors.textSecondary, fontSize: 15 }]}>{formatPrice(totalPrice)}</Text>
+              </View>
+              <View style={[styles.totalRow, { marginTop: 4 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="pricetag-outline" size={14} color="#F97316" />
+                  <Text style={{ fontSize: 13, color: '#F97316', fontWeight: '600' }}>
+                    {activePromoWithDiscount.title}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#F97316' }}>
+                  -{formatPrice(promotionDiscount)}
+                </Text>
+              </View>
+              <View style={[styles.divider, { marginVertical: 8 }]} />
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalAmount}>{formatPrice(totalPrice - promotionDiscount)}</Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total ({totalDuration} min est.)</Text>
+              <Text style={styles.totalAmount}>{formatPrice(totalPrice)}</Text>
+            </View>
+          )}
         </Card>
 
         {/* Vehicle Selection */}

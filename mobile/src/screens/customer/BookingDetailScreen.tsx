@@ -33,6 +33,9 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [rescheduleModal, setRescheduleModal] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
+  const [calOpen, setCalOpen] = useState(false);
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [rescheduling, setRescheduling] = useState(false);
 
   useEffect(() => {
@@ -56,12 +59,16 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const openReschedule = () => {
     setNewDate(booking.scheduled_date);
     setNewTime(booking.scheduled_time);
+    const d = new Date(booking.scheduled_date);
+    setCalYear(d.getFullYear());
+    setCalMonth(d.getMonth());
+    setCalOpen(false);
     setRescheduleModal(true);
   };
 
   const handleReschedule = async () => {
-    if (!newDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      showAlert('Invalid Date', 'Enter date as YYYY-MM-DD');
+    if (!newDate) {
+      showAlert('Invalid Date', 'Please pick a date from the calendar');
       return;
     }
     if (!newTime.match(/^\d{2}:\d{2}$/)) {
@@ -229,27 +236,88 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
           <View style={styles.divider} />
-          {booking.products_total != null && booking.products_total > 0 ? (
-            <>
-              <View style={styles.serviceRow}>
-                <Text style={styles.totalLabel}>Services</Text>
-                <Text style={styles.servicePrice}>{formatPrice(booking.services_total ?? 0)}</Text>
-              </View>
-              <View style={styles.serviceRow}>
-                <Text style={styles.totalLabel}>Parts &amp; Products</Text>
-                <Text style={styles.servicePrice}>{formatPrice(booking.products_total)}</Text>
-              </View>
-              <View style={[styles.serviceRow, { marginTop: 4 }]}>
-                <Text style={[styles.totalLabel, { fontWeight: '800' }]}>Total</Text>
-                <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
-              </View>
-            </>
-          ) : (
-            <View style={styles.serviceRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
-            </View>
-          )}
+          {(() => {
+            const promoDiscount: number = booking.promotion_discount ?? 0;
+            const promoTitle: string | null = booking.promotion_title ?? null;
+            const referralDiscount: number = booking.referral_discount ?? 0;
+            const loyaltyDiscount: number = booking.loyalty_discount ?? 0;
+            const hasProducts = booking.products_total != null && booking.products_total > 0;
+            const subtotal = hasProducts
+              ? (booking.services_total ?? 0) + (booking.products_total ?? 0)
+              : booking.total_price + promoDiscount + referralDiscount + loyaltyDiscount;
+            const hasDiscounts = promoDiscount > 0 || referralDiscount > 0 || loyaltyDiscount > 0;
+
+            return (
+              <>
+                {hasProducts && (
+                  <>
+                    <View style={styles.serviceRow}>
+                      <Text style={styles.totalLabel}>Services</Text>
+                      <Text style={styles.servicePrice}>{formatPrice(booking.services_total ?? 0)}</Text>
+                    </View>
+                    <View style={styles.serviceRow}>
+                      <Text style={styles.totalLabel}>Parts &amp; Products</Text>
+                      <Text style={styles.servicePrice}>{formatPrice(booking.products_total)}</Text>
+                    </View>
+                  </>
+                )}
+
+                {hasDiscounts && (
+                  <View style={styles.serviceRow}>
+                    <Text style={styles.totalLabel}>Subtotal</Text>
+                    <Text style={[styles.servicePrice, { textDecorationLine: 'line-through', color: colors.textSecondary }]}>
+                      {formatPrice(subtotal)}
+                    </Text>
+                  </View>
+                )}
+
+                {promoDiscount > 0 && (
+                  <View style={styles.serviceRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Ionicons name="pricetag-outline" size={13} color="#F97316" />
+                      <Text style={{ fontSize: 13, color: '#F97316', fontWeight: '600' }}>
+                        {promoTitle ?? 'Promotion'}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#F97316' }}>
+                      -{formatPrice(promoDiscount)}
+                    </Text>
+                  </View>
+                )}
+
+                {referralDiscount > 0 && (
+                  <View style={styles.serviceRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Ionicons name="people-outline" size={13} color="#8B5CF6" />
+                      <Text style={{ fontSize: 13, color: '#8B5CF6', fontWeight: '600' }}>Referral Discount</Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B5CF6' }}>
+                      -{formatPrice(referralDiscount)}
+                    </Text>
+                  </View>
+                )}
+
+                {loyaltyDiscount > 0 && (
+                  <View style={styles.serviceRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Ionicons name="star-outline" size={13} color="#F59E0B" />
+                      <Text style={{ fontSize: 13, color: '#F59E0B', fontWeight: '600' }}>Loyalty Points</Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#F59E0B' }}>
+                      -{formatPrice(loyaltyDiscount)}
+                    </Text>
+                  </View>
+                )}
+
+                {hasDiscounts && <View style={[styles.divider, { marginVertical: 6 }]} />}
+
+                <View style={[styles.serviceRow, { marginTop: hasDiscounts ? 0 : 4 }]}>
+                  <Text style={[styles.totalLabel, { fontWeight: '800' }]}>Total</Text>
+                  <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
+                </View>
+              </>
+            );
+          })()}
         </Card>
 
         {booking.notes ? (
@@ -480,18 +548,73 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalHint}>Current: {formatDate(booking.scheduled_date)} at {formatTime(booking.scheduled_time)}</Text>
 
             <Text style={styles.fieldLabel}>New Date</Text>
-            <TextInput
-              style={styles.input}
-              value={newDate}
-              onChangeText={setNewDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={colors.textLight}
-              keyboardType="numeric"
-            />
+            <TouchableOpacity
+              style={[styles.input, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+              onPress={() => setCalOpen(o => !o)}
+            >
+              <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+              <Text style={{ flex: 1, color: newDate ? colors.text : colors.textLight, fontSize: 15 }}>
+                {newDate ? formatDate(newDate) : 'Pick a date'}
+              </Text>
+              <Ionicons name={calOpen ? 'chevron-up-outline' : 'chevron-down-outline'} size={15} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {calOpen && (() => {
+              const todayStr = new Date().toISOString().slice(0, 10);
+              const firstDay = new Date(calYear, calMonth, 1).getDay();
+              const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+              const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+              while (cells.length % 7 !== 0) cells.push(null);
+              const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+              const CAL_DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+              return (
+                <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, padding: 12, marginTop: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <TouchableOpacity onPress={() => calMonth === 0 ? (setCalMonth(11), setCalYear(y => y - 1)) : setCalMonth(m => m - 1)} style={{ padding: 6 }}>
+                      <Ionicons name="chevron-back" size={18} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={{ fontWeight: '700', color: colors.text, fontSize: 14 }}>{CAL_MONTHS[calMonth]} {calYear}</Text>
+                    <TouchableOpacity onPress={() => calMonth === 11 ? (setCalMonth(0), setCalYear(y => y + 1)) : setCalMonth(m => m + 1)} style={{ padding: 6 }}>
+                      <Ionicons name="chevron-forward" size={18} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                    {CAL_DAYS.map(d => (
+                      <View key={d} style={{ flex: 1, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 11, color: colors.textSecondary, fontWeight: '600' }}>{d}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  {Array.from({ length: cells.length / 7 }, (_, row) => (
+                    <View key={row} style={{ flexDirection: 'row' }}>
+                      {cells.slice(row * 7, row * 7 + 7).map((day, col) => {
+                        if (!day) return <View key={col} style={{ flex: 1, height: 34 }} />;
+                        const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                        const isSelected = dateStr === newDate;
+                        const isDisabled = dateStr < todayStr;
+                        const isToday = dateStr === todayStr;
+                        return (
+                          <TouchableOpacity
+                            key={col}
+                            disabled={isDisabled}
+                            onPress={() => { setNewDate(dateStr); setCalOpen(false); }}
+                            style={{ flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: isSelected ? colors.primary : 'transparent', borderRadius: 17, opacity: isDisabled ? 0.3 : 1 }}
+                          >
+                            <Text style={{ fontSize: 13, fontWeight: isSelected || isToday ? '700' : '400', color: isSelected ? '#fff' : isToday ? colors.primary : colors.text }}>
+                              {day}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              );
+            })()}
 
             <Text style={[styles.fieldLabel, { marginTop: 14 }]}>New Time</Text>
             <View style={styles.timeGrid}>
@@ -513,6 +636,7 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             >
               <Text style={styles.submitBtnText}>{rescheduling ? 'Saving…' : 'Confirm Reschedule'}</Text>
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>

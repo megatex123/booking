@@ -215,6 +215,23 @@ async def create_booking(data: BookingCreate, user=Depends(require_customer), db
     }
     await db.bookings.insert_one(booking)
 
+    # Auto-add vehicle to user's vehicle list if not already there
+    existing_vehicles = user.get("vehicles", [])
+    existing_plates = {v.get("plate", "").upper().replace(" ", "") for v in existing_vehicles}
+    new_plate_key = data.vehicle_plate.upper().replace(" ", "")
+    if new_plate_key not in existing_plates:
+        new_vehicle = {
+            "plate": data.vehicle_plate,
+            "name": data.vehicle_name,
+            "brand": data.vehicle_brand,
+            "year": None,
+            "color": None,
+        }
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$push": {"vehicles": new_vehicle}, "$set": {"updated_at": now}},
+        )
+
     # Deduct loyalty points after successful booking creation
     if loyalty_points_used > 0:
         await db.users.update_one({"_id": user["_id"]}, {"$inc": {"loyalty_points": -loyalty_points_used}})
