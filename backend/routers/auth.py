@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from datetime import datetime, timedelta
 import random
 import string
+import uuid
 from bson import ObjectId
 from core.database import get_db
 from core.security import hash_password, verify_password, create_access_token
@@ -55,8 +56,10 @@ async def register_customer(data: CustomerRegister, db=Depends(get_db)):
         "created_at": now,
         "updated_at": now,
     }
+    session_id = str(uuid.uuid4())
+    user_doc["session_id"] = session_id
     await db.users.insert_one(user_doc)
-    token = create_access_token({"sub": user_doc["_id"], "role": "customer"})
+    token = create_access_token({"sub": user_doc["_id"], "role": "customer", "sid": session_id})
     return TokenResponse(access_token=token, user=serialize_user(user_doc))
 
 
@@ -118,7 +121,13 @@ async def login(data: UserLogin, db=Depends(get_db)):
     if not user or not verify_password(data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": user["_id"], "role": user["role"]})
+    payload: dict = {"sub": user["_id"], "role": user["role"]}
+    if user["role"] == "customer":
+        session_id = str(uuid.uuid4())
+        await db.users.update_one({"_id": user["_id"]}, {"$set": {"session_id": session_id}})
+        payload["sid"] = session_id
+
+    token = create_access_token(payload)
     return TokenResponse(access_token=token, user=serialize_user(user))
 
 

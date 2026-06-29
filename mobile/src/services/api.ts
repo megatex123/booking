@@ -19,16 +19,17 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-let _unauthorizedHandler: (() => void) | null = null;
-export const setUnauthorizedHandler = (fn: () => void) => { _unauthorizedHandler = fn; };
+let _unauthorizedHandler: ((reason?: string) => void) | null = null;
+export const setUnauthorizedHandler = (fn: (reason?: string) => void) => { _unauthorizedHandler = fn; };
 
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     if (err.response?.status === 401) {
+      const detail = err.response?.data?.detail;
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
-      _unauthorizedHandler?.();
+      _unauthorizedHandler?.(detail);
     }
     return Promise.reject(err);
   }

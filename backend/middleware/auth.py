@@ -18,6 +18,12 @@ async def get_current_user(
     user = await db.users.find_one({"_id": payload["sub"]})
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    if user.get("role") == "customer":
+        token_sid = payload.get("sid")
+        if not token_sid or token_sid != user.get("session_id"):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="SESSION_EXPIRED")
+
     return user
 
 

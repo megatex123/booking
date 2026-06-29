@@ -11,6 +11,7 @@ import { fetchFlags } from '../store/flagsSlice';
 import { getToken, getUser } from '../services/storage';
 import { connectSocket, getSocket } from '../services/socket';
 import { setUnauthorizedHandler } from '../services/api';
+import { showAlert } from '../utils/webAlert';
 import { Loading } from '../components/common/Loading';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { UserTypeScreen } from '../screens/auth/UserTypeScreen';
@@ -31,7 +32,12 @@ export function RootNavigator() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    setUnauthorizedHandler(() => dispatch(logout()));
+    setUnauthorizedHandler((reason) => {
+      if (reason === 'SESSION_EXPIRED') {
+        showAlert('Your account has been logged in from another device. You have been signed out.');
+      }
+      dispatch(logout());
+    });
     (async () => {
       const [token, savedUser] = await Promise.all([getToken(), getUser()]);
       if (token && savedUser) {
