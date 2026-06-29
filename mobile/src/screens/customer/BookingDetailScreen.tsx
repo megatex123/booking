@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, TextInput, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showConfirm, showAlert } from '../../utils/webAlert';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -87,12 +86,8 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
     try {
-      const token = await AsyncStorage.getItem('access_token');
-      const res = await fetch(`http://localhost:8000/api/v1/bookings/${bookingId}/invoice`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) { showAlert('Error', 'Could not generate invoice.'); return; }
-      const blob = await res.blob();
+      const res = await bookingAPI.downloadInvoice(bookingId);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -101,8 +96,9 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch {
-      showAlert('Error', 'Could not download invoice.');
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail || 'Could not generate invoice.';
+      showAlert('Error', detail);
     }
   };
 
