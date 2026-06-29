@@ -3,9 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const isLocal =
   typeof window === 'undefined' || window.location.hostname === 'localhost';
-const BASE_URL = isLocal
-  ? 'http://localhost:8000/api/v1'
-  : 'https://bengkil-lah-api.percubaan.com/api/v1';
+const API_HOST = isLocal ? 'http://localhost:8000' : 'https://bengkil-lah-api.percubaan.com';
+const BASE_URL = `${API_HOST}/api/v1`;
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -244,6 +243,6 @@ export const uploadAPI = {
     const data = await response.json();
     return data.url as string; // e.g. "/uploads/abc123.jpg"
   },
-  mediaUrl: (path: string) => `http://localhost:8000${path}`,
-  getFullUrl: (path: string) => path.startsWith('http') ? path : `http://localhost:8000${path}`,
+  mediaUrl: (path: string) => `${API_HOST}${path}`,
+  getFullUrl: (path: string) => path.startsWith('http') ? path : `${API_HOST}${path}`,
 };

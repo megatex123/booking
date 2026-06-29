@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../components/common/Card';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { logout } from '../../store/authSlice';
 import { fetchMyBookings } from '../../store/bookingSlice';
-import { reviewAPI } from '../../services/api';
+import { reviewAPI, uploadAPI } from '../../services/api';
 import { Typography, Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from 'react-i18next';
@@ -74,9 +74,16 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Avatar */}
         <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
-          </View>
+          {user?.avatar ? (
+            <Image
+              source={{ uri: uploadAPI.getFullUrl(user.avatar) }}
+              style={styles.avatarImg}
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
+            </View>
+          )}
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           <View style={styles.roleBadge}>
@@ -179,6 +186,7 @@ function makeStyles(colors: AppTheme) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: { alignItems: 'center', paddingVertical: Spacing.xl, paddingHorizontal: Spacing.lg },
+    avatarImg: { width: 90, height: 90, borderRadius: 45 },
     avatar: {
       width: 90,
       height: 90,
