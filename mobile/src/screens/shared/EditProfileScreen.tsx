@@ -21,8 +21,9 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((s) => s.auth);
 
-  const [name, setName]   = useState(user?.name  || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [name, setName]       = useState(user?.name    || '');
+  const [phone, setPhone]     = useState(user?.phone   || '');
+  const [address, setAddress] = useState(user?.address || '');
   const [saving, setSaving]   = useState(false);
   const [error,  setError]    = useState('');
 
@@ -74,7 +75,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
     setSaving(true);
     setError('');
     try {
-      const res = await api.patch('/users/me', { name: name.trim(), phone: phone.trim() });
+      const res = await api.patch('/users/me', { name: name.trim(), phone: phone.trim(), address: address.trim() });
       dispatch(updateUser(res.data));
       await saveUser({ ...user!, ...res.data });
       navigation.goBack();
@@ -156,6 +157,17 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           keyboardType="phone-pad"
         />
 
+        <Text style={styles.label}>Address</Text>
+        <TextInput
+          style={[styles.input, styles.inputMulti, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+          value={address}
+          onChangeText={setAddress}
+          placeholder="e.g. No. 12, Jalan Bukit, Kuala Lumpur"
+          placeholderTextColor={colors.textLight}
+          multiline
+          numberOfLines={2}
+        />
+
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.divider, borderColor: colors.border, color: colors.textLight }]}
@@ -219,6 +231,7 @@ function makeStyles(colors: AppTheme) {
       paddingHorizontal: Spacing.md, paddingVertical: 12,
       ...Typography.body,
     },
+    inputMulti: { minHeight: 64, textAlignVertical: 'top' },
     hint: { ...Typography.caption, marginTop: 4 },
     errorText: {
       ...Typography.bodySmall, padding: Spacing.md,

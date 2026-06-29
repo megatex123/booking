@@ -2,7 +2,7 @@ import uuid
 import os
 import aiofiles
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
-from middleware.auth import require_workshop
+from middleware.auth import get_current_user
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 MAX_SIZE = 100 * 1024 * 1024  # 100 MB
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 
 
 @router.post("/")
-async def upload_file(file: UploadFile = File(...), user=Depends(require_workshop)):
+async def upload_file(file: UploadFile = File(...), user=Depends(get_current_user)):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail=f"File type {file.content_type} not allowed")
 

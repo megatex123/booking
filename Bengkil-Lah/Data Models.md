@@ -10,6 +10,7 @@ email         string (unique)
 phone         string
 role          "customer" | "workshop"
 avatar        string? (path to upload)
+address       string? (customer home/mailing address)
 password_hash string
 otp           string?
 otp_expires   datetime?
@@ -170,7 +171,7 @@ created_at datetime
 
 Key interfaces mirror the MongoDB schemas:
 
-- `User` — id, name, email, phone, role, avatar, created_at
+- `User` — id, name, email, phone, role, avatar, address?, created_at
 - `Vehicle` — name, plate, brand, year, color *(derived from booking history, not a separate collection)*
 - `Workshop` — full workshop info including `services[]`, `working_hours`, `images[]`
 - `WorkshopService` — _id, name, description, price, duration_minutes, category, is_active

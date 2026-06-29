@@ -348,8 +348,8 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         })}
       </ScrollView>
 
-      {/* Sort bar */}
-      <View style={styles.sortRow}>
+      {/* Sort bar — only in list mode */}
+      {!mapMode && <View style={styles.sortRow}>
         <Text style={styles.resultCount} numberOfLines={1}>
           {sorted.length} {sorted.length === 1 ? 'workshop' : 'workshops'}
           {search ? ` for "${search}"` : ''}
@@ -371,7 +371,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </View>}
 
       {/* Map or List */}
       {mapMode ? (
@@ -574,7 +574,7 @@ function makeStyles(colors: AppTheme) {
     borderWidth: 1, borderColor: colors.border,
   },
 
-  categoriesScroll: { height: 44, marginBottom: 8 },
+  categoriesScroll: { height: 44, maxHeight: 44, marginBottom: 8, flexShrink: 0, overflow: 'hidden' as any },
   categories: { paddingHorizontal: Spacing.lg, gap: 8, alignItems: 'flex-start', flexDirection: 'row' },
   chip: {
     flexDirection: 'row',

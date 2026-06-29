@@ -27,6 +27,7 @@ def serialize_user(user: dict) -> UserResponse:
         phone=user["phone"],
         role=user["role"],
         avatar=user.get("avatar"),
+        address=user.get("address"),
         created_at=user["created_at"],
     )
 
@@ -47,6 +48,7 @@ async def register_customer(data: CustomerRegister, db=Depends(get_db)):
         "role": "customer",
         "vehicles": [],
         "avatar": None,
+        "address": data.address or None,
         "referral_code": _generate_referral_code(),
         "referral_credits": 0.0,
         "loyalty_points": 0,

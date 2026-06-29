@@ -6,11 +6,11 @@ Status of every major feature in the app.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Customer registration | ✅ Complete | |
+| Customer registration | ✅ Complete | Includes optional address field |
 | Workshop registration | ✅ Complete | Creates user + workshop record |
 | Login (JWT) | ✅ Complete | |
 | Token persistence (AsyncStorage) | ✅ Complete | |
-| Edit profile / avatar | ✅ Complete | Photo upload via `/uploads/` |
+| Edit profile / avatar | ✅ Complete | Photo upload via `/uploads/` (open to all roles); address field editable |
 | Change password | ✅ Complete | |
 | Forgot password (OTP) | ✅ Complete | Screens + backend wired; depends on SMTP in `.env` |
 | Online status indicator | ✅ Complete | Socket.IO `connected_users` map |
@@ -66,7 +66,7 @@ Status of every major feature in the app.
 
 | Feature | Status | Notes |
 |---|---|---|
-| My Vehicles list | ✅ Complete | Saved to `users.vehicles` in MongoDB via `PATCH /users/me`; `MyVehiclesScreen` fields: Plate, Brand, Model Name, Year, Color |
+| My Vehicles list | ✅ Complete | Saved to `users.vehicles` in MongoDB via `PATCH /users/me`; `MyVehiclesScreen` fields: Plate, Brand, Model Name, Year, Color; pencil icon on each card opens inline edit form with all fields editable (including plate number) |
 | Vehicle service history | ✅ Complete | Unified timeline: completed bookings + self-logged manual entries merged chronologically; workshop bookings (blue) vs manual logs (amber/wrench icon); supports edit & delete of manual entries |
 | Manual service logging | ✅ Complete | Customers can self-log services done outside the app (DIY, local mechanic, any workshop); `POST /service-logs/`; `manual_service_logs` MongoDB collection; form: date, location, services (comma list + quick-pick chips), notes, mileage, cost, next service interval |
 | Car Health Score | ✅ Complete | Score (0–100) per vehicle based on elapsed time since last service vs. next service interval; `GET /bookings/vehicle-health`; merges completed bookings AND manual logs — uses whichever record is most recent; `CarHealthScreen` with SVG circular gauge; dashboard widget on `CustomerDashboardScreen`; fleet average banner |

@@ -56,8 +56,8 @@ backend/
 ### users
 | Method | Path | Description |
 |---|---|---|
-| GET | `/users/me` | Current user profile |
-| PATCH | `/users/me` | Update profile / avatar |
+| GET | `/users/me` | Current user profile (includes `address`) |
+| PATCH | `/users/me` | Update profile / avatar / address |
 | GET | `/users/me/vehicles` | Vehicle list from bookings |
 | GET | `/users/online-status` | Socket.IO online check for user IDs |
 
@@ -129,9 +129,9 @@ See [[Booking Flow]] for the full lifecycle.
 | POST | `/payments/confirm/{booking_id}` | Mark booking payment as paid |
 
 ### uploads
-| Method | Path | Description |
-|---|---|---|
-| POST | `/uploads/` | Multipart file upload → returns `/uploads/<hash>.<ext>` path |
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/uploads/` | Any authenticated user | Multipart file upload → returns `/uploads/<hash>.<ext>` path. Accepts image/jpeg, image/png, image/webp, image/gif, video/mp4, video/quicktime, video/webm, video/x-msvideo (max 100 MB). Auth: `get_current_user` (was incorrectly `require_workshop` — fixed so customers can upload avatars). |
 
 ### notifications
 | Method | Path | Description |

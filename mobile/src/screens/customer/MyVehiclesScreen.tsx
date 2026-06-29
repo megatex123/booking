@@ -28,6 +28,8 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  // null = adding new, number = editing that index
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // Form fields
   const [plate, setPlate] = useState('');
@@ -62,6 +64,24 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
   const resetForm = () => {
     setPlate(''); setBrand(''); setName(''); setYear(''); setColor('');
     setShowForm(false);
+    setEditingIndex(null);
+  };
+
+  const openAddForm = () => {
+    setPlate(''); setBrand(''); setName(''); setYear(''); setColor('');
+    setEditingIndex(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (idx: number) => {
+    const v = vehicles[idx];
+    setPlate(v.plate);
+    setBrand(v.brand);
+    setName(v.name);
+    setYear(v.year ? String(v.year) : '');
+    setColor(v.color || '');
+    setEditingIndex(idx);
+    setShowForm(true);
   };
 
   const addVehicle = async () => {
@@ -80,10 +100,28 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
     resetForm();
   };
 
-  const removeVehicle = async (plate: string) => {
-    const confirmed = await showConfirm('Remove Vehicle', 'Remove this vehicle?');
-    if (!confirmed) return;
-    await syncToAPI(vehicles.filter((v) => v.plate !== plate));
+  const saveEdit = async () => {
+    if (!plate.trim() || !brand.trim() || !name.trim()) {
+      showAlert('Plate, brand, and model name are required.');
+      return;
+    }
+    if (editingIndex === null) return;
+    const updated: Vehicle = {
+      plate: plate.trim().toUpperCase(),
+      brand: brand.trim(),
+      name: name.trim(),
+      year: year ? parseInt(year, 10) : undefined,
+      color: color.trim() || undefined,
+    };
+    const newList = vehicles.map((v, i) => (i === editingIndex ? updated : v));
+    await syncToAPI(newList);
+    resetForm();
+  };
+
+  const removeVehicle = async (idx: number) => {
+    showConfirm('Remove this vehicle?', async () => {
+      await syncToAPI(vehicles.filter((_, i) => i !== idx));
+    });
   };
 
   if (loading) {
@@ -108,7 +146,7 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.title}>My Vehicles</Text>
-        <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn} disabled={saving}>
+        <TouchableOpacity onPress={openAddForm} style={styles.addBtn} disabled={saving}>
           <Ionicons name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -121,15 +159,15 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.emptyText}>
               Register your car so workshops know what to service and to track your Car Health Score.
             </Text>
-            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => setShowForm(true)}>
+            <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={openAddForm}>
               <Text style={styles.emptyBtnText}>Add Vehicle</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {vehicles.map((v) => (
+        {vehicles.map((v, idx) => (
           <TouchableOpacity
-            key={v.plate}
+            key={`${v.plate}-${idx}`}
             style={styles.card}
             onPress={() => navigation.navigate('VehicleServiceHistory', {
               vehicle: { id: v.plate, plate: v.plate, model: `${v.brand} ${v.name}`, year: String(v.year ?? ''), color: v.color ?? '' }
@@ -147,10 +185,17 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={[styles.cardHint, { color: colors.primary }]}>Tap to view service history</Text>
             </View>
             <View style={styles.cardRight}>
-              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
               <TouchableOpacity
-                onPress={() => removeVehicle(v.plate)}
-                style={styles.removeBtn}
+                onPress={() => openEditForm(idx)}
+                style={styles.cardAction}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                disabled={saving}
+              >
+                <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => removeVehicle(idx)}
+                style={styles.cardAction}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 disabled={saving}
               >
@@ -162,7 +207,9 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
 
         {showForm && (
           <View style={[styles.form, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.formTitle, { color: colors.text }]}>Add Vehicle</Text>
+            <Text style={[styles.formTitle, { color: colors.text }]}>
+              {editingIndex !== null ? 'Edit Vehicle' : 'Add Vehicle'}
+            </Text>
 
             <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Plate Number *</Text>
             <TextInput
@@ -207,10 +254,13 @@ export const MyVehiclesScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.saveBtn, { backgroundColor: colors.primary }, (!plate || !brand || !name) && styles.saveBtnDisabled]}
-                onPress={addVehicle}
+                onPress={editingIndex !== null ? saveEdit : addVehicle}
                 disabled={!plate || !brand || !name || saving}
               >
-                {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.saveBtnText}>Add</Text>}
+                {saving
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.saveBtnText}>{editingIndex !== null ? 'Save' : 'Add'}</Text>
+                }
               </TouchableOpacity>
             </View>
           </View>
@@ -250,8 +300,8 @@ function makeStyles(colors: AppTheme) {
     cardPlate: { ...Typography.h3, color: colors.text },
     cardModel: { ...Typography.bodySmall, color: colors.textSecondary, marginTop: 2 },
     cardHint: { ...Typography.caption, marginTop: 4 },
-    cardRight: { alignItems: 'center', gap: 6 },
-    removeBtn: { padding: 4 },
+    cardRight: { alignItems: 'center', gap: 8 },
+    cardAction: { padding: 4 },
     form: {
       borderRadius: BorderRadius.md, padding: Spacing.lg,
       marginTop: Spacing.md, borderWidth: 1,

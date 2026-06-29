@@ -142,7 +142,10 @@ const [mapMode, setMapMode] = useState(Platform.OS !== 'web');
 ```
 
 ### Filter chip ScrollView
-Must have `maxHeight: 44` and chips need `alignSelf: 'flex-start'` to prevent height stretching on web.
+Must have `maxHeight: 44`, `flexShrink: 0`, `overflow: hidden`, and chips need `alignSelf: 'flex-start'` to prevent height stretching on web.
+
+### HomeScreen map mode
+The sort bar (Nearest / Top Rated / Most Reviewed) is hidden in map mode — it renders between the category chips and the map causing a layout gap on web. Only shown in list mode via `{!mapMode && <SortRow />}`.
 
 ## Socket.IO Client (`src/services/socket.ts`)
 

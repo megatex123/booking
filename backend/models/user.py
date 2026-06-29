@@ -13,6 +13,7 @@ class UserRegister(BaseModel):
 
 class CustomerRegister(UserRegister):
     role: str = "customer"
+    address: Optional[str] = None
 
 
 class WorkshopRegister(UserRegister):
@@ -36,6 +37,7 @@ class UserResponse(BaseModel):
     phone: str
     role: str
     avatar: Optional[str] = None
+    address: Optional[str] = None
     created_at: datetime
 
 
@@ -56,6 +58,7 @@ class VehicleInfo(BaseModel):
 class UpdateProfile(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
+    address: Optional[str] = None
     vehicles: Optional[list[VehicleInfo]] = None
     avatar: Optional[str] = None
 

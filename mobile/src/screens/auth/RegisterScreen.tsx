@@ -23,7 +23,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const { loading } = useAppSelector((s) => s.auth);
 
   const [form, setForm] = useState({
-    name: '', email: '', password: '', confirmPassword: '', phone: '',
+    name: '', email: '', password: '', confirmPassword: '', phone: '', address: '',
     workshop_name: '', workshop_address: '', latitude: '', longitude: '', description: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -54,6 +54,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       email: form.email.trim().toLowerCase(),
       password: form.password,
       phone: form.phone.trim(),
+      ...(role === 'customer' && form.address.trim() ? { address: form.address.trim() } : {}),
     };
     if (role === 'workshop') {
       data.workshop_name = form.workshop_name.trim();
@@ -93,6 +94,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             placeholder="your@email.com" keyboardType="email-address" error={errors.email} leftIcon="mail-outline" />
           <Input label="Phone Number" value={form.phone} onChangeText={(v) => set('phone', v)}
             placeholder="+60123456789" keyboardType="phone-pad" error={errors.phone} leftIcon="call-outline" />
+          {role === 'customer' && (
+            <Input label="Address (optional)" value={form.address} onChangeText={(v) => set('address', v)}
+              placeholder="e.g. No. 12, Jalan Bukit, Kuala Lumpur" autoCapitalize="words"
+              leftIcon="location-outline" multiline numberOfLines={2} />
+          )}
           <Input label="Password" value={form.password} onChangeText={(v) => set('password', v)}
             placeholder="At least 6 characters" secureTextEntry error={errors.password} leftIcon="lock-closed-outline" />
           <Input label="Confirm Password" value={form.confirmPassword} onChangeText={(v) => set('confirmPassword', v)}

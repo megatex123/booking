@@ -25,6 +25,7 @@ async def get_me(user=Depends(get_current_user)):
         phone=user["phone"],
         role=user["role"],
         avatar=user.get("avatar"),
+        address=user.get("address"),
         created_at=user["created_at"],
     )
 
@@ -36,6 +37,8 @@ async def update_profile(data: UpdateProfile, user=Depends(get_current_user), db
         update["name"] = data.name
     if data.phone:
         update["phone"] = data.phone
+    if data.address is not None:
+        update["address"] = data.address
     if data.vehicles is not None:
         update["vehicles"] = [v.dict() for v in data.vehicles]
     if data.avatar:
@@ -50,6 +53,7 @@ async def update_profile(data: UpdateProfile, user=Depends(get_current_user), db
         phone=updated["phone"],
         role=updated["role"],
         avatar=updated.get("avatar"),
+        address=updated.get("address"),
         created_at=updated["created_at"],
     )
 

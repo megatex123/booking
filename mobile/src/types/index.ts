@@ -7,6 +7,7 @@ export interface User {
   phone: string;
   role: UserRole;
   avatar?: string;
+  address?: string;
   created_at: string;
 }
 
