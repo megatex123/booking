@@ -19,6 +19,7 @@
 | Feature status | [[Features]] |
 | Finance & payments | [[Finance]] |
 | Planned future features | [[Future Features]] |
+| AI features (Claude API) | [[claude-api]] |
 
 ---
 
