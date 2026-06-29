@@ -3,10 +3,17 @@ from datetime import datetime
 from typing import List
 from core.database import get_db
 from core.socket_manager import connected_users
+from core.feature_flags import get_merged_flags
 from middleware.auth import get_current_user, require_workshop
 from models.user import UpdateProfile, UserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/me/flags")
+async def get_my_flags(user=Depends(get_current_user), db=Depends(get_db)):
+    """Returns global feature flags merged with any per-user overrides for the caller."""
+    return await get_merged_flags(db, user["_id"])
 
 
 @router.get("/me", response_model=UserResponse)

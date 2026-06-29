@@ -73,7 +73,7 @@ async def seed():
     client = AsyncIOMotorClient(MONGO_URL)
     db = client[DB_NAME]
 
-    for col in ["users", "workshops", "bookings", "messages", "reviews", "notifications", "feature_flags"]:
+    for col in ["users", "workshops", "bookings", "messages", "reviews", "notifications", "feature_flags", "user_feature_overrides"]:
         await db[col].drop()
     print("✓ Cleared existing collections")
 

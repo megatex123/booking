@@ -7,6 +7,8 @@ export interface FlagRecord {
   group: string;
   description: string;
   enabled: boolean;
+  overridden?: boolean;
+  global_enabled?: boolean;
 }
 
 interface FlagsState {
@@ -21,10 +23,21 @@ const initialState: FlagsState = {
   loaded: false,
 };
 
-export const fetchFlags = createAsyncThunk('flags/fetch', async () => {
-  const res = await api.get('/admin/flags');
-  return res.data as FlagRecord[];
-});
+export const fetchFlags = createAsyncThunk(
+  'flags/fetch',
+  async (_, { getState }) => {
+    const state = getState() as any;
+    const user = state.auth?.user;
+    // Authenticated customer/vendor gets merged (global + user overrides)
+    if (user && user.role !== 'admin') {
+      const res = await api.get('/users/me/flags');
+      return res.data as FlagRecord[];
+    }
+    // Admin and unauthenticated get raw global flags
+    const res = await api.get('/admin/flags');
+    return res.data as FlagRecord[];
+  }
+);
 
 const flagsSlice = createSlice({
   name: 'flags',

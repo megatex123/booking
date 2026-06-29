@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Switch, ActivityIndicator, RefreshControl,
+  Switch, ActivityIndicator, RefreshControl, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,19 +14,20 @@ import { useTheme } from '../../hooks/useTheme';
 import { Typography, Spacing, BorderRadius, AppTheme } from '../../utils/theme';
 
 interface Stats {
-  customers: number;
-  vendors: number;
-  bookings: number;
-  active_bookings: number;
-  workshops: number;
-  queue_today: number;
+  customers: number; vendors: number; bookings: number;
+  active_bookings: number; workshops: number; queue_today: number;
 }
 
-type Tab = 'customer' | 'vendor';
+interface AppUser {
+  id: string; name: string; email: string; role: string; created_at?: string;
+}
+
+type MainTab = 'flags' | 'users';
+type FlagTab = 'customer' | 'vendor';
 
 interface Props { navigation: any }
 
-export const AdminDashboardScreen: React.FC<Props> = () => {
+export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -36,35 +37,42 @@ export const AdminDashboardScreen: React.FC<Props> = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('customer');
+
+  const [mainTab, setMainTab] = useState<MainTab>('flags');
+  const [flagTab, setFlagTab] = useState<FlagTab>('customer');
   const [toggling, setToggling] = useState<string | null>(null);
 
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersSearch, setUsersSearch] = useState('');
+  const [usersFilter, setUsersFilter] = useState<'all' | 'customer' | 'workshop'>('all');
+
   const loadStats = useCallback(async () => {
-    try {
-      const res = await adminAPI.stats();
-      setStats(res.data);
-    } catch {}
+    try { const r = await adminAPI.stats(); setStats(r.data); } catch {}
     setStatsLoading(false);
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try { const r = await adminAPI.users(); setUsers(r.data); } catch {}
+    setUsersLoading(false);
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadStats();
+    await Promise.all([loadStats(), mainTab === 'users' ? loadUsers() : Promise.resolve()]);
     setRefreshing(false);
   };
 
   useEffect(() => { loadStats(); }, [loadStats]);
+  useEffect(() => { if (mainTab === 'users' && users.length === 0) loadUsers(); }, [mainTab]);
 
-  const handleToggle = async (flag: FlagRecord, value: boolean) => {
+  const handleToggleFlag = async (flag: FlagRecord, value: boolean) => {
     if (toggling) return;
     setToggling(flag.key);
     dispatch(setFlag({ key: flag.key, enabled: value }));
-    try {
-      await flagsAPI.update(flag.key, value);
-    } catch {
-      // revert on failure
-      dispatch(setFlag({ key: flag.key, enabled: !value }));
-    }
+    try { await flagsAPI.update(flag.key, value); }
+    catch { dispatch(setFlag({ key: flag.key, enabled: !value })); }
     setToggling(null);
   };
 
@@ -73,7 +81,14 @@ export const AdminDashboardScreen: React.FC<Props> = () => {
     if (ok) dispatch(logout());
   };
 
-  const visibleFlags = records.filter((f) => f.group === activeTab);
+  const visibleFlags = records.filter((f) => f.group === flagTab);
+
+  const filteredUsers = users.filter((u) => {
+    const matchRole = usersFilter === 'all' || u.role === usersFilter;
+    const q = usersSearch.toLowerCase();
+    const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    return matchRole && matchSearch;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -98,52 +113,66 @@ export const AdminDashboardScreen: React.FC<Props> = () => {
       >
         {/* Stats */}
         {statsLoading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
         ) : stats ? (
           <View style={styles.statsGrid}>
-            <StatCard label="Customers"    value={stats.customers}      icon="person-outline"        color="#3B82F6" colors={colors} />
-            <StatCard label="Vendors"      value={stats.vendors}        icon="storefront-outline"    color="#10B981" colors={colors} />
-            <StatCard label="Bookings"     value={stats.bookings}       icon="receipt-outline"       color="#F59E0B" colors={colors} />
-            <StatCard label="Active"       value={stats.active_bookings} icon="time-outline"         color="#EF4444" colors={colors} />
-            <StatCard label="Workshops"    value={stats.workshops}      icon="business-outline"      color="#8B5CF6" colors={colors} />
-            <StatCard label="Queue Today"  value={stats.queue_today}    icon="people-circle-outline" color="#0EA5E9" colors={colors} />
+            <StatCard label="Customers"   value={stats.customers}       icon="person-outline"        color="#3B82F6" colors={colors} />
+            <StatCard label="Vendors"     value={stats.vendors}         icon="storefront-outline"    color="#10B981" colors={colors} />
+            <StatCard label="Bookings"    value={stats.bookings}        icon="receipt-outline"       color="#F59E0B" colors={colors} />
+            <StatCard label="Active"      value={stats.active_bookings} icon="time-outline"          color="#EF4444" colors={colors} />
+            <StatCard label="Workshops"   value={stats.workshops}       icon="business-outline"      color="#8B5CF6" colors={colors} />
+            <StatCard label="Queue Today" value={stats.queue_today}     icon="people-circle-outline" color="#0EA5E9" colors={colors} />
           </View>
         ) : null}
 
-        {/* Feature Flags */}
-        <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Feature Flags</Text>
-          <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-            Toggle features on or off for customers and vendors. Changes take effect immediately.
-          </Text>
+        {/* Main tabs */}
+        <View style={[styles.mainTabs, { borderColor: colors.border, backgroundColor: colors.background }]}>
+          {(['flags', 'users'] as MainTab[]).map((t) => (
+            <TouchableOpacity
+              key={t}
+              style={[styles.mainTab, mainTab === t && { backgroundColor: colors.primary }]}
+              onPress={() => setMainTab(t)}
+            >
+              <Ionicons
+                name={t === 'flags' ? 'toggle-outline' : 'people-outline'}
+                size={15}
+                color={mainTab === t ? '#fff' : colors.textSecondary}
+              />
+              <Text style={[styles.mainTabLabel, { color: mainTab === t ? '#fff' : colors.textSecondary }]}>
+                {t === 'flags' ? 'Feature Flags' : 'User Overrides'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          {/* Tabs */}
-          <View style={[styles.tabs, { borderColor: colors.border, backgroundColor: colors.background }]}>
-            {(['customer', 'vendor'] as Tab[]).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tab, activeTab === tab && { backgroundColor: colors.primary }]}
-                onPress={() => setActiveTab(tab)}
-              >
-                <Text style={[styles.tabLabel, { color: activeTab === tab ? '#fff' : colors.textSecondary }]}>
-                  {tab === 'customer' ? 'Customer' : 'Vendor'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* ── Feature Flags tab ── */}
+        {mainTab === 'flags' && (
+          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Feature Flags</Text>
+            <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+              Global toggles — apply to all users of that role unless overridden per-user.
+            </Text>
 
-          {/* Flag rows */}
-          {visibleFlags.length === 0 ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
-          ) : (
-            visibleFlags.map((flag, i) => (
+            <View style={[styles.subTabs, { borderColor: colors.border, backgroundColor: colors.background }]}>
+              {(['customer', 'vendor'] as FlagTab[]).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.subTab, flagTab === t && { backgroundColor: colors.primary }]}
+                  onPress={() => setFlagTab(t)}
+                >
+                  <Text style={[styles.subTabLabel, { color: flagTab === t ? '#fff' : colors.textSecondary }]}>
+                    {t === 'customer' ? 'Customer' : 'Vendor'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {visibleFlags.length === 0 ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : visibleFlags.map((flag, i) => (
               <View
                 key={flag.key}
-                style={[
-                  styles.flagRow,
-                  { borderTopColor: colors.border },
-                  i === 0 && { borderTopWidth: 0 },
-                ]}
+                style={[styles.flagRow, { borderTopColor: colors.border }, i === 0 && { borderTopWidth: 0 }]}
               >
                 <View style={styles.flagInfo}>
                   <Text style={[styles.flagLabel, { color: flag.enabled ? colors.text : colors.textSecondary }]}>
@@ -153,28 +182,95 @@ export const AdminDashboardScreen: React.FC<Props> = () => {
                     {flag.description}
                   </Text>
                 </View>
-                <View style={styles.flagRight}>
-                  {toggling === flag.key ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <Switch
-                      value={flag.enabled}
-                      onValueChange={(v) => handleToggle(flag, v)}
-                      trackColor={{ false: colors.border, true: colors.primary + '80' }}
-                      thumbColor={flag.enabled ? colors.primary : '#ccc'}
-                    />
-                  )}
-                </View>
+                {toggling === flag.key ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Switch
+                    value={flag.enabled}
+                    onValueChange={(v) => handleToggleFlag(flag, v)}
+                    trackColor={{ false: colors.border, true: colors.primary + '80' }}
+                    thumbColor={flag.enabled ? colors.primary : '#ccc'}
+                  />
+                )}
               </View>
-            ))
-          )}
-        </View>
+            ))}
+          </View>
+        )}
 
-        {/* Footer note */}
-        <Text style={[styles.footerNote, { color: colors.textSecondary }]}>
-          Disabled features are hidden from users but not deleted.
-          All data is preserved and can be re-enabled at any time.
-        </Text>
+        {/* ── User Overrides tab ── */}
+        {mainTab === 'users' && (
+          <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>User Overrides</Text>
+            <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+              Select a user to set per-user flag overrides that take priority over global flags.
+            </Text>
+
+            {/* Search + filter */}
+            <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="search-outline" size={16} color={colors.textSecondary} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Search by name or email…"
+                placeholderTextColor={colors.textSecondary}
+                value={usersSearch}
+                onChangeText={setUsersSearch}
+              />
+              {usersSearch.length > 0 && (
+                <TouchableOpacity onPress={() => setUsersSearch('')}>
+                  <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.filterChips}>
+              {(['all', 'customer', 'workshop'] as const).map((f) => (
+                <TouchableOpacity
+                  key={f}
+                  style={[styles.filterChip, { borderColor: colors.border },
+                    usersFilter === f && { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  onPress={() => setUsersFilter(f)}
+                >
+                  <Text style={[styles.filterChipText,
+                    { color: usersFilter === f ? '#fff' : colors.textSecondary }]}>
+                    {f === 'workshop' ? 'Vendor' : f.charAt(0).toUpperCase() + f.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {usersLoading ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+            ) : filteredUsers.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No users found.</Text>
+            ) : filteredUsers.map((u, i) => (
+              <TouchableOpacity
+                key={u.id}
+                style={[styles.userRow, { borderTopColor: colors.border }, i === 0 && { borderTopWidth: 0 }]}
+                onPress={() => navigation.navigate('UserFlags', { user: u })}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.userAvatar, { backgroundColor: u.role === 'customer' ? '#EFF6FF' : '#F0FDF4' }]}>
+                  <Ionicons
+                    name={u.role === 'customer' ? 'person' : 'storefront'}
+                    size={18}
+                    color={u.role === 'customer' ? '#2563EB' : '#16A34A'}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.userName, { color: colors.text }]}>{u.name}</Text>
+                  <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{u.email}</Text>
+                </View>
+                <View style={[styles.roleBadge, { backgroundColor: u.role === 'customer' ? '#EFF6FF' : '#F0FDF4' }]}>
+                  <Text style={[styles.roleText, { color: u.role === 'customer' ? '#2563EB' : '#16A34A' }]}>
+                    {u.role === 'workshop' ? 'Vendor' : 'Customer'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
@@ -187,21 +283,18 @@ function StatCard({
   label: string; value: number; icon: any; color: string; colors: AppTheme;
 }) {
   return (
-    <View style={[statCardStyles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <View style={[statCardStyles.iconBox, { backgroundColor: color + '15' }]}>
+    <View style={[scStyles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[scStyles.iconBox, { backgroundColor: color + '15' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
-      <Text style={[statCardStyles.value, { color: colors.text }]}>{value}</Text>
-      <Text style={[statCardStyles.label, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[scStyles.value, { color: colors.text }]}>{value}</Text>
+      <Text style={[scStyles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
-const statCardStyles = StyleSheet.create({
-  card: {
-    flex: 1, minWidth: '30%', borderRadius: 12, borderWidth: 1,
-    padding: 12, alignItems: 'center', gap: 6,
-  },
+const scStyles = StyleSheet.create({
+  card: { flex: 1, minWidth: '30%', borderRadius: 12, borderWidth: 1, padding: 12, alignItems: 'center', gap: 6 },
   iconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   value: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
   label: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
@@ -213,45 +306,62 @@ function makeStyles(colors: AppTheme) {
 
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-      borderBottomWidth: 1,
+      paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1,
     },
     headerLeft: { gap: 2 },
     adminBadge: {
-      flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-      borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3,
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, alignSelf: 'flex-start',
     },
     adminLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
     headerTitle: { ...Typography.h3 },
     logoutBtn: { padding: 6 },
 
     body: { padding: Spacing.lg, gap: Spacing.md },
-
     statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 
-    section: {
-      borderRadius: BorderRadius.lg, borderWidth: 1, padding: Spacing.md, gap: 12,
+    mainTabs: {
+      flexDirection: 'row', borderRadius: BorderRadius.md, borderWidth: 1, overflow: 'hidden',
     },
+    mainTab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
+    mainTabLabel: { fontSize: 13, fontWeight: '700' },
+
+    section: { borderRadius: BorderRadius.lg, borderWidth: 1, padding: Spacing.md, gap: 12 },
     sectionTitle: { ...Typography.h3 },
     sectionSub: { ...Typography.bodySmall, lineHeight: 18 },
 
-    tabs: {
-      flexDirection: 'row', borderRadius: BorderRadius.md, borderWidth: 1, overflow: 'hidden',
-    },
-    tab: { flex: 1, paddingVertical: 8, alignItems: 'center' },
-    tabLabel: { fontSize: 13, fontWeight: '700' },
+    subTabs: { flexDirection: 'row', borderRadius: BorderRadius.md, borderWidth: 1, overflow: 'hidden' },
+    subTab: { flex: 1, paddingVertical: 8, alignItems: 'center' },
+    subTabLabel: { fontSize: 13, fontWeight: '700' },
 
     flagRow: {
-      flexDirection: 'row', alignItems: 'center',
-      paddingTop: 14, borderTopWidth: 1, gap: 12,
+      flexDirection: 'row', alignItems: 'center', paddingTop: 14, borderTopWidth: 1, gap: 12,
     },
     flagInfo: { flex: 1, gap: 3 },
     flagLabel: { fontSize: 14, fontWeight: '700' },
     flagDesc: { fontSize: 12, lineHeight: 16 },
-    flagRight: { width: 52, alignItems: 'center' },
 
-    footerNote: {
-      ...Typography.caption, textAlign: 'center', lineHeight: 18, paddingHorizontal: Spacing.md,
+    searchRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      borderRadius: BorderRadius.md, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8,
     },
+    searchInput: { flex: 1, fontSize: 14, padding: 0 },
+    filterChips: { flexDirection: 'row', gap: 8 },
+    filterChip: {
+      borderRadius: BorderRadius.full, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 5,
+    },
+    filterChipText: { fontSize: 12, fontWeight: '600' },
+
+    userRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingTop: 14, borderTopWidth: 1,
+    },
+    userAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    userName: { fontSize: 14, fontWeight: '700' },
+    userEmail: { fontSize: 12 },
+    roleBadge: { borderRadius: BorderRadius.full, paddingHorizontal: 10, paddingVertical: 4 },
+    roleText: { fontSize: 11, fontWeight: '700' },
+
+    emptyText: { ...Typography.bodySmall, textAlign: 'center', paddingVertical: 20 },
   });
 }

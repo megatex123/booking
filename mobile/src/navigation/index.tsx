@@ -38,10 +38,14 @@ export function RootNavigator() {
         dispatch(setAuth({ token, user: savedUser }));
         await connectSocket();
       }
-      dispatch(fetchFlags());
       setInitializing(false);
     })();
   }, []);
+
+  // Re-fetch feature flags whenever the logged-in user changes (covers login, logout, init)
+  useEffect(() => {
+    dispatch(fetchFlags());
+  }, [user?._id]);
 
   // Wire up notification socket listener whenever socket connects (login or init)
   useEffect(() => {

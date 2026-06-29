@@ -204,6 +204,7 @@ export const corporateAPI = {
 
 export const flagsAPI = {
   getAll: () => api.get('/admin/flags'),
+  getMyFlags: () => api.get('/users/me/flags'),
   update: (key: string, enabled: boolean) =>
     api.patch(`/admin/flags/${key}`, { enabled }),
 };
@@ -212,6 +213,10 @@ export const adminAPI = {
   stats: () => api.get('/admin/stats'),
   users: (role?: string) =>
     api.get('/admin/users', { params: role ? { role } : {} }),
+  getUserFlags: (userId: string) =>
+    api.get(`/admin/users/${userId}/flags`),
+  setUserFlag: (userId: string, key: string, enabled: boolean | null) =>
+    api.patch(`/admin/users/${userId}/flags/${key}`, { enabled }),
 };
 
 export const uploadAPI = {
