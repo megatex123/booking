@@ -1270,11 +1270,37 @@ async def seed():
             )
     print("✓ Updated workshop ratings from seeded reviews")
 
+    # ── Feature flags ──────────────────────────────────────────────────────────
+    feature_flags = [
+        {"key": "customer_queue_join",      "label": "Queue Join",           "group": "customer", "description": "Customers can join workshop queues remotely",          "enabled": True},
+        {"key": "customer_vehicle_health",  "label": "Car Health Score",     "group": "customer", "description": "Vehicle health scoring and service reminders",          "enabled": True},
+        {"key": "customer_service_history", "label": "Service History",      "group": "customer", "description": "Unified service timeline and manual logs",              "enabled": True},
+        {"key": "customer_loyalty",         "label": "Loyalty Program",      "group": "customer", "description": "Points, tiers, and rewards",                           "enabled": True},
+        {"key": "customer_referral",        "label": "Referral Program",     "group": "customer", "description": "Referral codes and credit rewards",                    "enabled": True},
+        {"key": "customer_compare",         "label": "Compare Workshops",    "group": "customer", "description": "Side-by-side workshop comparison",                     "enabled": True},
+        {"key": "customer_corporate",       "label": "Corporate Accounts",   "group": "customer", "description": "Corporate fleet registration",                         "enabled": True},
+        {"key": "customer_chat",            "label": "In-app Chat",          "group": "customer", "description": "Real-time chat with workshop staff",                   "enabled": True},
+        {"key": "vendor_staff_scheduling",  "label": "Staff Scheduling",     "group": "vendor",   "description": "Roster mechanics by day and shift",                    "enabled": True},
+        {"key": "vendor_queue_management",  "label": "Walk-in Queue",        "group": "vendor",   "description": "Live walk-in queue management",                        "enabled": True},
+        {"key": "vendor_analytics",         "label": "Analytics",            "group": "vendor",   "description": "Revenue charts and insights dashboard",                 "enabled": True},
+        {"key": "vendor_product_inventory", "label": "Product Inventory",    "group": "vendor",   "description": "Spare parts and materials management",                  "enabled": True},
+        {"key": "vendor_workshop_layout",   "label": "Workshop Layout",      "group": "vendor",   "description": "Repair bay assignment and management",                  "enabled": True},
+        {"key": "vendor_customer_crm",      "label": "Customer CRM",         "group": "vendor",   "description": "Past customers and visit history",                      "enabled": True},
+        {"key": "vendor_panel_settings",    "label": "Panel Settings",       "group": "vendor",   "description": "Insurance panel provider configuration",               "enabled": True},
+        {"key": "vendor_promotions",        "label": "Promotions",           "group": "vendor",   "description": "Flash deals and time-limited offers",                  "enabled": True},
+    ]
+    for flag in feature_flags:
+        flag["created_at"] = NOW
+    await db.feature_flags.insert_many(feature_flags)
+    print(f"✓ Created {len(feature_flags)} feature flags (all enabled)")
+
     client.close()
 
     print("\n════════════════════════════════════════════════════════════")
     print("  Seed complete! Login credentials:")
     print("════════════════════════════════════════════════════════════")
+    print("  ADMIN:")
+    print("    admin@bengkillah.com   / admin123")
     print("  CUSTOMERS:")
     print("    ahmad@example.com      / password123")
     print("    siti@example.com       / password123")
