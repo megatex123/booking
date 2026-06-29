@@ -162,6 +162,21 @@ export const reminderAPI = {
   remove: (id: string) => api.delete(`/reminders/${id}`),
 };
 
+export const queueAPI = {
+  // public
+  getEntries: (workshopId: string) => api.get(`/queue/${workshopId}/entries`),
+  // customer
+  join: (workshopId: string, data: { vehicle_plate: string; vehicle_name?: string; service_note?: string }) =>
+    api.post(`/queue/${workshopId}/join`, data),
+  myEntries: () => api.get('/queue/my/entries'),
+  leave: (entryId: string) => api.patch(`/queue/my/${entryId}/leave`),
+  // workshop management
+  manage: () => api.get('/queue/manage/entries'),
+  updateStatus: (entryId: string, status: string) =>
+    api.patch(`/queue/manage/${entryId}/status`, { status }),
+  remove: (entryId: string) => api.delete(`/queue/manage/${entryId}`),
+};
+
 export const scheduleAPI = {
   list: (params?: { date_from?: string; date_to?: string }) =>
     api.get('/workshops/my/schedules/', { params }),

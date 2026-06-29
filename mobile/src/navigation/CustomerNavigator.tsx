@@ -27,6 +27,7 @@ import { ReferralScreen } from '../screens/customer/ReferralScreen';
 import { CorporateRegistrationScreen } from '../screens/customer/CorporateRegistrationScreen';
 import { CorporateManagementScreen } from '../screens/customer/CorporateManagementScreen';
 import { LoyaltyScreen } from '../screens/customer/LoyaltyScreen';
+import { QueueStatusScreen } from '../screens/customer/QueueStatusScreen';
 import { Colors } from '../utils/theme';
 import { ENIGMA_FOOTER_HEIGHT } from '../../App';
 
@@ -59,6 +60,7 @@ function HomeStackScreen() {
       <HomeStack.Screen name="Chat" component={ChatScreen} />
       <HomeStack.Screen name="Payment" component={PaymentScreen} />
       <HomeStack.Screen name="Review" component={ReviewScreen} />
+      <HomeStack.Screen name="QueueStatus" component={QueueStatusScreen} />
     </HomeStack.Navigator>
   );
 }

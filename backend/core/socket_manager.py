@@ -49,6 +49,20 @@ async def leave_booking(sid, data):
         await sio.leave_room(sid, f"booking_{booking_id}")
 
 
+@sio.event
+async def join_queue_room(sid, data):
+    workshop_id = data.get("workshop_id")
+    if workshop_id:
+        await sio.enter_room(sid, f"queue_{workshop_id}")
+
+
+@sio.event
+async def leave_queue_room(sid, data):
+    workshop_id = data.get("workshop_id")
+    if workshop_id:
+        await sio.leave_room(sid, f"queue_{workshop_id}")
+
+
 async def emit_to_user(user_id: str, event: str, data: dict):
     sids = connected_users.get(user_id, set())
     for sid in sids:
@@ -57,3 +71,7 @@ async def emit_to_user(user_id: str, event: str, data: dict):
 
 async def emit_to_booking_room(booking_id: str, event: str, data: dict, skip_sid: str = None):
     await sio.emit(event, data, room=f"booking_{booking_id}", skip_sid=skip_sid)
+
+
+async def emit_to_queue_room(workshop_id: str, event: str, data: dict):
+    await sio.emit(event, data, room=f"queue_{workshop_id}")

@@ -72,6 +72,14 @@ const SECTIONS = [
     description: 'Roster mechanics by day and shift — track who is on duty',
     route: 'StaffScheduling',
   },
+  {
+    icon: 'people-circle-outline' as const,
+    iconBg: '#EFF6FF',
+    iconColor: '#2563EB',
+    title: 'Walk-in Queue',
+    description: 'Live queue of remote walk-ins — call, serve, and track their turn',
+    route: 'QueueManagement',
+  },
 ];
 
 export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => {

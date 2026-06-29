@@ -10,7 +10,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { Loading } from '../../components/common/Loading';
-import { reviewAPI, workshopAPI, uploadAPI } from '../../services/api';
+import { reviewAPI, workshopAPI, uploadAPI, queueAPI, userAPI } from '../../services/api';
+import { Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { showAlert } from '../../utils/webAlert';
 import { LocationMap } from '../../components/common/LocationMap';
 import { Colors, Typography, Spacing, BorderRadius, StatusColors, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
@@ -42,6 +44,13 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [queueSnap, setQueueSnap] = useState(workshop.queue_snapshot ?? null);
   const [refreshingQueue, setRefreshingQueue] = useState(false);
+  // Queue join modal
+  const [queueModalVisible, setQueueModalVisible] = useState(false);
+  const [queuePlate, setQueuePlate] = useState('');
+  const [queueVehicleName, setQueueVehicleName] = useState('');
+  const [queueNote, setQueueNote] = useState('');
+  const [queueVehicles, setQueueVehicles] = useState<any[]>([]);
+  const [joiningQueue, setJoiningQueue] = useState(false);
   const [activePhotoCategory, setActivePhotoCategory] = useState<string | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
 
@@ -65,6 +74,39 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
       setQueueSnap(res.data);
     } catch {}
     setRefreshingQueue(false);
+  };
+
+  const openQueueModal = async () => {
+    try {
+      const res = await userAPI.getVehicles();
+      setQueueVehicles(res.data ?? []);
+      if (res.data?.length > 0) {
+        setQueuePlate(res.data[0].plate ?? '');
+        setQueueVehicleName(`${res.data[0].brand ?? ''} ${res.data[0].name ?? ''}`.trim());
+      }
+    } catch {}
+    setQueueModalVisible(true);
+  };
+
+  const joinQueue = async () => {
+    if (!queuePlate.trim()) { showAlert('Enter your vehicle plate.'); return; }
+    setJoiningQueue(true);
+    try {
+      const res = await queueAPI.join(workshop.id, {
+        vehicle_plate: queuePlate.trim(),
+        vehicle_name: queueVehicleName.trim() || undefined,
+        service_note: queueNote.trim() || undefined,
+      });
+      setQueueModalVisible(false);
+      navigation.navigate('QueueStatus', {
+        entryId: res.data.id,
+        workshopId: workshop.id,
+        workshopName: workshop.name,
+      });
+    } catch (e: any) {
+      showAlert(e?.response?.data?.detail ?? 'Failed to join queue.');
+    }
+    setJoiningQueue(false);
   };
 
   const toggleService = (svc: WorkshopService) => {
@@ -263,6 +305,13 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
                   <Ionicons name="hourglass-outline" size={14} color={waitColor} />
                   <Text style={[styles.queueWaitText, { color: waitColor }]}>{waitLabel}</Text>
                 </View>
+                <TouchableOpacity
+                  style={[styles.joinQueueBtn, { backgroundColor: colors.primary }]}
+                  onPress={openQueueModal}
+                >
+                  <Ionicons name="add-circle-outline" size={15} color="#fff" />
+                  <Text style={styles.joinQueueBtnTxt}>Join Queue Remotely</Text>
+                </TouchableOpacity>
               </View>
             );
           })()}
@@ -397,6 +446,76 @@ export const WorkshopDetailScreen: React.FC<Props> = ({ navigation, route }) => 
           />
         </View>
       )}
+
+      {/* ── Join Queue Modal ─────────────────────────── */}
+      <Modal visible={queueModalVisible} transparent animationType="slide" onRequestClose={() => setQueueModalVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <ScrollView style={[styles.queueModal, { backgroundColor: colors.surface }]} keyboardShouldPersistTaps="handled">
+              <View style={[{ width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20, backgroundColor: colors.border }]} />
+              <Text style={[styles.queueModalTitle, { color: colors.text }]}>Join Queue at {workshop.name}</Text>
+              <Text style={[styles.queueModalSub, { color: colors.textSecondary }]}>
+                Reserve your spot remotely. You'll be notified when it's your turn.
+              </Text>
+
+              {queueVehicles.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {queueVehicles.map((v: any) => {
+                      const plate = v.plate ?? '';
+                      const vname = `${v.brand ?? ''} ${v.name ?? ''}`.trim();
+                      const selected = queuePlate === plate;
+                      return (
+                        <TouchableOpacity key={plate}
+                          style={[styles.vehChip, selected
+                            ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                            : { backgroundColor: colors.background, borderColor: colors.border }]}
+                          onPress={() => { setQueuePlate(plate); setQueueVehicleName(vname); }}
+                        >
+                          <Text style={[styles.vehChipPlate, { color: selected ? '#fff' : colors.text }]}>{plate}</Text>
+                          {vname ? <Text style={[styles.vehChipName, { color: selected ? 'rgba(255,255,255,.7)' : colors.textSecondary }]}>{vname}</Text> : null}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              )}
+
+              <Text style={[styles.queueFieldLabel, { color: colors.textSecondary }]}>Vehicle Plate *</Text>
+              <TextInput
+                style={[styles.queueInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                value={queuePlate} onChangeText={setQueuePlate}
+                placeholder="e.g. WXY 1234" placeholderTextColor={colors.textSecondary}
+                autoCapitalize="characters"
+              />
+
+              <Text style={[styles.queueFieldLabel, { color: colors.textSecondary }]}>What do you need? (optional)</Text>
+              <TextInput
+                style={[styles.queueInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, minHeight: 60 }]}
+                value={queueNote} onChangeText={setQueueNote}
+                placeholder="e.g. Oil change, tyre check, noise from front"
+                placeholderTextColor={colors.textSecondary} multiline numberOfLines={2}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 28 }}>
+                <TouchableOpacity style={[styles.queueModalBtn, { backgroundColor: colors.border, flex: 1 }]}
+                  onPress={() => setQueueModalVisible(false)} disabled={joiningQueue}>
+                  <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.queueModalBtn, { backgroundColor: colors.primary, flex: 2 }]}
+                  onPress={joinQueue} disabled={joiningQueue}>
+                  {joiningQueue ? <ActivityIndicator color="#fff" size="small" /> : (
+                    <>
+                      <Ionicons name="add-circle-outline" size={15} color="#fff" />
+                      <Text style={{ color: '#fff', fontWeight: '700' }}>Join Queue</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -635,6 +754,21 @@ function makeStyles(colors: AppTheme) {
     alignSelf: 'flex-start',
   },
   queueWaitText: { ...Typography.caption, fontWeight: '700', fontSize: 12 },
+  joinQueueBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, borderRadius: BorderRadius.md, padding: 11, marginTop: 10,
+  },
+  joinQueueBtnTxt: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  // Queue join modal
+  queueModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.xl, maxHeight: '85%' as any },
+  queueModalTitle: { ...Typography.h3, marginBottom: 4 },
+  queueModalSub: { ...Typography.caption, lineHeight: 18, marginBottom: Spacing.lg },
+  queueFieldLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  queueInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, marginBottom: 14 },
+  queueModalBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: BorderRadius.lg },
+  vehChip: { borderRadius: BorderRadius.md, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center' },
+  vehChipPlate: { fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  vehChipName: { fontSize: 10, marginTop: 2 },
 
   promoCard: {
     backgroundColor: '#F9731608', borderRadius: BorderRadius.md,
