@@ -76,9 +76,8 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
     setToggling(null);
   };
 
-  const handleLogout = async () => {
-    const ok = await showConfirm('Logout', 'Sign out of admin panel?');
-    if (ok) dispatch(logout());
+  const handleLogout = () => {
+    showConfirm('Sign out of admin panel?', () => dispatch(logout()));
   };
 
   const visibleFlags = records.filter((f) => f.group === flagTab);
