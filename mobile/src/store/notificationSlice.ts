@@ -55,6 +55,18 @@ const notificationSlice = createSlice({
     setUnreadCount(state, action: PayloadAction<number>) {
       state.unreadCount = action.payload;
     },
+    // Optimistic updates — applied immediately so the UI reacts without waiting for the API
+    markReadOptimistic(state, action: PayloadAction<string>) {
+      const item = state.items.find(n => n.id === action.payload);
+      if (item && !item.is_read) {
+        item.is_read = true;
+        state.unreadCount = Math.max(0, state.unreadCount - 1);
+      }
+    },
+    markAllReadOptimistic(state) {
+      state.items.forEach(n => { n.is_read = true; });
+      state.unreadCount = 0;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -64,20 +76,9 @@ const notificationSlice = createSlice({
         state.unreadCount = action.payload.filter(n => !n.is_read).length;
         state.loading = false;
       })
-      .addCase(fetchNotifications.rejected, (state) => { state.loading = false; })
-      .addCase(markRead.fulfilled, (state, action) => {
-        const item = state.items.find(n => n.id === action.payload);
-        if (item && !item.is_read) {
-          item.is_read = true;
-          state.unreadCount = Math.max(0, state.unreadCount - 1);
-        }
-      })
-      .addCase(markAllRead.fulfilled, (state) => {
-        state.items.forEach(n => { n.is_read = true; });
-        state.unreadCount = 0;
-      });
+      .addCase(fetchNotifications.rejected, (state) => { state.loading = false; });
   },
 });
 
-export const { addNotification, setUnreadCount } = notificationSlice.actions;
+export const { addNotification, setUnreadCount, markReadOptimistic, markAllReadOptimistic } = notificationSlice.actions;
 export default notificationSlice.reducer;

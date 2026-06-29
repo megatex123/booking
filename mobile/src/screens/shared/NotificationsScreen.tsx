@@ -5,7 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { fetchNotifications, markRead, markAllRead } from '../../store/notificationSlice';
+import {
+  fetchNotifications, markRead, markAllRead,
+  markReadOptimistic, markAllReadOptimistic,
+} from '../../store/notificationSlice';
 
 interface Props { navigation: any }
 
@@ -48,7 +51,10 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   }, []);
 
   const handlePress = useCallback((item: any) => {
-    if (!item.is_read) dispatch(markRead(item.id));
+    if (!item.is_read) {
+      dispatch(markReadOptimistic(item.id)); // instant UI update
+      dispatch(markRead(item.id));            // sync to server in background
+    }
 
     if (item.type === 'service_reminder' && item.data?.workshop_id) {
       // Navigate to the workshop so the customer can rebook
@@ -66,7 +72,8 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   }, [dispatch, navigation, userRole]);
 
   const handleMarkAll = useCallback(() => {
-    dispatch(markAllRead());
+    dispatch(markAllReadOptimistic()); // instant UI update
+    dispatch(markAllRead());            // sync to server in background
   }, [dispatch]);
 
   const renderItem = ({ item }: { item: any }) => {
