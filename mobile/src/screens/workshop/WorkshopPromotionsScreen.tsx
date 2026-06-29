@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, ActivityIndicator, Switch,
+  TextInput, Modal, ActivityIndicator, Switch, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -195,14 +195,7 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
               maxLength={200}
             />
             <Text style={styles.fieldLabel}>Ends at (date & time) *</Text>
-            <TextInput
-              style={styles.input}
-              value={endsAt}
-              onChangeText={setEndsAt}
-              placeholder="YYYY-MM-DDTHH:MM"
-              placeholderTextColor={colors.textLight}
-            />
-            <Text style={styles.fieldHint}>Format: 2025-12-31T23:59</Text>
+            <DateTimePicker value={endsAt} onChange={setEndsAt} min={MIN_ENDS_AT()} colors={colors} styles={styles} />
 
             <Text style={styles.fieldLabel}>Discount (optional)</Text>
             <View style={styles.discountTypeRow}>
@@ -239,6 +232,55 @@ export const WorkshopPromotionsScreen: React.FC<Props> = ({ navigation }) => {
     </SafeAreaView>
   );
 };
+
+function fmtDateTimeDisplay(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-MY', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  }) + ', ' + d.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function DateTimePicker({
+  value, onChange, min, colors, styles,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  min: string;
+  colors: any;
+  styles: any;
+}) {
+  const display = value ? fmtDateTimeDisplay(value) : 'Pick date & time';
+  const hasValue = !!value;
+
+  return (
+    <View style={styles.datePickerWrap}>
+      {/* Visible styled button */}
+      <View style={[styles.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.background }]}>
+        <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+        <Text style={[styles.datePickerText, { color: hasValue ? colors.text : colors.textLight }]} numberOfLines={1}>
+          {display}
+        </Text>
+        <Ionicons name="chevron-down-outline" size={15} color={colors.textSecondary} />
+      </View>
+      {/* Invisible datetime-local input covers the button — clicking it opens the browser calendar */}
+      {Platform.OS === 'web' && (
+        <input
+          type="datetime-local"
+          value={value}
+          min={min}
+          onChange={(e: any) => onChange(e.target.value)}
+          style={{
+            position: 'absolute', inset: 0,
+            opacity: 0, cursor: 'pointer',
+            width: '100%', height: '100%',
+          } as any}
+        />
+      )}
+    </View>
+  );
+}
 
 const PromoCard: React.FC<{ promo: Promo; onEdit: () => void; onToggle: () => void; onDelete: () => void }> = ({ promo, onEdit, onToggle, onDelete }) => {
   const { colors } = useTheme();
@@ -326,7 +368,13 @@ function makeStyles(colors: AppTheme) {
     ...Typography.body, color: colors.text, backgroundColor: colors.background,
   },
   textArea: { height: 80, textAlignVertical: 'top', paddingTop: 10 },
-  fieldHint: { ...Typography.caption, color: colors.textSecondary, marginTop: 4 },
+  datePickerWrap: { position: 'relative' },
+  datePickerBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1, borderRadius: BorderRadius.sm,
+    paddingHorizontal: 14, paddingVertical: 12,
+  },
+  datePickerText: { flex: 1, ...Typography.body },
   discountTypeRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   discountTypeBtn: {
     flex: 1, paddingVertical: 9, borderRadius: BorderRadius.sm,
