@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 
 interface Props { navigation: any }
 
@@ -15,6 +16,7 @@ const SECTIONS = [
     title: 'Product Inventory',
     description: 'Manage spare parts, materials, and reorder alerts',
     route: 'ProductManagement',
+    flagKey: 'vendor_product_inventory',
   },
   {
     icon: 'grid-outline' as const,
@@ -23,6 +25,7 @@ const SECTIONS = [
     title: 'Workshop Layout',
     description: 'Manage repair stations and assign active bookings',
     route: 'WorkshopLayout',
+    flagKey: 'vendor_workshop_layout',
   },
   {
     icon: 'people-outline' as const,
@@ -31,6 +34,7 @@ const SECTIONS = [
     title: 'Mechanics',
     description: 'Add staff, assign bookings, track individual workload',
     route: 'MechanicManagement',
+    flagKey: null,
   },
   {
     icon: 'people-circle-outline' as const,
@@ -39,6 +43,7 @@ const SECTIONS = [
     title: 'Customer CRM',
     description: 'Past customers, visit history, vehicles, and total spend',
     route: 'CustomerCRM',
+    flagKey: 'vendor_customer_crm',
   },
   {
     icon: 'bar-chart-outline' as const,
@@ -47,6 +52,7 @@ const SECTIONS = [
     title: 'Revenue & Analytics',
     description: 'Monthly revenue, peak hours, top services, customer ratio',
     route: 'Analytics',
+    flagKey: 'vendor_analytics',
   },
   {
     icon: 'shield-checkmark-outline',
@@ -55,6 +61,7 @@ const SECTIONS = [
     title: 'Panel Workshop Settings',
     description: 'Accept insurance claim bookings — configure accepted providers',
     route: 'PanelSettings',
+    flagKey: 'vendor_panel_settings',
   },
   {
     icon: 'flame-outline' as const,
@@ -63,6 +70,7 @@ const SECTIONS = [
     title: 'Promotions & Flash Deals',
     description: 'Create time-limited offers that appear as badges on your workshop card',
     route: 'Promotions',
+    flagKey: 'vendor_promotions',
   },
   {
     icon: 'calendar-outline' as const,
@@ -71,6 +79,7 @@ const SECTIONS = [
     title: 'Staff Scheduling',
     description: 'Roster mechanics by day and shift — track who is on duty',
     route: 'StaffScheduling',
+    flagKey: 'vendor_staff_scheduling',
   },
   {
     icon: 'people-circle-outline' as const,
@@ -79,12 +88,36 @@ const SECTIONS = [
     title: 'Walk-in Queue',
     description: 'Live queue of remote walk-ins — call, serve, and track their turn',
     route: 'QueueManagement',
+    flagKey: 'vendor_queue_management',
   },
 ];
 
 export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const flagProductInventory  = useFeatureFlag('vendor_product_inventory');
+  const flagWorkshopLayout    = useFeatureFlag('vendor_workshop_layout');
+  const flagCustomerCRM       = useFeatureFlag('vendor_customer_crm');
+  const flagAnalytics         = useFeatureFlag('vendor_analytics');
+  const flagPanelSettings     = useFeatureFlag('vendor_panel_settings');
+  const flagPromotions        = useFeatureFlag('vendor_promotions');
+  const flagStaffScheduling   = useFeatureFlag('vendor_staff_scheduling');
+  const flagQueueManagement   = useFeatureFlag('vendor_queue_management');
+
+  const flagMap: Record<string, boolean> = {
+    vendor_product_inventory:  flagProductInventory,
+    vendor_workshop_layout:    flagWorkshopLayout,
+    vendor_customer_crm:       flagCustomerCRM,
+    vendor_analytics:          flagAnalytics,
+    vendor_panel_settings:     flagPanelSettings,
+    vendor_promotions:         flagPromotions,
+    vendor_staff_scheduling:   flagStaffScheduling,
+    vendor_queue_management:   flagQueueManagement,
+  };
+
+  const visibleSections = SECTIONS.filter((s) => s.flagKey == null || flagMap[s.flagKey] !== false);
+
   return (
   <SafeAreaView style={styles.container}>
     <View style={styles.header}>
@@ -100,7 +133,7 @@ export const WorkshopManagementScreen: React.FC<Props> = ({ navigation }) => {
         Manage your workshop resources, inventory, and repair bay assignments.
       </Text>
 
-      {SECTIONS.map((s) => (
+      {visibleSections.map((s) => (
         <TouchableOpacity
           key={s.route}
           style={styles.card}

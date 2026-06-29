@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { setAuth, logout } from '../store/authSlice';
 import { addNotification } from '../store/notificationSlice';
 import { fetchUnreadCount } from '../store/notificationSlice';
+import { fetchFlags } from '../store/flagsSlice';
 import { getToken, getUser } from '../services/storage';
 import { connectSocket, getSocket } from '../services/socket';
 import { setUnauthorizedHandler } from '../services/api';
@@ -20,6 +21,7 @@ import { VerifyOTPScreen } from '../screens/auth/VerifyOTPScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { CustomerNavigator } from './CustomerNavigator';
 import { WorkshopNavigator } from './WorkshopNavigator';
+import { AdminNavigator } from './AdminNavigator';
 
 const Stack = createStackNavigator();
 
@@ -36,6 +38,7 @@ export function RootNavigator() {
         dispatch(setAuth({ token, user: savedUser }));
         await connectSocket();
       }
+      dispatch(fetchFlags());
       setInitializing(false);
     })();
   }, []);
@@ -82,6 +85,7 @@ export function RootNavigator() {
     );
   }
 
+  if (user.role === 'admin') return <AdminNavigator />;
   return user.role === 'customer' ? <CustomerNavigator /> : <WorkshopNavigator />;
 }
 

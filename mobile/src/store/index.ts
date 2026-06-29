@@ -6,6 +6,7 @@ import workshopReducer from './workshopSlice';
 import notificationReducer from './notificationSlice';
 import favouriteReducer from './favouriteSlice';
 import compareReducer from './compareSlice';
+import flagsReducer from './flagsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     favourites: favouriteReducer,
     compare: compareReducer,
+    flags: flagsReducer,
   },
   middleware: (getDefault) => getDefault({ serializableCheck: false }),
 });

@@ -202,6 +202,18 @@ export const corporateAPI = {
   getBilling: (month?: string) => api.get('/corporate/billing', { params: month ? { month } : {} }),
 };
 
+export const flagsAPI = {
+  getAll: () => api.get('/admin/flags'),
+  update: (key: string, enabled: boolean) =>
+    api.patch(`/admin/flags/${key}`, { enabled }),
+};
+
+export const adminAPI = {
+  stats: () => api.get('/admin/stats'),
+  users: (role?: string) =>
+    api.get('/admin/users', { params: role ? { role } : {} }),
+};
+
 export const uploadAPI = {
   uploadFile: async (uri: string, mimeType: string, filename: string): Promise<string> => {
     const formData = new FormData();

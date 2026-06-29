@@ -73,9 +73,18 @@ async def seed():
     client = AsyncIOMotorClient(MONGO_URL)
     db = client[DB_NAME]
 
-    for col in ["users", "workshops", "bookings", "messages", "reviews", "notifications"]:
+    for col in ["users", "workshops", "bookings", "messages", "reviews", "notifications", "feature_flags"]:
         await db[col].drop()
     print("✓ Cleared existing collections")
+
+    # ── Admin user ─────────────────────────────────────────────────────────────
+    admin_user = {
+        "_id": oid(), "name": "Admin", "email": "admin@bengkillah.com",
+        "password": hashed("admin123"), "phone": "+60100000000",
+        "role": "admin", "avatar": None, "created_at": NOW, "updated_at": NOW,
+    }
+    await db.users.insert_one(admin_user)
+    print("✓ Created admin user (admin@bengkillah.com / admin123)")
 
     # ── Customers ─────────────────────────────────────────────────────────────
     customers = [
