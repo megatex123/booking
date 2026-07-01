@@ -45,7 +45,11 @@
     user-select: none;
   }
 
-  .deck { width: 100%; height: 100vh; position: relative; }
+  .deck {
+    width: 100%; height: 100vh; position: relative;
+    perspective: 1400px;
+    perspective-origin: 50% 50%;
+  }
 
   .slide {
     position: absolute; inset: 0;
@@ -53,11 +57,44 @@
     align-items: center; justify-content: center;
     padding: 60px 80px;
     opacity: 0; pointer-events: none;
-    transition: opacity .5s cubic-bezier(.4,0,.2,1), transform .5s cubic-bezier(.4,0,.2,1);
-    transform: translateX(60px);
+    transform-style: preserve-3d;
+    transition: opacity .65s cubic-bezier(.4,0,.2,1), transform .65s cubic-bezier(.4,0,.2,1);
+    transform: translateX(80px) rotateY(12deg) scale(.92);
+    backface-visibility: hidden;
   }
-  .slide.active  { opacity: 1; pointer-events: all; transform: translateX(0) scale(1); z-index: 1; }
-  .slide.exit    { opacity: 0; transform: translateX(-80px) scale(.97); }
+  .slide.active {
+    opacity: 1; pointer-events: all; z-index: 1;
+    transform: translateX(0) rotateY(0deg) scale(1);
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-80px) rotateY(-12deg) scale(.92);
+  }
+
+  /* 3D tilt on stat/info cards when hovered */
+  .card {
+    transition: transform .2s ease, box-shadow .2s ease !important;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .card:hover {
+    box-shadow: 0 24px 60px rgba(0,0,0,.45) !important;
+  }
+
+  /* Floating depth layers — children animate in with Z depth */
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(32px) translateZ(-40px); }
+    to   { opacity: 1; transform: translateY(0)    translateZ(0); }
+  }
+  .slide.active > * {
+    animation: riseIn .6s cubic-bezier(.22,1,.36,1) both;
+  }
+  .slide.active > *:nth-child(1) { animation-delay: .05s; }
+  .slide.active > *:nth-child(2) { animation-delay: .15s; }
+  .slide.active > *:nth-child(3) { animation-delay: .25s; }
+  .slide.active > *:nth-child(4) { animation-delay: .35s; }
+  .slide.active > *:nth-child(5) { animation-delay: .42s; }
+  .slide.active > *:nth-child(6) { animation-delay: .48s; }
 
   .cols { display: flex; gap: 32px; width: 100%; }
   .col  { flex: 1; }
@@ -1486,11 +1523,41 @@
     if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                     { e.preventDefault(); go(-1); }
   });
 
+  // ── MOUSE WHEEL NAVIGATION ──
+  let wheelLock = false;
+  document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (wheelLock) return;
+    wheelLock = true;
+    go(e.deltaY > 0 ? 1 : -1);
+    setTimeout(() => { wheelLock = false; }, 750);
+  }, { passive: false });
+
   let tx = 0;
   document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
   document.addEventListener('touchend',   e => {
     const dx = e.changedTouches[0].clientX - tx;
     if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  // ── 3D CARD TILT ON MOUSE MOVE ──
+  document.addEventListener('mousemove', (e) => {
+    const activeSlide = document.querySelector('.slide.active');
+    if (!activeSlide) return;
+    const cards = activeSlide.querySelectorAll('.card');
+    const cx = window.innerWidth  / 2;
+    const cy = window.innerHeight / 2;
+    const rx = ((e.clientY - cy) / cy) * -6;   // max ±6°
+    const ry = ((e.clientX - cx) / cx) *  8;   // max ±8°
+    cards.forEach((card, i) => {
+      const depth = (i % 3) * 0.3 + 0.7;       // stagger depth
+      card.style.transform = `perspective(800px) rotateX(${rx * depth}deg) rotateY(${ry * depth}deg) translateZ(${depth * 6}px)`;
+    });
+  });
+
+  // Reset cards when mouse leaves
+  document.addEventListener('mouseleave', () => {
+    document.querySelectorAll('.card').forEach(c => { c.style.transform = ''; });
   });
 
   // ── ANIMATED COUNTERS ──
@@ -1508,18 +1575,7 @@
   }
 
   function triggerEntrance(slideEl) {
-    const children = [...slideEl.children];
-    children.forEach((child, i) => {
-      child.style.opacity = '0';
-      child.style.transform = 'translateY(24px)';
-      child.style.transition = `opacity .5s ease ${i * .1 + .05}s, transform .5s ease ${i * .1 + .05}s`;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          child.style.opacity = '';
-          child.style.transform = '';
-        });
-      });
-    });
+    // CSS animation handles the visual entrance; this function only triggers counters/specials
 
     if (slideEl.id === 's4') {
       setTimeout(() => {

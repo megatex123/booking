@@ -623,10 +623,76 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                       <Text style={[styles.servicePrice, { fontSize: 13 }]}>{formatPrice(it.price * it.quantity)}</Text>
                     </View>
                   ))}
-                  <View style={[styles.serviceRow, { marginTop: 4 }]}>
-                    <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
-                    <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
-                  </View>
+
+                  {/* Discount breakdown — only shown when approved and discounts exist */}
+                  {q.status === 'approved' ? (() => {
+                    const promoDiscount = q.promotion_discount ?? 0;
+                    const loyaltyDiscount = q.loyalty_discount ?? 0;
+                    const originalOffset = q.original_discount_offset ?? 0;
+                    const hasDiscounts = promoDiscount > 0 || loyaltyDiscount > 0 || originalOffset > 0;
+
+                    return (
+                      <>
+                        <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                          <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
+                          <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
+                        </View>
+
+                        {promoDiscount > 0 && (
+                          <View style={styles.serviceRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="pricetag-outline" size={12} color="#F97316" />
+                              <Text style={{ fontSize: 12, color: '#F97316', fontWeight: '600' }}>
+                                {q.promotion_title ?? 'Promotion'}
+                              </Text>
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#F97316' }}>-{formatPrice(promoDiscount)}</Text>
+                          </View>
+                        )}
+
+                        {loyaltyDiscount > 0 && (
+                          <View style={styles.serviceRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="star-outline" size={12} color="#F59E0B" />
+                              <Text style={{ fontSize: 12, color: '#F59E0B', fontWeight: '600' }}>
+                                Loyalty Points ({q.loyalty_points_used} pts)
+                              </Text>
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>-{formatPrice(loyaltyDiscount)}</Text>
+                          </View>
+                        )}
+
+                        {originalOffset > 0 && (
+                          <View style={styles.serviceRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Ionicons name="gift-outline" size={12} color="#10B981" />
+                              <Text style={{ fontSize: 12, color: '#10B981', fontWeight: '600' }}>
+                                Original booking discount
+                              </Text>
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#10B981' }}>-{formatPrice(originalOffset)}</Text>
+                          </View>
+                        )}
+
+                        {hasDiscounts && <View style={[styles.divider, { marginVertical: 5 }]} />}
+
+                        <View style={styles.serviceRow}>
+                          <Text style={[styles.totalLabel, { fontSize: 13, fontWeight: '800' }]}>
+                            {hasDiscounts ? 'Net Received' : 'Quotation Total'}
+                          </Text>
+                          <Text style={[styles.totalAmount, { fontSize: 14, color: colors.success }]}>
+                            {formatPrice(q.net_contribution ?? q.final_amount ?? q.subtotal)}
+                          </Text>
+                        </View>
+                      </>
+                    );
+                  })() : (
+                    <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                      <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
+                      <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
+                    </View>
+                  )}
+
                   {!!q.note && <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 6, fontStyle: 'italic' }}>"{q.note}"</Text>}
                   {q.status === 'rejected' && !!q.customer_response_note && (
                     <Text style={{ fontSize: 12, color: colors.danger, marginTop: 4 }}>Customer note: {q.customer_response_note}</Text>

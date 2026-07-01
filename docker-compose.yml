@@ -1,0 +1,56 @@
+services:
+
+  mongodb:
+    image: mongo:8
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ghcr.io/megatex123/booking/backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017
+      DATABASE_NAME: carbooking
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8081}
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/megatex123/booking/web:latest
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+
+  pitch:
+    image: ghcr.io/megatex123/booking/pitch:latest
+    build:
+      context: ./pitch-serve
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+
+volumes:
+  mongo_data:
+  uploads:
