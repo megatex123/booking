@@ -55,6 +55,7 @@ Explore tab
                             → BookingDetail → Chat
                                            → Payment
                                            → Review
+           → PriceEstimator
 
 Bookings tab
   └── BookingHistory → BookingDetail → Chat, Payment, Review
@@ -119,6 +120,10 @@ API modules:
 - `notificationAPI` — list, unread count, mark read, mark all read
 - `paymentAPI` — create intent, confirm payment
 - `uploadAPI` — multipart file upload (handles web blob URLs and native RN paths)
+- `priceEstimatorAPI` — `getSymptoms()`, `estimate(symptomIds, lat, lng, radiusKm)`
+
+### 401 handling — single-device session
+`setUnauthorizedHandler(fn)` in `api.ts` passes the `detail` string from a 401 response to the handler. `navigation/index.tsx` checks for `reason === 'SESSION_EXPIRED'` and shows an alert ("logged in from another device") before dispatching `logout()`. Plain 401s (expired/invalid token) log out silently as before.
 
 ## Web Platform Gotchas
 
@@ -128,6 +133,10 @@ API modules:
 | `react-native-maps` | Returns a plain `<View>` (no map rendered) |
 | `@stripe/stripe-react-native` | No-op stubs for all Stripe components |
 | `expo-location` | Returns dummy coordinates |
+| `expo-image-picker` | Real implementation on web — opens a hidden `<input type="file">` and resolves picked files as `blob:` URIs (`launchImageLibraryAsync` previously always returned `{ canceled: true }`, silently breaking photo/video upload on web) |
+
+### Custom date/time picker (web)
+Native browser `<input type="datetime-local">` looks inconsistent across browsers and is easy to break inside a React Native `Modal` (clicks can bubble to an overlay `TouchableOpacity` and dismiss the modal before the date registers). `WorkshopPromotionsScreen.tsx`'s `DateTimePicker` component now renders its own inline calendar (month grid + HH:MM text inputs) instead of relying on the native input — no overlay/z-index issues, consistent look on every browser. Reusable pattern for any future date pickers inside modals.
 
 ### Alert on web
 `Alert.alert()` is a no-op in React Native Web. Always use:

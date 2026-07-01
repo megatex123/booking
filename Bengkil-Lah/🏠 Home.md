@@ -6,20 +6,20 @@
 
 ## Quick Links
 
-| Area | Note |
-|---|---|
-| System overview | [[Architecture]] |
-| Backend (FastAPI + MongoDB) | [[Backend]] |
-| Mobile (Expo + React Native) | [[Frontend]] |
-| Database schemas | [[Data Models]] |
-| Booking lifecycle | [[Booking Flow]] |
-| Real-time events | [[Realtime]] |
-| All API endpoints | [[API Reference]] |
-| Running the project | [[Dev Setup]] |
-| Feature status | [[Features]] |
-| Finance & payments | [[Finance]] |
-| Planned future features | [[Future Features]] |
-| AI features (Claude API) | [[claude-api]] |
+| Area                         | Note                |
+| ---------------------------- | ------------------- |
+| System overview              | [[Architecture]]    |
+| Backend (FastAPI + MongoDB)  | [[Backend]]         |
+| Mobile (Expo + React Native) | [[Frontend]]        |
+| Database schemas             | [[Data Models]]     |
+| Booking lifecycle            | [[Booking Flow]]    |
+| Real-time eventsI + MongoDB) | [[Realtime]]        |
+| All API endpoints            | [[API Reference]]   |
+| Running the project          | [[Dev Setup]]       |
+| Feature status               | [[Features]]        |
+| Finance & payments           | [[Finance]]         |
+| Planned future features      | [[Future Features]] |
+| AI features (Claude API)     | [[claude-api]]      |
 
 ---
 

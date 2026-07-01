@@ -14,6 +14,7 @@ Status of every major feature in the app.
 | Change password | ✅ Complete | |
 | Forgot password (OTP) | ✅ Complete | Screens + backend wired; depends on SMTP in `.env` |
 | Online status indicator | ✅ Complete | Socket.IO `connected_users` map |
+| Single-device login (customers) | ✅ Complete | `session_id` embedded in JWT, validated per-request; logging in elsewhere signs out other devices with an in-app alert. Workshop accounts unaffected. |
 
 ## Customer — Workshop Discovery
 
@@ -29,7 +30,8 @@ Status of every major feature in the app.
 | Price comparison | ✅ Complete | "Compare" chip on cards + WorkshopDetail; floating compare tray (max 3); full side-by-side table in `CompareScreen` with per-category pricing |
 | Real-time queue / wait time | ✅ Complete | `compute_queue_snapshot()` in `workshops.py` — triggered on `in_progress`/`completed` transitions, cached in `workshop.queue_snapshot`; wait badge on Explore cards; full queue card on WorkshopDetail with Refresh button (`GET /workshops/{id}/queue`); panel filter chip |
 | Loyalty Points System | ✅ Complete | Earn 1 pt per RM1 spent (awarded on `completed`); 100 pts = RM1 discount; redeem at booking creation; balance visible in Profile → Loyalty Points; `LoyaltyScreen` with history; `GET /loyalty/balance`, `GET /loyalty/history` |
-| Workshop Promotions & Flash Deals | ✅ Complete | Embedded in workshop doc; serializer filters active/non-expired; 🔥 badge on Explore cards and "Current Deals" section in WorkshopDetail; `WorkshopPromotionsScreen` for vendor CRUD; `GET/POST/PATCH/DELETE /workshops/my/promotions` |
+| Workshop Promotions & Flash Deals | ✅ Complete | Embedded in workshop doc; serializer filters active/non-expired; 🔥 badge on Explore cards and "Current Deals" section in WorkshopDetail; `WorkshopPromotionsScreen` for vendor CRUD; `GET/POST/PATCH/DELETE /workshops/my/promotions`; custom inline calendar date/time picker (no native browser input) |
+| Price Estimator | ✅ Complete | Customer picks symptoms ("squeaky brakes", "AC not cold") → estimated price range from nearby workshops before booking; `PriceEstimatorScreen`, banner entry point on Explore (list mode); `GET /price-estimator/symptoms`, `POST /price-estimator/estimate` |
 
 ## Customer — Booking
 
@@ -44,6 +46,9 @@ Status of every major feature in the app.
 | Cancel booking | ✅ Complete | Pending / confirmed only |
 | Reschedule booking | ✅ Complete | Pending / confirmed only |
 | Real-time status updates | ✅ Complete | Socket.IO `booking_status_updated` |
+| Quotation approval before charge | ✅ Complete | Workshop sends itemized quote (`initial` while pending/confirmed, pre-filled from the customer's selected services; `additional` while in_progress for extra work found, starts blank); customer must approve before the amount is added to the total — nothing auto-charged. `POST /bookings/{id}/quotations`, `PATCH /bookings/{id}/quotations/{qid}/respond`; UI in both `WorkshopBookingDetailScreen` (send) and `BookingDetailScreen` (approve/reject) |
+| Promotion + loyalty discount on quotations | ✅ Complete | When approving a quotation, the best active workshop promotion is auto-applied and the customer can toggle "Use loyalty points" — same discount math as booking creation. Final discounted amount (not raw subtotal) is added to the booking total; breakdown shown on the approved quotation card and in the downloadable PDF |
+| Quotation PDF download | ✅ Complete | Once a quotation is approved, customer or workshop can download a branded PDF via `GET /bookings/{id}/quotations/{qid}/pdf`; "Print / Download PDF" button on the approved quotation card in `BookingDetailScreen` |
 
 ## Customer — Payments
 
@@ -53,6 +58,7 @@ Status of every major feature in the app.
 | Payment UI (web) | ⚠️ Stub | Stripe SDK mocked; no real card capture on web |
 | Manual payment confirm (API) | ✅ Complete | `POST /payments/confirm/{id}` works directly |
 | PDF Invoice download | ✅ Complete | `GET /bookings/{id}/invoice` — branded 2-page PDF via fpdf2; "Download Invoice" button on completed bookings (web) |
+| Price breakdown on booking detail | ✅ Complete | When any discount applies, shows subtotal (strikethrough) + itemised promotion/referral/loyalty discounts + final total on `BookingDetailScreen` |
 
 ## Customer — Reviews
 
@@ -66,7 +72,7 @@ Status of every major feature in the app.
 
 | Feature | Status | Notes |
 |---|---|---|
-| My Vehicles list | ✅ Complete | Saved to `users.vehicles` in MongoDB via `PATCH /users/me`; `MyVehiclesScreen` fields: Plate, Brand, Model Name, Year, Color; pencil icon on each card opens inline edit form with all fields editable (including plate number) |
+| My Vehicles list | ✅ Complete | Saved to `users.vehicles` in MongoDB via `PATCH /users/me`; `MyVehiclesScreen` fields: Plate, Brand, Model Name, Year, Color; pencil icon on each card opens inline edit form with all fields editable (including plate number); `GET /users/me/vehicles` also merges in vehicle plates from booking history not yet in `users.vehicles`, and new bookings auto-add their vehicle so the list stays in sync |
 | Vehicle service history | ✅ Complete | Unified timeline: completed bookings + self-logged manual entries merged chronologically; workshop bookings (blue) vs manual logs (amber/wrench icon); supports edit & delete of manual entries |
 | Manual service logging | ✅ Complete | Customers can self-log services done outside the app (DIY, local mechanic, any workshop); `POST /service-logs/`; `manual_service_logs` MongoDB collection; form: date, location, services (comma list + quick-pick chips), notes, mileage, cost, next service interval |
 | Car Health Score | ✅ Complete | Score (0–100) per vehicle based on elapsed time since last service vs. next service interval; `GET /bookings/vehicle-health`; merges completed bookings AND manual logs — uses whichever record is most recent; `CarHealthScreen` with SVG circular gauge; dashboard widget on `CustomerDashboardScreen`; fleet average banner |
@@ -90,7 +96,7 @@ Status of every major feature in the app.
 | Reject booking (with reason) | ✅ Complete | `status_note` stored |
 | Mark in-progress | ✅ Complete | |
 | Mark completed (general notes) | ✅ Complete | |
-| Mark completed (per-service reports) | ✅ Complete | |
+| Mark completed (per-service reports) | ✅ Complete | Each report supports work-done notes, next-service recommendation, products used, and photo/video upload (web file picker fixed — `expo-image-picker` mock now opens a real `<input type="file">` instead of always cancelling) |
 | Assign repair station | ✅ Complete | |
 | Real-time new booking alert | ✅ Complete | Socket.IO `new_booking` |
 

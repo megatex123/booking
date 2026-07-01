@@ -37,7 +37,8 @@ backend/
     ├── uploads.py
     ├── notifications.py
     ├── reminders.py      vehicle reminders CRUD (vehicle_reminders collection)
-    └── service_logs.py   manual service log CRUD (manual_service_logs collection)
+    ├── service_logs.py   manual service log CRUD (manual_service_logs collection)
+    └── price_estimator.py  symptom catalog + nearby price-range estimates
 ```
 
 ## Routers
@@ -53,13 +54,18 @@ backend/
 | POST | `/auth/reset-password` | Set new password with OTP |
 | PATCH | `/auth/change-password` | Change password (authenticated) |
 
+#### Single-device login (customers only)
+Customers get a `session_id` (UUID) generated on register/login, stored on `users.session_id` and embedded in the JWT as `sid`. `get_current_user` rejects any customer token whose `sid` doesn't match the DB value with `401 SESSION_EXPIRED`. Logging in on a new device overwrites `session_id`, invalidating all other devices' tokens immediately. Workshop vendors are unaffected — they can stay logged in on multiple devices. Frontend: `setUnauthorizedHandler` in `mobile/src/navigation/index.tsx` shows an alert and logs out when it receives this specific 401 reason.
+
 ### users
 | Method | Path | Description |
 |---|---|---|
 | GET | `/users/me` | Current user profile (includes `address`) |
 | PATCH | `/users/me` | Update profile / avatar / address |
-| GET | `/users/me/vehicles` | Vehicle list from bookings |
+| GET | `/users/me/vehicles` | Merged list: stored `users.vehicles` **+** any vehicle plates found in the customer's bookings that aren't already stored. Prevents vehicles entered only at booking time from going "missing" from My Vehicles. |
 | GET | `/users/online-status` | Socket.IO online check for user IDs |
+
+`POST /bookings/` also auto-adds the booking's vehicle to `users.vehicles` if the plate isn't already there, so new bookings stay in sync going forward.
 
 ### workshops
 | Method | Path | Description |
@@ -91,6 +97,24 @@ See [[Booking Flow]] for the full lifecycle.
 | PATCH | `/bookings/{id}/reschedule` | Change date/time (customer) |
 | PATCH | `/bookings/{id}/station` | Assign repair station (workshop) |
 | PATCH | `/bookings/{id}/mechanic` | Assign mechanic (workshop) |
+| POST | `/bookings/{id}/quotations` | Send itemized quote to customer (workshop) |
+| PATCH | `/bookings/{id}/quotations/{qid}/respond` | Approve or reject a pending quotation (customer) |
+
+### Quotations
+Workshop sends an itemized quote (`items: [{name, description?, price, quantity}]`, optional `note`) that the customer must explicitly approve before it affects the booking total — nothing is charged automatically. Stored as `booking.quotations: [...]`, each entry has its own `_id`, `status` (`pending`/`approved`/`rejected`), `subtotal`, and timestamps.
+
+Two use cases share the same endpoint, distinguished by `type` (auto-set from the booking's current status at creation time):
+- **`initial`** — sent while the booking is `pending` or `confirmed`, e.g. revising the price before work starts.
+- **`additional`** — sent while `in_progress`, e.g. extra parts/labor discovered during inspection.
+
+On customer approval, the **discounted** amount (not the raw subtotal) is added to both `booking.total_price` and a running `booking.quotation_total` (separate from `services_total`/`products_total`, which only track the original selected services and completion-time product usage). A quotation can only be responded to once — re-responding to an already-resolved quotation returns `400`. Real-time updates reuse the existing `booking_status_updated` Socket.IO event (no new event needed) so both the customer's and workshop's screens refresh automatically. Push notifications: `quotation_received` (to customer), `quotation_approved` / `quotation_rejected` (to workshop owner).
+
+#### Discounts on quotation approval
+`PATCH /bookings/{id}/quotations/{qid}/respond` accepts optional `promotion_id` and `loyalty_points_used` alongside `action`. When approving, the backend reuses the exact same discount math as `POST /bookings/` (see `create_booking`):
+1. **Promotion** — looks up the workshop's `promotions[]` for an active, non-expired match; percentage or fixed, capped to the quotation subtotal.
+2. **Loyalty points** — rounds `loyalty_points_used` down to the nearest 100, caps to the customer's actual balance and to what the (post-promotion) amount can absorb at `0.01 RM/point`, then deducts the points from `users.loyalty_points`.
+
+The resulting `final_amount = subtotal − promotion_discount − loyalty_discount` is what gets added to `total_price`/`quotation_total` — not the raw subtotal. All of `promotion_discount`, `promotion_title`, `loyalty_points_used`, `loyalty_discount`, `final_amount` are stored on the quotation entry itself for display/PDF. Frontend auto-picks the single best active promotion per quotation (same "best discount wins" logic as `BookingScreen`) rather than offering a picker.
 
 ### service-logs (manual service history)
 | Method | Path | Description |
@@ -146,6 +170,15 @@ See [[Booking Flow]] for the full lifecycle.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/bookings/{id}/invoice` | Customer or Workshop owner | Returns branded PDF invoice (`application/pdf`). 400 if booking not completed. |
+| GET | `/bookings/{id}/quotations/{qid}/pdf` | Customer or Workshop owner | Returns branded PDF of an **approved** quotation. 400 if not yet approved. Built by `build_quotation_pdf()` in `routers/invoices.py` — same fpdf2 layout system as the invoice (header band, item table, stamp/signature box, footer), reused for quotations since both live in the same router. |
+
+### price-estimator
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/price-estimator/symptoms` | — | Returns the 17-entry symptom catalog (`id`, `label`, `icon`, `category`) |
+| POST | `/price-estimator/estimate` | — | Body: `{ symptom_ids[], latitude, longitude, radius_km? }`. Finds nearby workshops via `$near`, matches active services by `category` or keyword scan against service name/description, returns per-symptom `min_price`/`max_price`/`avg_price`/`workshop_count` plus up to 5 sample services sorted by price. |
+
+Symptoms map to one of the existing service categories (`brake`, `electrical`, `engine`, `oil_change`, `tire`, `body`, `other`) with extra keyword lists (e.g. "squeaky brakes" → category `brake` + keywords `brake/pad/disc/caliper/drum`) to catch services that don't have a matching category but mention the right words in their name/description.
 
 ## Key Implementation Details
 

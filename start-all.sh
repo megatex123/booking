@@ -63,7 +63,7 @@ fi
 # ── Pitch deck ───────────────────────────────────────────────────────────────
 PITCH_DIR="$(cd "$(dirname "$0")/pitch-serve" && pwd)"
 echo "→ Serving pitch deck on :8082..."
-python3 -m http.server 8082 --directory "$PITCH_DIR" > /tmp/pitch-serve.log 2>&1 &
+npx serve "$PITCH_DIR" -p 8082 > /tmp/pitch-serve.log 2>&1 &
 PITCH_PID=$!
 sleep 1
 
@@ -74,16 +74,34 @@ else
   echo "✗ Pitch server failed — check /tmp/pitch-serve.log"
 fi
 
+# ── Cloudflare Tunnel ────────────────────────────────────────────────────────
+CLOUDFLARED="$HOME/.local/bin/cloudflared"
+if pgrep -f "cloudflared.*run" &>/dev/null; then
+  echo "✓ Cloudflare Tunnel already running"
+else
+  if [ -x "$CLOUDFLARED" ]; then
+    echo "→ Starting Cloudflare Tunnel..."
+    nohup "$CLOUDFLARED" tunnel --protocol http2 run percubaan-tunnel > /tmp/cloudflared.log 2>&1 &
+    sleep 2
+    echo "✓ Tunnel started → https://bengkil-lah.percubaan.com"
+  else
+    echo "⚠ cloudflared not found at $CLOUDFLARED — tunnel not started"
+    echo "  Run manually: ~/.local/bin/cloudflared tunnel run percubaan-tunnel"
+  fi
+fi
+
 echo ""
 echo "════════════════════════════════════════"
 echo "  Backend  → http://localhost:8000/docs"
 echo "  App      → http://localhost:8081"
+echo "  Public   → https://bengkil-lah.percubaan.com"
 echo "  Pitch    → https://pitch.percubaan.com"
 echo "════════════════════════════════════════"
 echo ""
-echo "Logs: tail -f /tmp/backend.log   (backend)"
-echo "      tail -f /tmp/expo-build.log (build)"
-echo "      tail -f /tmp/pitch-serve.log (pitch)"
+echo "Logs: tail -f /tmp/backend.log        (backend)"
+echo "      tail -f /tmp/expo-build.log     (expo build)"
+echo "      tail -f /tmp/cloudflared.log    (tunnel)"
+echo "      tail -f /tmp/pitch-serve.log    (pitch)"
 echo ""
 echo "Press Ctrl+C to stop all services"
 
@@ -92,7 +110,7 @@ cleanup() {
   kill $BACKEND_PID $EXPO_PID $PITCH_PID 2>/dev/null
   pkill -f "uvicorn main:socket_app" 2>/dev/null
   pkill -f "serve dist" 2>/dev/null
-  pkill -f "http.server 8082" 2>/dev/null
+  pkill -f "serve.*pitch-serve" 2>/dev/null
 }
 trap cleanup EXIT INT TERM
 wait

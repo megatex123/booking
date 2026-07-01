@@ -97,6 +97,31 @@ Customer can cancel while `pending` or `confirmed`. Notifies workshop via Socket
 
 Workshop can assign a `station_id` (repair bay) to a booking at any time via `PATCH /bookings/{id}/station`. No status change, no notifications — purely operational.
 
+## Quotations (price approval before charge)
+
+Independent of the main status flow — a workshop can send an itemized quotation while the booking is `pending`, `confirmed`, or `in_progress`, and the customer must approve it before the amount is added to `total_price`. Nothing is charged automatically.
+
+```
+Workshop: POST /bookings/{id}/quotations  { items: [...], note? }
+                    │
+                    ▼  push + Socket.IO → customer
+        booking.quotations += { status: "pending", subtotal, type }
+                    │
+   Customer: PATCH .../quotations/{qid}/respond  { action: "approve" | "reject" }
+                    │
+        ┌───────────┴────────────┐
+   approve                    reject
+        │                         │
+total_price += subtotal      total_price unchanged
+quotation_total += subtotal       │
+        └───────────┬────────────┘
+                    ▼  push + Socket.IO → workshop owner
+```
+
+`type` is set automatically from the booking's status at creation time — `initial` (pending/confirmed) for a price revision before work starts, `additional` (in_progress) for extra parts/labor found during the job. A quotation can only be responded to once. See [[Backend]] for the full endpoint contract.
+
+Once approved, the customer (or workshop) can download a branded PDF of that quotation via `GET /bookings/{id}/quotations/{qid}/pdf` — a "Print / Download PDF" button appears on the approved quotation card in `BookingDetailScreen`. Not available for pending/rejected quotations.
+
 ## Payment Flow
 
 1. Customer taps Pay → frontend calls `POST /payments/create-intent/{booking_id}`
@@ -125,6 +150,9 @@ A customer can leave exactly one review per `completed` booking. Review creation
 | Service completed | Customer | "Service Completed ✅" |
 | Booking cancelled (by customer) | Workshop | "Booking Cancelled" |
 | Booking rescheduled | Workshop | "Booking Rescheduled 📅" |
+| Quotation sent | Customer | "New Quotation 📋" |
+| Quotation approved | Workshop | "Quotation Approved ✅" |
+| Quotation rejected | Workshop | "Quotation Rejected ❌" |
 
 ## Related Notes
 - [[Data Models]] — booking schema fields

@@ -20,11 +20,13 @@ What it does:
 2. Starts FastAPI + Socket.IO backend on port 8000 (`--reload` for hot-reload)
 3. Builds Expo web export (`dist/`)
 4. Serves built web app on port 8081 with `npx serve`
+5. Serves the investor pitch deck (`pitch-serve/`) on port 8082 with `npx serve`
 
 After startup:
 - Backend API → `http://localhost:8000`
 - API docs (Swagger) → `http://localhost:8000/docs`
 - Web app → `http://localhost:8081`
+- Pitch deck → `http://localhost:8082`
 
 ## After Mobile Code Changes
 
@@ -73,12 +75,14 @@ Creates:
 |---|---|
 | `/tmp/backend.log` | FastAPI/uvicorn output |
 | `/tmp/expo-build.log` | Expo web build output |
-| `/tmp/expo.log` | npx serve output |
+| `/tmp/expo.log` | npx serve (web app) output |
+| `/tmp/pitch-serve.log` | npx serve (pitch deck) output |
 
 ```bash
 tail -f /tmp/backend.log
 tail -f /tmp/expo-build.log
 tail -f /tmp/expo.log
+tail -f /tmp/pitch-serve.log
 ```
 
 ## Environment
@@ -105,21 +109,37 @@ SMTP_HOST=...   # for OTP emails
 
 ## Public Deployment (Cloudflare Tunnel)
 
-The app is publicly accessible via Cloudflare Tunnel (`~/.cloudflared/config.yml`):
+The app is publicly accessible via Cloudflare Tunnel (`~/.cloudflared/config.yml`, tunnel name `percubaan-tunnel`):
 
 | URL | Service |
 |---|---|
 | `https://bengkil-lah.percubaan.com` | Web app (`localhost:8081`) |
 | `https://bengkil-lah-api.percubaan.com` | FastAPI backend (`localhost:8000`) |
+| `https://pitch.percubaan.com` | Investor pitch deck (`localhost:8082`) |
 
 The tunnel must be running for these URLs to work. Start it with:
 ```bash
-cloudflared tunnel run
+cloudflared tunnel run percubaan-tunnel
 ```
 
 The mobile app (`src/services/api.ts` and `src/services/socket.ts`) auto-detects the environment:
 - `localhost` → uses `http://localhost:8000`
 - any other hostname → uses `https://bengkil-lah-api.percubaan.com`
+
+### Static site hardening (web app + pitch deck)
+
+Both `dist/` (web app) and `pitch-serve/` (pitch deck) are served with `npx serve` plus a `serve.json` config, **not** Python's `http.server` (no compression, no custom headers, and directory-listing risk if mis-invoked — this is what broke `pitch.percubaan.com` once before, exposing a filesystem listing when `--directory` was passed an empty value).
+
+`serve.json` provides:
+- Security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`
+- Caching: `immutable` for hashed static assets (`_expo/static/**`, `*.jpg`), `must-revalidate` for `index.html`
+- gzip compression (automatic with `serve`)
+
+Source locations:
+- `mobile/public/serve.json` + `mobile/public/index.html` (SEO/OG meta tags, favicon) — copied into `dist/` on every `expo export --platform web`, since Expo treats `public/` as a template + static asset folder
+- `pitch-serve/serve.json` — lives directly alongside `pitch-serve/index.html` (synced manually from `pitch.html` at the project root — copy both when editing the deck)
+
+The pitch deck's logo was previously embedded 3× as base64 inside the HTML (~270KB of duplication). It's now a single external file (`pitch-serve/enigma-logo.jpg`, also reused as the favicon), cutting the page from 354KB to ~84KB raw / ~17KB gzipped.
 
 ## Related Notes
 - [[Architecture]] — full tech stack

@@ -373,6 +373,24 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </ScrollView>
       </View>}
 
+      {/* Price Estimator banner — list mode only */}
+      {!mapMode && (
+        <TouchableOpacity
+          style={styles.estimatorBanner}
+          onPress={() => navigation.navigate('PriceEstimator')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.estimatorBannerLeft}>
+            <Ionicons name="calculator-outline" size={20} color={colors.primary} />
+            <View>
+              <Text style={styles.estimatorBannerTitle}>Price Estimator</Text>
+              <Text style={styles.estimatorBannerSub}>Know the cost before you book</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        </TouchableOpacity>
+      )}
+
       {/* Map or List */}
       {mapMode ? (
         <View style={styles.mapWrap}>
@@ -601,6 +619,16 @@ function makeStyles(colors: AppTheme) {
   chipBadgeText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   chipBadgeTextActive: { color: '#fff' },
 
+  estimatorBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginHorizontal: Spacing.lg, marginBottom: 8,
+    backgroundColor: colors.primary + '10',
+    borderWidth: 1, borderColor: colors.primary + '30',
+    borderRadius: BorderRadius.md, paddingHorizontal: 14, paddingVertical: 10,
+  },
+  estimatorBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  estimatorBannerTitle: { ...Typography.bodySmall, fontWeight: '700', color: colors.primary },
+  estimatorBannerSub: { ...Typography.caption, color: colors.textSecondary },
   sortRow: {
     flexDirection: 'row',
     alignItems: 'center',

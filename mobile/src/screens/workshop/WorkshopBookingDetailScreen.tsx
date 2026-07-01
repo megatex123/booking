@@ -88,6 +88,14 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
   const [showClaimStatusModal, setShowClaimStatusModal] = useState(false);
   const [updatingClaimStatus, setUpdatingClaimStatus] = useState(false);
 
+  // Quotation
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
+  const [quotationItems, setQuotationItems] = useState<{ name: string; description: string; price: string; quantity: string }[]>([
+    { name: '', description: '', price: '', quantity: '1' },
+  ]);
+  const [quotationNote, setQuotationNote] = useState('');
+  const [sendingQuotation, setSendingQuotation] = useState(false);
+
   useEffect(() => {
     dispatch(fetchBookingById(bookingId));
     workshopAPI.getProducts().then((r) => setInventoryProducts(r.data)).catch(() => {});
@@ -281,6 +289,72 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
     await doUpdate('in_progress');
     // Open bay selector after status transitions
     setShowBaySelector(true);
+  };
+
+  const addQuotationItem = () => {
+    setQuotationItems((prev) => [...prev, { name: '', description: '', price: '', quantity: '1' }]);
+  };
+  const updateQuotationItem = (idx: number, field: 'name' | 'description' | 'price' | 'quantity', value: string) => {
+    setQuotationItems((prev) => prev.map((it, i) => (i === idx ? { ...it, [field]: value } : it)));
+  };
+  const removeQuotationItem = (idx: number) => {
+    setQuotationItems((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const quotationSubtotal = quotationItems.reduce((sum, it) => {
+    const price = parseFloat(it.price) || 0;
+    const qty = parseFloat(it.quantity) || 0;
+    return sum + price * qty;
+  }, 0);
+
+  const resetQuotationForm = () => {
+    setQuotationItems([{ name: '', description: '', price: '', quantity: '1' }]);
+    setQuotationNote('');
+  };
+
+  const openQuotationModal = () => {
+    if (booking.status !== 'in_progress' && booking.services?.length) {
+      // Initial quote — pre-fill with the customer's originally selected services
+      setQuotationItems(
+        booking.services.map((svc: any) => ({
+          name: svc.name,
+          description: svc.description || '',
+          price: String(svc.price),
+          quantity: '1',
+        }))
+      );
+    } else {
+      // Additional quote (in_progress) — start blank for newly discovered work
+      setQuotationItems([{ name: '', description: '', price: '', quantity: '1' }]);
+    }
+    setQuotationNote('');
+    setShowQuotationModal(true);
+  };
+
+  const handleSendQuotation = async () => {
+    const items = quotationItems
+      .filter((it) => it.name.trim() && parseFloat(it.price) > 0)
+      .map((it) => ({
+        name: it.name.trim(),
+        description: it.description.trim(),
+        price: parseFloat(it.price),
+        quantity: parseFloat(it.quantity) || 1,
+      }));
+    if (items.length === 0) {
+      showAlert('Add at least one item with a name and price.');
+      return;
+    }
+    setSendingQuotation(true);
+    try {
+      await bookingAPI.createQuotation(bookingId, items, quotationNote.trim());
+      await dispatch(fetchBookingById(bookingId));
+      setShowQuotationModal(false);
+      resetQuotationForm();
+      showAlert('Quotation sent to the customer.');
+    } catch (e: any) {
+      showAlert(e?.response?.data?.detail || 'Failed to send quotation.');
+    } finally {
+      setSendingQuotation(false);
+    }
   };
 
   const updateServiceReport = (idx: number, field: keyof ServiceReportState, value: any) => {
@@ -515,6 +589,53 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
             <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
           </View>
         </Card>
+
+        {/* Quotations */}
+        {(['pending', 'confirmed', 'in_progress'].includes(booking.status) || (booking.quotations && booking.quotations.length > 0)) && (
+          <Card style={styles.section}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: (booking.quotations?.length ?? 0) > 0 ? 12 : 0 }}>
+              <Text style={styles.sectionTitle}>Quotations</Text>
+              {['pending', 'confirmed', 'in_progress'].includes(booking.status) && (
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary + '15', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
+                  onPress={openQuotationModal}
+                >
+                  <Ionicons name="add-circle-outline" size={15} color={colors.primary} />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: colors.primary }}>Send Quote</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {(booking.quotations || []).slice().reverse().map((q) => {
+              const statusColor = q.status === 'approved' ? colors.success : q.status === 'rejected' ? colors.danger : colors.warning;
+              return (
+                <View key={q._id} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase' }}>
+                      {q.type === 'additional' ? 'Additional Work' : 'Initial Quote'}
+                    </Text>
+                    <View style={{ backgroundColor: statusColor + '18', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: statusColor, textTransform: 'capitalize' }}>{q.status}</Text>
+                    </View>
+                  </View>
+                  {q.items.map((it, i) => (
+                    <View key={i} style={styles.serviceRow}>
+                      <Text style={[styles.serviceName, { fontSize: 13 }]}>{it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}</Text>
+                      <Text style={[styles.servicePrice, { fontSize: 13 }]}>{formatPrice(it.price * it.quantity)}</Text>
+                    </View>
+                  ))}
+                  <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                    <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
+                    <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
+                  </View>
+                  {!!q.note && <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 6, fontStyle: 'italic' }}>"{q.note}"</Text>}
+                  {q.status === 'rejected' && !!q.customer_response_note && (
+                    <Text style={{ fontSize: 12, color: colors.danger, marginTop: 4 }}>Customer note: {q.customer_response_note}</Text>
+                  )}
+                </View>
+              );
+            })}
+          </Card>
+        )}
 
         {booking.notes ? (
           <Card style={styles.section}>
@@ -1078,6 +1199,106 @@ export const WorkshopBookingDetailScreen: React.FC<Props> = ({ navigation, route
                 </TouchableOpacity>
               );
             })}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Send Quotation Modal */}
+      <Modal visible={showQuotationModal} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, paddingBottom: 32, maxHeight: '88%' }}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={{ ...Typography.h3, color: colors.text }}>Send Quotation</Text>
+                <TouchableOpacity onPress={() => { setShowQuotationModal(false); resetQuotationForm(); }}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }}>
+                {booking.status === 'in_progress'
+                  ? 'Itemize the extra parts/labour found during service. The customer must approve before it\'s added to the total.'
+                  : 'Itemize a price quote for this booking. The customer must approve before it\'s added to the total.'}
+              </Text>
+
+              {quotationItems.map((item, idx) => (
+                <View key={idx} style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>Item {idx + 1}</Text>
+                    {quotationItems.length > 1 && (
+                      <TouchableOpacity onPress={() => removeQuotationItem(idx)}>
+                        <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <TextInput
+                    style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: colors.text, backgroundColor: colors.background, marginBottom: 8, ...Typography.bodySmall }}
+                    placeholder="Item name (e.g. Brake Pad Replacement)"
+                    placeholderTextColor={colors.textLight}
+                    value={item.name}
+                    onChangeText={(v) => updateQuotationItem(idx, 'name', v)}
+                  />
+                  <TextInput
+                    style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: colors.text, backgroundColor: colors.background, marginBottom: 8, ...Typography.bodySmall }}
+                    placeholder="Description (optional)"
+                    placeholderTextColor={colors.textLight}
+                    value={item.description}
+                    onChangeText={(v) => updateQuotationItem(idx, 'description', v)}
+                  />
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 8, backgroundColor: colors.background, paddingLeft: 12 }}>
+                      <Text style={{ color: colors.textSecondary, ...Typography.bodySmall, fontWeight: '700' }}>RM</Text>
+                      <TextInput
+                        style={{ flex: 1, paddingVertical: 8, paddingHorizontal: 8, color: colors.text, ...Typography.bodySmall }}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textLight}
+                        keyboardType="decimal-pad"
+                        value={item.price}
+                        onChangeText={(v) => updateQuotationItem(idx, 'price', v)}
+                      />
+                    </View>
+                    <TextInput
+                      style={{ width: 80, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, color: colors.text, backgroundColor: colors.background, ...Typography.bodySmall }}
+                      placeholder="Qty"
+                      placeholderTextColor={colors.textLight}
+                      keyboardType="decimal-pad"
+                      value={item.quantity}
+                      onChangeText={(v) => updateQuotationItem(idx, 'quantity', v)}
+                    />
+                  </View>
+                </View>
+              ))}
+
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.primary, borderRadius: 10, paddingVertical: 10, marginBottom: 16 }}
+                onPress={addQuotationItem}
+              >
+                <Ionicons name="add" size={16} color={colors.primary} />
+                <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Add Item</Text>
+              </TouchableOpacity>
+
+              <Text style={[styles.formLabel, { marginBottom: 6 }]}>Note to customer (optional)</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: colors.text, backgroundColor: colors.background, minHeight: 60, textAlignVertical: 'top', marginBottom: 16, ...Typography.bodySmall }}
+                placeholder="e.g. Found worn brake pads during inspection"
+                placeholderTextColor={colors.textLight}
+                multiline
+                value={quotationNote}
+                onChangeText={setQuotationNote}
+              />
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.background, borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                <Text style={{ ...Typography.body, fontWeight: '700', color: colors.text }}>Quote Total</Text>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: colors.primary }}>{formatPrice(quotationSubtotal)}</Text>
+              </View>
+
+              <Button
+                title="Send Quotation"
+                onPress={handleSendQuotation}
+                fullWidth
+                size="lg"
+                loading={sendingQuotation}
+              />
+            </ScrollView>
           </View>
         </View>
       </Modal>

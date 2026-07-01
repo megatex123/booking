@@ -9,7 +9,7 @@ import { Loading } from '../../components/common/Loading';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchBookingById, cancelBooking } from '../../store/bookingSlice';
-import { reviewAPI, bookingAPI } from '../../services/api';
+import { reviewAPI, bookingAPI, workshopAPI, loyaltyAPI } from '../../services/api';
 import { Colors, Typography, Spacing, BorderRadius, AppTheme} from '../../utils/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatPrice, formatDate, formatTime } from '../../utils/helpers';
@@ -37,10 +37,150 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [rescheduling, setRescheduling] = useState(false);
+  const [respondingQuotationId, setRespondingQuotationId] = useState<string | null>(null);
+  const [activePromotions, setActivePromotions] = useState<any[]>([]);
+  const [workshopServices, setWorkshopServices] = useState<any[]>([]);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<{ points: number; rm_value: number } | null>(null);
+  const [useLoyaltyForQuote, setUseLoyaltyForQuote] = useState<Set<string>>(new Set());
+
+  // Rejection modal state
+  const [rejectModalQid, setRejectModalQid] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  const [submittingReject, setSubmittingReject] = useState(false);
+
+  // Edit services modal state
+  const [showServiceEditModal, setShowServiceEditModal] = useState(false);
+  const [editServiceIds, setEditServiceIds] = useState<Set<string>>(new Set());
+  const [savingServiceEdit, setSavingServiceEdit] = useState(false);
 
   useEffect(() => {
     dispatch(fetchBookingById(bookingId));
   }, [bookingId]);
+
+  // Load workshop services whenever booking is pending (for edit services feature)
+  // or when there is a pending quotation (for quotation approval/rejection)
+  useEffect(() => {
+    const needsWorkshopData = booking?.status === 'pending' || booking?.quotations?.some((q) => q.status === 'pending');
+    if (needsWorkshopData && booking?.workshop_id) {
+      workshopAPI.getById(booking.workshop_id).then((r) => {
+        setActivePromotions(r.data?.active_promotions || []);
+        setWorkshopServices(r.data?.services?.filter((s: any) => s.is_active !== false) || []);
+      }).catch(() => {});
+      loyaltyAPI.getBalance().then((r) => setLoyaltyBalance(r.data)).catch(() => {});
+    }
+  }, [booking?.quotations, booking?.workshop_id]);
+
+  // Auto-pick the best active promotion for a given quotation subtotal
+  const bestPromoFor = (subtotal: number) => {
+    return activePromotions
+      .filter((p) => p.discount_type && p.discount_value != null && p.discount_value > 0)
+      .reduce((best: any, p: any) => {
+        const calc = (promo: any) =>
+          promo.discount_type === 'percentage'
+            ? Math.min(subtotal * promo.discount_value / 100, subtotal)
+            : Math.min(promo.discount_value, subtotal);
+        if (!best) return p;
+        return calc(p) >= calc(best) ? p : best;
+      }, null);
+  };
+
+  const quotePromoDiscount = (subtotal: number, promo: any) =>
+    !promo ? 0 : promo.discount_type === 'percentage'
+      ? Math.min(subtotal * promo.discount_value / 100, subtotal)
+      : Math.min(promo.discount_value, subtotal);
+
+  const quoteLoyaltyMaxPts = (afterPromo: number) =>
+    loyaltyBalance ? Math.min(Math.floor(loyaltyBalance.points / 100) * 100, Math.floor(afterPromo / 0.01 / 100) * 100) : 0;
+
+  const handleApproveQuotation = (quotationId: string, subtotal: number) => {
+    const promo = bestPromoFor(subtotal);
+    const promoDiscount = quotePromoDiscount(subtotal, promo);
+    const afterPromo = Math.max(subtotal - promoDiscount, 0);
+    const useLoyalty = useLoyaltyForQuote.has(quotationId);
+    const loyaltyPts = useLoyalty ? quoteLoyaltyMaxPts(afterPromo) : 0;
+    const finalAmount = Math.max(afterPromo - loyaltyPts * 0.01, 0);
+
+    showConfirm(`Approve this quotation for ${formatPrice(finalAmount)}? The amount will be added to your total.`, async () => {
+      setRespondingQuotationId(quotationId);
+      try {
+        await bookingAPI.respondToQuotation(bookingId, quotationId, 'approve', undefined, promo?.id, loyaltyPts >= 100 ? loyaltyPts : undefined);
+        await dispatch(fetchBookingById(bookingId));
+      } catch (e: any) {
+        showAlert(e?.response?.data?.detail || 'Failed to approve quotation.');
+      } finally {
+        setRespondingQuotationId(null);
+      }
+    });
+  };
+
+  const openRejectModal = (quotationId: string) => {
+    // Pre-select current booking services
+    const currentIds = new Set((booking?.services || []).map((s: any) => s._id));
+    setSelectedServiceIds(currentIds);
+    setRejectReason('');
+    setRejectModalQid(quotationId);
+  };
+
+  const toggleService = (id: string) => {
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSubmitReject = async () => {
+    if (!rejectModalQid) return;
+    setSubmittingReject(true);
+    try {
+      await bookingAPI.respondToQuotation(bookingId, rejectModalQid, 'reject', rejectReason.trim() || undefined);
+      // If services changed, also update the booking's service selection
+      const currentIds = new Set((booking?.services || []).map((s: any) => s._id));
+      const newIds = Array.from(selectedServiceIds);
+      const changed = newIds.length !== currentIds.size || newIds.some((id) => !currentIds.has(id));
+      if (changed && newIds.length > 0) {
+        await bookingAPI.updateServices(bookingId, newIds);
+      }
+      await dispatch(fetchBookingById(bookingId));
+      setRejectModalQid(null);
+    } catch (e: any) {
+      showAlert(e?.response?.data?.detail || 'Failed to reject quotation.');
+    } finally {
+      setSubmittingReject(false);
+    }
+  };
+
+  const openServiceEditModal = () => {
+    const currentIds = new Set((booking?.services || []).map((s: any) => s._id));
+    setEditServiceIds(currentIds);
+    setShowServiceEditModal(true);
+  };
+
+  const toggleEditService = (id: string) => {
+    setEditServiceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSaveServiceEdit = async () => {
+    if (editServiceIds.size === 0) {
+      showAlert('Please select at least one service.');
+      return;
+    }
+    setSavingServiceEdit(true);
+    try {
+      await bookingAPI.updateServices(bookingId, Array.from(editServiceIds));
+      await dispatch(fetchBookingById(bookingId));
+      setShowServiceEditModal(false);
+    } catch (e: any) {
+      showAlert(e?.response?.data?.detail || 'Failed to update services.');
+    } finally {
+      setSavingServiceEdit(false);
+    }
+  };
 
   useEffect(() => {
     if (booking?.status === 'completed') {
@@ -109,10 +249,33 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const handleDownloadQuotation = async (quotationId: string) => {
+    if (Platform.OS !== 'web') {
+      showAlert('Quotation', 'Quotation download is available on the web version.');
+      return;
+    }
+    try {
+      const res = await bookingAPI.downloadQuotation(bookingId, quotationId);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quotation-${quotationId.slice(0, 8).toUpperCase()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail || 'Could not generate quotation PDF.';
+      showAlert('Error', detail);
+    }
+  };
+
   if (loading || !booking) return <Loading fullScreen message="Loading booking..." />;
 
   const canReschedule = ['pending', 'confirmed'].includes(booking.status) && user?.role === 'customer';
   const canCancel = ['pending', 'confirmed'].includes(booking.status) && user?.role === 'customer';
+  const canEditServices = booking.status === 'pending' && user?.role === 'customer';
   const canPay = ['confirmed', 'completed'].includes(booking.status) && booking.payment_status === 'unpaid' && user?.role === 'customer';
   const canReview = booking.status === 'completed' && booking.payment_status === 'paid' && !review && user?.role === 'customer';
   const awaitingPayment = booking.status === 'completed' && booking.payment_status === 'unpaid' && user?.role === 'customer';
@@ -213,6 +376,12 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.metaText}>{formatTime(booking.scheduled_time)}</Text>
           </View>
+          {!!booking.mechanic_name && (
+            <View style={styles.metaRow}>
+              <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
+              <Text style={styles.metaText}>Mechanic: <Text style={{ fontWeight: '700', color: colors.text }}>{booking.mechanic_name}</Text></Text>
+            </View>
+          )}
         </Card>
 
         {/* Vehicle */}
@@ -242,9 +411,14 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             const referralDiscount: number = booking.referral_discount ?? 0;
             const loyaltyDiscount: number = booking.loyalty_discount ?? 0;
             const hasProducts = booking.products_total != null && booking.products_total > 0;
-            const subtotal = hasProducts
-              ? (booking.services_total ?? 0) + (booking.products_total ?? 0)
-              : booking.total_price + promoDiscount + referralDiscount + loyaltyDiscount;
+            // Raw sum of originally selected services — reliable regardless of any
+            // approved quotations, which are tracked (and displayed) separately below.
+            const rawServicesTotal = booking.services.reduce((sum: number, s: any) => sum + s.price, 0);
+            const subtotal = hasProducts ? (booking.services_total ?? 0) + (booking.products_total ?? 0) : rawServicesTotal;
+            // The total for THIS card's discounts is the original price before any
+            // quotations were approved — booking.total_price may have since been
+            // revised/added to by approved quotations (shown in the Quotations card).
+            const originalTotal = booking.original_total_price ?? booking.total_price;
             const hasDiscounts = promoDiscount > 0 || referralDiscount > 0 || loyaltyDiscount > 0;
 
             return (
@@ -257,7 +431,7 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     </View>
                     <View style={styles.serviceRow}>
                       <Text style={styles.totalLabel}>Parts &amp; Products</Text>
-                      <Text style={styles.servicePrice}>{formatPrice(booking.products_total)}</Text>
+                      <Text style={styles.servicePrice}>{formatPrice(booking.products_total ?? 0)}</Text>
                     </View>
                   </>
                 )}
@@ -312,13 +486,199 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 {hasDiscounts && <View style={[styles.divider, { marginVertical: 6 }]} />}
 
                 <View style={[styles.serviceRow, { marginTop: hasDiscounts ? 0 : 4 }]}>
-                  <Text style={[styles.totalLabel, { fontWeight: '800' }]}>Total</Text>
-                  <Text style={styles.totalAmount}>{formatPrice(booking.total_price)}</Text>
+                  <Text style={[styles.totalLabel, { fontWeight: '800' }]}>
+                    {!!booking.quotations?.length ? 'Services Total' : 'Total'}
+                  </Text>
+                  <Text style={styles.totalAmount}>{formatPrice(originalTotal)}</Text>
                 </View>
               </>
             );
           })()}
         </Card>
+
+        {/* Quotations */}
+        {!!booking.quotations?.length && (
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Quotations</Text>
+            {booking.quotations.slice().reverse().map((q) => {
+              const statusColor = q.status === 'approved' ? colors.success : q.status === 'rejected' ? colors.danger : '#F59E0B';
+              return (
+                <View key={q._id} style={{ borderWidth: 1, borderColor: q.status === 'pending' ? statusColor : colors.border, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase' }}>
+                      {q.type === 'additional' ? 'Additional Work Found' : 'Initial Quote'}
+                    </Text>
+                    <View style={{ backgroundColor: statusColor + '18', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: statusColor, textTransform: 'capitalize' }}>{q.status}</Text>
+                    </View>
+                  </View>
+                  {!!q.note && <Text style={{ fontSize: 13, color: colors.text, marginBottom: 8, fontStyle: 'italic' }}>"{q.note}"</Text>}
+                  {q.items.map((it, i) => (
+                    <View key={i} style={styles.serviceRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.serviceName, { fontSize: 13 }]}>{it.name}{it.quantity > 1 ? ` ×${it.quantity}` : ''}</Text>
+                        {!!it.description && <Text style={{ fontSize: 11, color: colors.textSecondary }}>{it.description}</Text>}
+                      </View>
+                      <Text style={[styles.servicePrice, { fontSize: 13 }]}>{formatPrice(it.price * it.quantity)}</Text>
+                    </View>
+                  ))}
+                  {q.status === 'pending' && (() => {
+                    const promo = bestPromoFor(q.subtotal);
+                    const promoDiscount = quotePromoDiscount(q.subtotal, promo);
+                    const afterPromo = Math.max(q.subtotal - promoDiscount, 0);
+                    const loyaltyOn = useLoyaltyForQuote.has(q._id);
+                    const maxPts = quoteLoyaltyMaxPts(afterPromo);
+                    const loyaltyDiscountPreview = loyaltyOn ? maxPts * 0.01 : 0;
+                    const finalPreview = Math.max(afterPromo - loyaltyDiscountPreview, 0);
+                    const hasAnyDiscount = promoDiscount > 0 || (loyaltyOn && maxPts >= 100);
+
+                    return (
+                      <>
+                        <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                          <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
+                          <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
+                        </View>
+
+                        {promoDiscount > 0 && (
+                          <View style={styles.serviceRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                              <Ionicons name="pricetag-outline" size={12} color="#F97316" />
+                              <Text style={{ fontSize: 12, color: '#F97316', fontWeight: '600' }}>{promo?.title ?? 'Promotion'} (auto-applied)</Text>
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#F97316' }}>-{formatPrice(promoDiscount)}</Text>
+                          </View>
+                        )}
+
+                        {loyaltyBalance && loyaltyBalance.points >= 100 && (
+                          <TouchableOpacity
+                            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, padding: 8, borderRadius: 8, backgroundColor: loyaltyOn ? '#F59E0B18' : colors.background, borderWidth: 1, borderColor: loyaltyOn ? '#F59E0B' : colors.border }}
+                            onPress={() => setUseLoyaltyForQuote((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(q._id)) next.delete(q._id); else next.add(q._id);
+                              return next;
+                            })}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Ionicons name={loyaltyOn ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={loyaltyOn ? '#F59E0B' : colors.textLight} />
+                              <Text style={{ fontSize: 12, color: colors.text, fontWeight: '600' }}>
+                                Use loyalty points ({loyaltyBalance.points} pts ≈ {formatPrice(loyaltyBalance.rm_value)})
+                              </Text>
+                            </View>
+                            {loyaltyOn && maxPts >= 100 && (
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>-{formatPrice(loyaltyDiscountPreview)}</Text>
+                            )}
+                          </TouchableOpacity>
+                        )}
+
+                        {hasAnyDiscount && (
+                          <View style={[styles.serviceRow, { marginTop: 6 }]}>
+                            <Text style={[styles.totalLabel, { fontSize: 13, fontWeight: '800' }]}>You'll Pay</Text>
+                            <Text style={[styles.totalAmount, { fontSize: 14 }]}>{formatPrice(finalPreview)}</Text>
+                          </View>
+                        )}
+
+                        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                          <TouchableOpacity
+                            style={{ flex: 1, backgroundColor: colors.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' }}
+                            onPress={() => openRejectModal(q._id)}
+                            disabled={respondingQuotationId === q._id}
+                          >
+                            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Reject</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{ flex: 1, backgroundColor: colors.success, borderRadius: 8, paddingVertical: 10, alignItems: 'center' }}
+                            onPress={() => handleApproveQuotation(q._id, q.subtotal)}
+                            disabled={respondingQuotationId === q._id}
+                          >
+                            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Approve</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    );
+                  })()}
+
+                  {q.status !== 'pending' && (
+                    <>
+                      <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                        <Text style={[styles.totalLabel, { fontSize: 13 }]}>Subtotal</Text>
+                        <Text style={[styles.totalAmount, { fontSize: 13 }]}>{formatPrice(q.subtotal)}</Text>
+                      </View>
+                      {q.status === 'approved' && !!q.promotion_discount && q.promotion_discount > 0 && (
+                        <View style={styles.serviceRow}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Ionicons name="pricetag-outline" size={12} color="#F97316" />
+                            <Text style={{ fontSize: 12, color: '#F97316', fontWeight: '600' }}>{q.promotion_title ?? 'Promotion'}</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#F97316' }}>-{formatPrice(q.promotion_discount)}</Text>
+                        </View>
+                      )}
+                      {q.status === 'approved' && !!q.loyalty_discount && q.loyalty_discount > 0 && (
+                        <View style={styles.serviceRow}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Ionicons name="star-outline" size={12} color="#F59E0B" />
+                            <Text style={{ fontSize: 12, color: '#F59E0B', fontWeight: '600' }}>Loyalty Points ({q.loyalty_points_used} pts)</Text>
+                          </View>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>-{formatPrice(q.loyalty_discount)}</Text>
+                        </View>
+                      )}
+                      {q.status === 'approved' && (
+                        <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                          <Text style={[styles.totalLabel, { fontSize: 13, fontWeight: '800' }]}>Quotation Total</Text>
+                          <Text style={[styles.totalAmount, { fontSize: 14 }]}>{formatPrice(q.final_amount ?? q.subtotal)}</Text>
+                        </View>
+                      )}
+                      {q.status === 'approved' && !!q.original_discount_offset && q.original_discount_offset > 0 && (
+                        <>
+                          <View style={styles.serviceRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                              <Ionicons name="gift-outline" size={12} color="#10B981" />
+                              <Text style={{ fontSize: 12, color: '#10B981', fontWeight: '600' }}>Your original booking discount</Text>
+                            </View>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#10B981' }}>-{formatPrice(q.original_discount_offset)}</Text>
+                          </View>
+                          <View style={[styles.serviceRow, { marginTop: 4 }]}>
+                            <Text style={[styles.totalLabel, { fontSize: 13, fontWeight: '800' }]}>Net Added to Total</Text>
+                            <Text style={[styles.totalAmount, { fontSize: 14, color: colors.success }]}>{formatPrice(q.net_contribution ?? q.final_amount ?? q.subtotal)}</Text>
+                          </View>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {q.status === 'approved' && (
+                    <TouchableOpacity
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, borderWidth: 1, borderColor: colors.success, borderRadius: 8, paddingVertical: 10 }}
+                      onPress={() => handleDownloadQuotation(q._id)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="print-outline" size={16} color={colors.success} />
+                      <Text style={{ color: colors.success, fontWeight: '700', fontSize: 13 }}>Print / Download PDF</Text>
+                    </TouchableOpacity>
+                  )}
+                  {q.status === 'rejected' && !!q.customer_response_note && (
+                    <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 6 }}>Your note: {q.customer_response_note}</Text>
+                  )}
+                </View>
+              );
+            })}
+
+            {booking.quotations.some((q) => q.status === 'approved') && (() => {
+              const originalDiscounts = (booking.referral_discount ?? 0) + (booking.promotion_discount ?? 0) + (booking.loyalty_discount ?? 0);
+              return (
+                <View style={{ backgroundColor: colors.primary + '12', borderRadius: 10, padding: 14, marginTop: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ ...Typography.body, fontWeight: '800', color: colors.text }}>Grand Total</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: colors.primary }}>{formatPrice(booking.total_price)}</Text>
+                  </View>
+                  {originalDiscounts > 0 && (
+                    <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }}>
+                      Includes your original -{formatPrice(originalDiscounts)} discount from booking{booking.loyalty_points_used ? ` (${booking.loyalty_points_used} loyalty pts)` : ''}
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
+          </Card>
+        )}
 
         {booking.notes ? (
           <Card style={styles.section}>
@@ -509,6 +869,16 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               <Ionicons name="download-outline" size={16} color="#2563EB" />
             </TouchableOpacity>
           )}
+          {canEditServices && (
+            <Button
+              title="Edit Services"
+              onPress={openServiceEditModal}
+              variant="outline"
+              fullWidth
+              size="lg"
+              style={styles.actionBtn}
+            />
+          )}
           {canReschedule && (
             <>
               <Button
@@ -636,6 +1006,160 @@ export const BookingDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             >
               <Text style={styles.submitBtnText}>{rescheduling ? 'Saving…' : 'Confirm Reschedule'}</Text>
             </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Services Modal */}
+      <Modal visible={showServiceEditModal} transparent animationType="slide" onRequestClose={() => setShowServiceEditModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, paddingBottom: 36, maxHeight: '88%' }}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Services</Text>
+                <TouchableOpacity onPress={() => setShowServiceEditModal(false)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              <Text style={{ ...Typography.caption, color: colors.textSecondary, marginBottom: 16 }}>
+                Select the services you want. You can change this until the workshop accepts your booking.
+              </Text>
+
+              {workshopServices.length === 0 && (
+                <Text style={{ color: colors.textSecondary, textAlign: 'center', marginVertical: 24 }}>Loading services…</Text>
+              )}
+
+              {workshopServices.map((svc: any) => {
+                const checked = editServiceIds.has(svc._id);
+                return (
+                  <TouchableOpacity
+                    key={svc._id}
+                    style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, marginBottom: 8, backgroundColor: checked ? colors.primary + '10' : colors.background, borderWidth: 1, borderColor: checked ? colors.primary : colors.border }}
+                    onPress={() => toggleEditService(svc._id)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={checked ? colors.primary : colors.textLight}
+                      style={{ marginRight: 10 }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ ...Typography.body, color: colors.text, fontWeight: checked ? '700' : '400' }}>{svc.name}</Text>
+                      {!!svc.description && <Text style={{ ...Typography.caption, color: colors.textSecondary }}>{svc.description}</Text>}
+                      {!!svc.duration_minutes && <Text style={{ ...Typography.caption, color: colors.textSecondary }}>~{svc.duration_minutes} min</Text>}
+                    </View>
+                    <Text style={{ ...Typography.body, fontWeight: '700', color: checked ? colors.primary : colors.textSecondary, marginLeft: 8 }}>
+                      {formatPrice(svc.price)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {editServiceIds.size > 0 && workshopServices.length > 0 && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 14, backgroundColor: colors.primary + '10', borderRadius: 10, marginTop: 8, marginBottom: 12 }}>
+                  <Text style={{ ...Typography.body, fontWeight: '800', color: colors.text }}>
+                    {editServiceIds.size} service{editServiceIds.size !== 1 ? 's' : ''} selected
+                  </Text>
+                  <Text style={{ ...Typography.body, fontWeight: '800', color: colors.primary }}>
+                    {formatPrice(workshopServices.filter((s: any) => editServiceIds.has(s._id)).reduce((sum: number, s: any) => sum + s.price, 0))}
+                  </Text>
+                </View>
+              )}
+
+              <Button
+                title={savingServiceEdit ? 'Saving…' : 'Save Changes'}
+                onPress={handleSaveServiceEdit}
+                fullWidth
+                size="lg"
+                loading={savingServiceEdit}
+                disabled={editServiceIds.size === 0}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Reject Quotation Modal */}
+      <Modal visible={!!rejectModalQid} transparent animationType="slide" onRequestClose={() => setRejectModalQid(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, paddingBottom: 36, maxHeight: '88%' }}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Reject Quotation</Text>
+                <TouchableOpacity onPress={() => setRejectModalQid(null)}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Reason */}
+              <Text style={{ ...Typography.caption, fontWeight: '700', color: colors.textSecondary, marginBottom: 6 }}>
+                Reason for rejection (optional)
+              </Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text, backgroundColor: colors.background, minHeight: 80, textAlignVertical: 'top', marginBottom: 20, ...Typography.body }}
+                placeholder="e.g. Price too high for engine tune-up, please revise"
+                placeholderTextColor={colors.textLight}
+                multiline
+                value={rejectReason}
+                onChangeText={setRejectReason}
+              />
+
+              {/* Service readjustment */}
+              {workshopServices.length > 0 && (
+                <>
+                  <Text style={{ ...Typography.caption, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>
+                    Adjust your service selection
+                  </Text>
+                  <Text style={{ ...Typography.caption, color: colors.textSecondary, marginBottom: 12 }}>
+                    Select the services you'd like to keep or add — the workshop will see your updated request.
+                  </Text>
+                  {workshopServices.map((svc: any) => {
+                    const checked = selectedServiceIds.has(svc._id);
+                    return (
+                      <TouchableOpacity
+                        key={svc._id}
+                        style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, marginBottom: 8, backgroundColor: checked ? colors.primary + '10' : colors.background, borderWidth: 1, borderColor: checked ? colors.primary : colors.border }}
+                        onPress={() => toggleService(svc._id)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={20}
+                          color={checked ? colors.primary : colors.textLight}
+                          style={{ marginRight: 10 }}
+                        />
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ ...Typography.body, color: colors.text, fontWeight: checked ? '700' : '400' }}>{svc.name}</Text>
+                          {!!svc.description && <Text style={{ ...Typography.caption, color: colors.textSecondary }}>{svc.description}</Text>}
+                        </View>
+                        <Text style={{ ...Typography.body, fontWeight: '700', color: checked ? colors.primary : colors.textSecondary }}>
+                          {formatPrice(svc.price)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {selectedServiceIds.size > 0 && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 12, backgroundColor: colors.background, borderRadius: 10, marginTop: 4, marginBottom: 8 }}>
+                      <Text style={{ ...Typography.body, fontWeight: '700', color: colors.text }}>New Total</Text>
+                      <Text style={{ ...Typography.body, fontWeight: '800', color: colors.primary }}>
+                        {formatPrice(workshopServices.filter((s: any) => selectedServiceIds.has(s._id)).reduce((sum: number, s: any) => sum + s.price, 0))}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+
+              <TouchableOpacity
+                style={{ backgroundColor: colors.danger, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8, opacity: submittingReject ? 0.6 : 1 }}
+                onPress={handleSubmitReject}
+                disabled={submittingReject}
+              >
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>
+                  {submittingReject ? 'Submitting…' : 'Reject Quotation'}
+                </Text>
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>

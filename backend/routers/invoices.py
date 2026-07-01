@@ -462,6 +462,296 @@ def build_invoice_pdf(b: dict, workshop_phone: str = "") -> bytes:
     return bytes(pdf.output())
 
 
+def build_quotation_pdf(b: dict, quotation: dict, workshop_phone: str = "") -> bytes:
+    PAGE_W, MARGIN = 210, 15
+    CW = PAGE_W - 2 * MARGIN
+
+    pdf = FPDF(unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=22)
+    pdf.add_page()
+
+    quote_num = f"QT-{quotation['_id'][:8].upper()}"
+    type_label = "Additional Work Quotation" if quotation.get("type") == "additional" else "Initial Quotation"
+    approved_dt = quotation.get("responded_at") or quotation.get("created_at")
+    date_str = _dtstr(approved_dt)
+
+    def section_bar(y: float, title: str) -> float:
+        pdf.set_fill_color(*C_BLUE)
+        pdf.rect(MARGIN, y, CW, 8, style="F")
+        pdf.set_text_color(*C_WHITE)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_xy(MARGIN + 3, y + 1.5)
+        pdf.cell(CW - 6, 5, title.upper(), align="L")
+        return y + 10
+
+    # ── 1. HEADER BAND ───────────────────────────────────────────────────────
+    HEADER_H = 44
+    pdf.set_fill_color(*C_BLUE)
+    pdf.rect(0, 0, PAGE_W, HEADER_H, style="F")
+
+    pdf.set_text_color(*C_WHITE)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_xy(MARGIN, 8)
+    pdf.cell(110, 9, b.get("workshop_name", "Workshop"), align="L")
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_xy(PAGE_W - MARGIN - 75, 8)
+    pdf.cell(75, 9, "QUOTATION", align="R")
+
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(210, 225, 255)
+    pdf.set_xy(MARGIN, 20)
+    pdf.cell(110, 5, b.get("workshop_address", ""), align="L")
+    if workshop_phone:
+        pdf.set_xy(MARGIN, 26)
+        pdf.cell(110, 5, f"Tel: {workshop_phone}", align="L")
+
+    pdf.set_text_color(*C_WHITE)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_xy(PAGE_W - MARGIN - 80, 20)
+    pdf.cell(80, 5, f"Quotation:  {quote_num}", align="R")
+    pdf.set_xy(PAGE_W - MARGIN - 80, 26)
+    pdf.cell(80, 5, f"Date:  {date_str}", align="R")
+
+    pdf.set_text_color(134, 239, 172)
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_xy(PAGE_W - MARGIN - 80, 32)
+    pdf.cell(80, 5, "Status: APPROVED", align="R")
+
+    # ── 2. CUSTOMER & VEHICLE ─────────────────────────────────────────────────
+    y = HEADER_H + 8
+    COL = CW / 2
+
+    pdf.set_text_color(*C_GREY)
+    pdf.set_font("Helvetica", "B", 7)
+    pdf.set_xy(MARGIN, y)
+    pdf.cell(COL, 5, "QUOTED TO", align="L")
+    pdf.set_xy(MARGIN + COL, y)
+    pdf.cell(COL, 5, "VEHICLE", align="L")
+    y += 6
+
+    pdf.set_draw_color(*C_BORDER)
+    pdf.line(MARGIN, y, MARGIN + COL - 4, y)
+    pdf.line(MARGIN + COL, y, PAGE_W - MARGIN, y)
+    y += 4
+
+    pdf.set_text_color(*C_DARK)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.set_xy(MARGIN, y)
+    pdf.cell(COL, 6, b.get("customer_name", ""), align="L")
+
+    vehicle_str = f"{b.get('vehicle_brand', '')} {b.get('vehicle_name', '')}".strip()
+    pdf.set_xy(MARGIN + COL, y)
+    pdf.cell(COL, 6, vehicle_str, align="L")
+    y += 7
+
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*C_GREY)
+    if b.get("customer_phone"):
+        pdf.set_xy(MARGIN, y)
+        pdf.cell(COL, 5, b["customer_phone"], align="L")
+
+    plate = b.get("vehicle_plate", "")
+    if plate:
+        pdf.set_text_color(*C_DARK)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_xy(MARGIN + COL, y)
+        pdf.cell(COL, 5, plate, align="L")
+    y += 12
+
+    # ── 3. TYPE BADGE ────────────────────────────────────────────────────────
+    pdf.set_fill_color(*C_BLUE_L)
+    pdf.set_draw_color(*C_BORDER)
+    pdf.rect(MARGIN, y, CW, 10, style="FD")
+    pdf.set_text_color(*C_BLUE)
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_xy(MARGIN + 4, y + 3)
+    pdf.cell(CW - 8, 5, type_label, align="L")
+    y += 16
+
+    # ── 4. ITEMS TABLE ───────────────────────────────────────────────────────
+    y = section_bar(y, "Quoted Items")
+
+    pdf.set_fill_color(*C_BLUE_L)
+    pdf.rect(MARGIN, y, CW, 7, style="F")
+    pdf.set_text_color(*C_BLUE)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_xy(MARGIN + 3, y + 1.5)
+    pdf.cell(95, 4, "Item", align="L")
+    pdf.set_xy(MARGIN + 98, y + 1.5)
+    pdf.cell(20, 4, "Qty", align="C")
+    pdf.set_xy(MARGIN + 122, y + 1.5)
+    pdf.cell(30, 4, "Unit Price", align="R")
+    pdf.set_xy(MARGIN + CW - 35, y + 1.5)
+    pdf.cell(32, 4, "Amount", align="R")
+    y += 8
+
+    for i, item in enumerate(quotation.get("items", [])):
+        name = item.get("name", "")
+        desc = item.get("description", "")
+        qty = float(item.get("quantity", 1) or 1)
+        price = float(item.get("price", 0) or 0)
+        line_total = qty * price
+
+        row_h = 8 if not desc else 12
+        row_fill = C_BG if i % 2 == 0 else C_WHITE
+        pdf.set_fill_color(*row_fill)
+        pdf.rect(MARGIN, y, CW, row_h, style="F")
+
+        pdf.set_text_color(*C_DARK)
+        pdf.set_font("Helvetica", "B", 8.5)
+        pdf.set_xy(MARGIN + 3, y + 2)
+        pdf.cell(95, 4, name, align="L")
+
+        if desc:
+            pdf.set_text_color(*C_GREY)
+            pdf.set_font("Helvetica", "", 7.5)
+            pdf.set_xy(MARGIN + 3, y + 6.5)
+            pdf.cell(95, 4, desc[:70], align="L")
+
+        pdf.set_text_color(*C_DARK)
+        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_xy(MARGIN + 98, y + 2)
+        pdf.cell(20, 4, f"{qty:g}", align="C")
+
+        pdf.set_xy(MARGIN + 122, y + 2)
+        pdf.cell(30, 4, _price(price), align="R")
+
+        pdf.set_font("Helvetica", "B", 8.5)
+        pdf.set_xy(MARGIN + CW - 35, y + 2)
+        pdf.cell(32, 4, _price(line_total), align="R")
+        y += row_h
+
+    pdf.set_draw_color(*C_BORDER)
+    pdf.line(MARGIN, y, PAGE_W - MARGIN, y)
+    y += 4
+
+    # ── 5. NOTE ──────────────────────────────────────────────────────────────
+    if quotation.get("note"):
+        pdf.set_text_color(*C_GREY)
+        pdf.set_font("Helvetica", "BI", 8)
+        pdf.set_xy(MARGIN, y)
+        pdf.cell(CW, 5, "Workshop Note:", align="L")
+        y += 5
+        pdf.set_text_color(*C_DARK)
+        pdf.set_font("Helvetica", "I", 8.5)
+        pdf.set_xy(MARGIN, y)
+        pdf.multi_cell(CW, 5, quotation["note"], align="L")
+        y = pdf.get_y() + 4
+
+    # ── 6. DISCOUNTS + TOTAL ─────────────────────────────────────────────────
+    promo_discount = float(quotation.get("promotion_discount", 0) or 0)
+    promo_title = quotation.get("promotion_title")
+    loyalty_discount = float(quotation.get("loyalty_discount", 0) or 0)
+    loyalty_pts = int(quotation.get("loyalty_points_used", 0) or 0)
+    has_discounts = promo_discount > 0 or loyalty_discount > 0
+    final_amount = quotation.get("final_amount", quotation.get("subtotal", 0))
+
+    if has_discounts:
+        pdf.set_text_color(*C_GREY)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_xy(MARGIN, y)
+        pdf.cell(CW - 38, 5, "SUBTOTAL", align="R")
+        pdf.set_text_color(*C_DARK)
+        pdf.set_xy(MARGIN + CW - 38, y)
+        pdf.cell(35, 5, _price(quotation.get("subtotal", 0)), align="R")
+        y += 6
+
+        if promo_discount > 0:
+            label = f"PROMOTION{f' ({promo_title})' if promo_title else ''}"
+            pdf.set_text_color(234, 88, 12)
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.set_xy(MARGIN, y)
+            pdf.cell(CW - 38, 5, label, align="R")
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.set_xy(MARGIN + CW - 38, y)
+            pdf.cell(35, 5, f"-{_price(promo_discount)}", align="R")
+            y += 6
+
+        if loyalty_discount > 0:
+            pdf.set_text_color(202, 138, 4)
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.set_xy(MARGIN, y)
+            pdf.cell(CW - 38, 5, f"LOYALTY POINTS ({loyalty_pts} pts)", align="R")
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.set_xy(MARGIN + CW - 38, y)
+            pdf.cell(35, 5, f"-{_price(loyalty_discount)}", align="R")
+            y += 6
+
+        pdf.set_draw_color(*C_BORDER)
+        pdf.line(MARGIN, y, PAGE_W - MARGIN, y)
+        y += 3
+
+    pdf.set_fill_color(*C_BLUE)
+    pdf.rect(MARGIN, y, CW, 12, style="F")
+    pdf.set_text_color(*C_WHITE)
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_xy(MARGIN, y + 2)
+    pdf.cell(CW - 38, 6, "QUOTATION TOTAL", align="R")
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_xy(MARGIN + CW - 38, y + 1)
+    pdf.cell(35, 10, _price(final_amount), align="R")
+    y += 20
+
+    # ── 7. STAMP + DISCLAIMER ────────────────────────────────────────────────
+    if y > 232:
+        pdf.add_page(); y = 15
+
+    STAMP_W, STAMP_H = 70, 32
+    STAMP_X = PAGE_W - MARGIN - STAMP_W
+
+    pdf.set_fill_color(245, 248, 255)
+    pdf.set_draw_color(*C_BLUE)
+    pdf.set_line_width(0.6)
+    pdf.rect(STAMP_X, y, STAMP_W, STAMP_H, style="FD")
+    pdf.set_line_width(0.2)
+
+    ws_name = (b.get("workshop_name") or "")[:22].upper()
+    pdf.set_text_color(*C_BLUE)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_xy(STAMP_X + 2, y + 4)
+    pdf.cell(STAMP_W - 4, 5, ws_name, align="C")
+
+    pdf.set_text_color(*C_GREY)
+    pdf.set_font("Helvetica", "", 6.5)
+    pdf.set_xy(STAMP_X + 2, y + 10)
+    pdf.cell(STAMP_W - 4, 4, "Authorised Workshop Stamp", align="C")
+
+    sig_y = y + 22
+    pdf.set_draw_color(*C_GREY)
+    pdf.set_line_width(0.4)
+    pdf.line(STAMP_X + 6, sig_y, STAMP_X + STAMP_W - 6, sig_y)
+    pdf.set_line_width(0.2)
+    pdf.set_xy(STAMP_X + 2, sig_y + 2)
+    pdf.cell(STAMP_W - 4, 4, "Authorised Signature", align="C")
+
+    pdf.set_text_color(*C_GREY)
+    pdf.set_font("Helvetica", "I", 7)
+    pdf.set_xy(MARGIN, y + 4)
+    pdf.multi_cell(
+        STAMP_X - MARGIN - 4, 4.5,
+        "This quotation was approved by the customer in-app and is a\n"
+        "computer-generated document produced by the Bengkil Lah\n"
+        "platform. For enquiries, contact the workshop directly.",
+        align="L",
+    )
+
+    # ── 8. FOOTER ────────────────────────────────────────────────────────────
+    FOOTER_Y = 277
+    pdf.set_draw_color(*C_BORDER)
+    pdf.line(MARGIN, FOOTER_Y, PAGE_W - MARGIN, FOOTER_Y)
+    pdf.set_text_color(*C_GREY)
+    pdf.set_font("Helvetica", "I", 7)
+    pdf.set_xy(MARGIN, FOOTER_Y + 2)
+    pdf.cell(
+        CW, 5,
+        f"Bengkil Lah  |  Quotation {quote_num}  |  Computer-generated - no wet signature required unless stamped",
+        align="C",
+    )
+
+    return bytes(pdf.output())
+
+
 # ── Endpoint ─────────────────────────────────────────────────────────────────
 
 @router.get("/{booking_id}/invoice", summary="Download PDF invoice (completed bookings only)")
@@ -490,6 +780,46 @@ async def download_invoice(
     pdf_bytes = build_invoice_pdf(b, workshop_phone)
 
     filename = f"invoice-{booking_id[:8].upper()}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(pdf_bytes)),
+        },
+    )
+
+
+@router.get("/{booking_id}/quotations/{quotation_id}/pdf", summary="Download PDF for an approved quotation")
+async def download_quotation_pdf(
+    booking_id: str,
+    quotation_id: str,
+    user=Depends(get_current_user),
+    db=Depends(get_db),
+):
+    b = await db.bookings.find_one({"_id": booking_id})
+    if not b:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if user["role"] == "customer" and b["customer_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    elif user["role"] == "workshop":
+        ws = await db.workshops.find_one({"owner_id": user["_id"]})
+        if not ws or b["workshop_id"] != ws["_id"]:
+            raise HTTPException(status_code=403, detail="Forbidden")
+
+    quotation = next((q for q in b.get("quotations", []) if q["_id"] == quotation_id), None)
+    if not quotation:
+        raise HTTPException(status_code=404, detail="Quotation not found")
+    if quotation["status"] != "approved":
+        raise HTTPException(status_code=400, detail="Only approved quotations can be downloaded")
+
+    workshop = await db.workshops.find_one({"_id": b["workshop_id"]})
+    workshop_phone = workshop.get("phone", "") if workshop else ""
+
+    pdf_bytes = build_quotation_pdf(b, quotation, workshop_phone)
+
+    filename = f"quotation-{quotation_id[:8].upper()}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

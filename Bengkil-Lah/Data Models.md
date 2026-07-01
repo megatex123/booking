@@ -100,6 +100,8 @@ scheduled_time   string "HH:MM"
 notes            string
 status           "pending"|"confirmed"|"rejected"|"in_progress"|"completed"|"cancelled"
 total_price      float
+quotation_total  float    (sum of approved quotation subtotals, default 0)
+quotations       Quotation[]
 payment_status   "unpaid"|"paid"
 payment_intent_id string?
 completion_notes string?
@@ -109,6 +111,32 @@ station_id       string?  (ref → repair_stations._id)
 status_note      string?  (rejection reason)
 created_at       datetime
 updated_at       datetime
+```
+
+#### Quotation (embedded, see [[Booking Flow]] for the approval flow)
+```
+_id                     string (uuid4)
+type                    "initial"|"additional"
+items                   QuotationItem[]
+subtotal                float (sum of item price × quantity)
+note                    string?  (workshop's message to customer)
+status                  "pending"|"approved"|"rejected"
+customer_response_note  string?  (set on reject)
+created_at              datetime
+responded_at            datetime?
+promotion_discount      float?   (set on approve, default 0)
+promotion_title         string?  (set on approve, if a promotion was applied)
+loyalty_points_used     int?     (set on approve, default 0)
+loyalty_discount        float?   (set on approve, default 0)
+final_amount            float?   (set on approve — subtotal minus both discounts; this is what's added to total_price)
+```
+
+#### QuotationItem (embedded)
+```
+name        string
+description string?
+price       float
+quantity    float (default 1)
 ```
 
 #### ServiceReport (embedded, created on completion)

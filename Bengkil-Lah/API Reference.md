@@ -16,13 +16,15 @@ Auth: `Authorization: Bearer <JWT>`
 | POST | `/auth/reset-password` | — | Validates OTP **and** sets new password in one step `{ email, otp, new_password }` |
 | PATCH | `/auth/change-password` | Any | Changes password (current required) |
 
+Customers get a single active session — logging in on a new device invalidates the JWT on all other devices (`401 SESSION_EXPIRED`). Workshop accounts are unaffected.
+
 ## Users
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/users/me` | Any | Current user object |
 | PATCH | `/users/me` | Any | Update name, phone, avatar |
-| GET | `/users/me/vehicles` | Customer | Vehicles derived from booking history |
+| GET | `/users/me/vehicles` | Customer | Stored `users.vehicles` merged with any vehicle plates found in booking history not already stored |
 | GET | `/users/online-status` | Workshop | `?user_ids=id1,id2` → online map (workshop-only) |
 
 ## Workshops
@@ -78,6 +80,9 @@ Auth: `Authorization: Bearer <JWT>`
 | PATCH | `/bookings/{id}/reschedule` | Customer | Change date/time |
 | PATCH | `/bookings/{id}/station` | Workshop | Assign repair station |
 | PATCH | `/bookings/{id}/mechanic` | Workshop | Assign mechanic (`{ mechanic_id }`, null to unassign) |
+| POST | `/bookings/{id}/quotations` | Workshop | Send an itemized quote — `{ items: [{name, description?, price, quantity}], note? }`. Allowed while booking is `pending`/`confirmed`/`in_progress`. Auto-typed `initial` or `additional` based on current status. |
+| PATCH | `/bookings/{id}/quotations/{quotation_id}/respond` | Customer | `{ action: "approve"\|"reject", reason?, promotion_id?, loyalty_points_used? }`. Approving applies an optional promotion + loyalty point discount (same math as booking creation) and adds the **discounted** amount to `total_price`/`quotation_total`; rejecting leaves the total unchanged. A quotation can only be responded to once. |
+| GET | `/bookings/{id}/quotations/{quotation_id}/pdf` | Customer or Workshop owner | Branded 1-2 page PDF of an **approved** quotation (`application/pdf`). 400 if the quotation isn't approved yet. |
 
 ### Status update body
 ```json
@@ -220,6 +225,13 @@ APScheduler fires `check_custom_reminders()` at 08:00 UTC daily; sends `custom_r
 | POST | `/uploads/` | Any | Multipart `file` field → `{ url: "/uploads/<hash>.<ext>" }` |
 
 Uploaded files served at `http://localhost:8000/uploads/<filename>`.
+
+## Price Estimator
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/price-estimator/symptoms` | — | List of 17 symptom entries (`id`, `label`, `icon`, `category`) |
+| POST | `/price-estimator/estimate` | — | `{ symptom_ids[], latitude, longitude, radius_km? }` → price range + sample services per symptom from nearby workshops |
 
 ## Related Notes
 - [[Backend]] — router implementation details

@@ -10,7 +10,9 @@ from models.booking import (
     BookingCreate, BookingStatusUpdate, BookingStationAssign, BookingMechanicAssign,
     BookingReschedule, ServiceReport, ProductUsed,
     InsuranceClaimSubmit, InsuranceClaimStatusUpdate,
+    QuotationCreate, QuotationRespond, BookingServiceUpdate,
 )
+import uuid
 from routers.workshops import compute_queue_snapshot
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -55,6 +57,9 @@ def serialize_booking(b: dict) -> dict:
         "total_price": b["total_price"],
         "services_total": b.get("services_total"),
         "products_total": b.get("products_total"),
+        "quotation_total": b.get("quotation_total", 0.0),
+        "quotations": _clean(b.get("quotations", [])),
+        "original_total_price": b.get("original_total_price"),
         "referral_discount": b.get("referral_discount", 0.0),
         "promotion_discount": b.get("promotion_discount", 0.0),
         "promotion_title": b.get("promotion_title"),
@@ -771,4 +776,265 @@ async def update_insurance_claim_status(booking_id: str, data: InsuranceClaimSta
     updated = await db.bookings.find_one({"_id": booking_id})
     return serialize_booking(updated)
 
+
+# ── Quotations ───────────────────────────────────────────────────────────────
+# Workshop sends an itemized quote to the customer before any charge is applied.
+# "initial" quotations are sent while the booking is pending/confirmed (e.g. the
+# original selected services need a price revision); "additional" quotations are
+# sent once work has started (in_progress) when extra parts/labor are discovered.
+# Either way, the quoted amount is only added to the booking total once the
+# customer explicitly approves it — never automatically.
+
+QUOTABLE_STATUSES = {"pending", "confirmed", "in_progress"}
+
+
+@router.post("/{booking_id}/quotations", status_code=201)
+async def create_quotation(booking_id: str, data: QuotationCreate, user=Depends(require_workshop), db=Depends(get_db)):
+    b = await db.bookings.find_one({"_id": booking_id})
+    if not b:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if b["workshop_owner_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if b["status"] not in QUOTABLE_STATUSES:
+        raise HTTPException(status_code=400, detail=f"Cannot send a quotation while booking is {b['status']}")
+    if not data.items:
+        raise HTTPException(status_code=400, detail="Quotation must have at least one item")
+
+    items = [item.dict() for item in data.items]
+    subtotal = round(sum(i["price"] * i["quantity"] for i in items), 2)
+    quotation = {
+        "_id": str(uuid.uuid4()),
+        "type": "additional" if b["status"] == "in_progress" else "initial",
+        "items": items,
+        "subtotal": subtotal,
+        "note": data.note or "",
+        "status": "pending",
+        "customer_response_note": None,
+        "created_at": datetime.utcnow(),
+        "responded_at": None,
+    }
+
+    await db.bookings.update_one(
+        {"_id": booking_id},
+        {"$push": {"quotations": quotation}, "$set": {"updated_at": datetime.utcnow()}},
+    )
+    updated = await db.bookings.find_one({"_id": booking_id})
+
+    await emit_to_user(b["customer_id"], "booking_status_updated", serialize_booking(updated))
+    await emit_to_booking_room(booking_id, "booking_status_updated", serialize_booking(updated))
+    await push_notification(
+        db, b["customer_id"], "quotation_received",
+        "New Quotation 📋",
+        f"{b['workshop_name']} sent you a quote for RM{subtotal:.2f} — tap to review.",
+        {"booking_id": booking_id, "quotation_id": quotation["_id"]},
+    )
+    return serialize_booking(updated)
+
+
+@router.patch("/{booking_id}/quotations/{quotation_id}/respond")
+async def respond_to_quotation(booking_id: str, quotation_id: str, data: QuotationRespond, user=Depends(require_customer), db=Depends(get_db)):
+    b = await db.bookings.find_one({"_id": booking_id})
+    if not b:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if b["customer_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    quotations = b.get("quotations", [])
+    quotation = next((q for q in quotations if q["_id"] == quotation_id), None)
+    if not quotation:
+        raise HTTPException(status_code=404, detail="Quotation not found")
+    if quotation["status"] != "pending":
+        raise HTTPException(status_code=400, detail="This quotation has already been responded to")
+
+    new_status = "approved" if data.action == "approve" else "rejected"
+
+    promotion_discount = 0.0
+    promotion_title = None
+    loyalty_discount = 0.0
+    loyalty_points_used = 0
+    final_amount = quotation["subtotal"]
+
+    if new_status == "approved":
+        discounted = quotation["subtotal"]
+
+        # ── Promotion discount ───────────────────────────────────────────────
+        if data.promotion_id:
+            workshop = await db.workshops.find_one({"_id": b["workshop_id"]})
+            now_utc = datetime.utcnow()
+            matched = next(
+                (p for p in (workshop or {}).get("promotions", [])
+                 if p["_id"] == data.promotion_id
+                 and p.get("is_active", True)
+                 and isinstance(p.get("ends_at"), datetime)
+                 and p["ends_at"] > now_utc
+                 and p.get("discount_type")
+                 and p.get("discount_value")),
+                None,
+            )
+            if matched:
+                if matched["discount_type"] == "percentage":
+                    promotion_discount = min(discounted * matched["discount_value"] / 100, discounted)
+                else:  # fixed
+                    promotion_discount = min(matched["discount_value"], discounted)
+                promotion_discount = round(promotion_discount, 2)
+                promotion_title = matched["title"]
+        discounted = max(discounted - promotion_discount, 0)
+
+        # ── Loyalty points redemption ─────────────────────────────────────────
+        if data.loyalty_points_used and data.loyalty_points_used >= 100:
+            db_user = await db.users.find_one({"_id": user["_id"]})
+            available = int(db_user.get("loyalty_points", 0)) if db_user else 0
+            pts_requested = (data.loyalty_points_used // 100) * 100  # round down to 100s
+            pts_to_use = min(pts_requested, available)
+            max_pts_for_total = int(discounted / 0.01 // 100) * 100
+            pts_to_use = min(pts_to_use, max_pts_for_total)
+            if pts_to_use >= 100:
+                loyalty_discount = pts_to_use * 0.01
+                loyalty_points_used = pts_to_use
+
+        final_amount = round(max(discounted - loyalty_discount, 0), 2)
+
+    # An initial quote revises the price for the originally selected services (the
+    # form is pre-filled with them) — it REPLACES that portion rather than adding on
+    # top, otherwise re-sending the same services double-charges them. Any referral/
+    # promotion/loyalty discount already locked in at booking creation must still
+    # apply — those were already earned (loyalty points already deducted from the
+    # customer's balance), so a revised quote can't silently wipe them out.
+    original_discount_offset = 0.0
+    net_contribution = final_amount
+    if new_status == "approved" and quotation["type"] == "initial":
+        original_discount_offset = round(
+            b.get("referral_discount", 0.0) + b.get("promotion_discount", 0.0) + b.get("loyalty_discount", 0.0),
+            2,
+        )
+        net_contribution = round(max(final_amount - original_discount_offset, 0), 2)
+
+    for q in quotations:
+        if q["_id"] == quotation_id:
+            q["status"] = new_status
+            q["customer_response_note"] = data.reason
+            q["responded_at"] = datetime.utcnow()
+            if new_status == "approved":
+                q["promotion_discount"] = promotion_discount
+                q["promotion_title"] = promotion_title
+                q["loyalty_points_used"] = loyalty_points_used
+                q["loyalty_discount"] = loyalty_discount
+                q["final_amount"] = final_amount
+                q["original_discount_offset"] = original_discount_offset
+                q["net_contribution"] = net_contribution
+
+    update = {"quotations": quotations, "updated_at": datetime.utcnow()}
+    if new_status == "approved":
+        new_quotation_total = round(b.get("quotation_total", 0.0) + final_amount, 2)
+        update["quotation_total"] = new_quotation_total
+
+        # Snapshot the pre-quotation total once, the first time any quotation is approved.
+        # This is what "initial" quotations revise against — it must never include
+        # amounts from quotations themselves, or repeated approvals would compound.
+        original_total_price = b.get("original_total_price")
+        if original_total_price is None:
+            original_total_price = b.get("total_price", 0.0)
+            update["original_total_price"] = original_total_price
+
+        if quotation["type"] == "initial":
+            update["initial_quote_override"] = net_contribution
+            base = net_contribution
+        else:
+            base = b.get("initial_quote_override", original_total_price)
+
+        additional_total = b.get("additional_quotation_total", 0.0)
+        if quotation["type"] == "additional":
+            additional_total = round(additional_total + final_amount, 2)
+            update["additional_quotation_total"] = additional_total
+
+        update["total_price"] = round(base + additional_total, 2)
+
+    await db.bookings.update_one({"_id": booking_id}, {"$set": update})
+
+    if new_status == "approved" and loyalty_points_used > 0:
+        await db.users.update_one({"_id": user["_id"]}, {"$inc": {"loyalty_points": -loyalty_points_used}})
+
+    updated = await db.bookings.find_one({"_id": booking_id})
+
+    await emit_to_user(b["workshop_owner_id"], "booking_status_updated", serialize_booking(updated))
+    await emit_to_booking_room(booking_id, "booking_status_updated", serialize_booking(updated))
+
+    if new_status == "approved":
+        await push_notification(
+            db, b["workshop_owner_id"], "quotation_approved",
+            "Quotation Approved ✅",
+            f"{b['customer_name']} approved your RM{final_amount:.2f} quote for booking {booking_id[-6:].upper()}.",
+            {"booking_id": booking_id, "quotation_id": quotation_id},
+        )
+    else:
+        await push_notification(
+            db, b["workshop_owner_id"], "quotation_rejected",
+            "Quotation Rejected ❌",
+            f"{b['customer_name']} rejected your RM{quotation['subtotal']:.2f} quote for booking {booking_id[-6:].upper()}.",
+            {"booking_id": booking_id, "quotation_id": quotation_id},
+        )
+
+    return serialize_booking(updated)
+
+
+@router.patch("/{booking_id}/services")
+async def update_booking_services(
+    booking_id: str,
+    data: BookingServiceUpdate,
+    user=Depends(require_customer),
+    db=Depends(get_db),
+):
+    """Customer modifies the services on their booking (only while pending or confirmed)."""
+    b = await db.bookings.find_one({"_id": booking_id})
+    if not b:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if b["customer_id"] != user["_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if b["status"] not in ("pending", "confirmed"):
+        raise HTTPException(status_code=400, detail="Services can only be changed while the booking is pending or confirmed")
+    if not data.service_ids:
+        raise HTTPException(status_code=400, detail="At least one service is required")
+
+    workshop = await db.workshops.find_one({"_id": b["workshop_id"]})
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+
+    services_map = {s["_id"]: s for s in workshop.get("services", [])}
+    selected, svc_names, raw_total = [], [], 0.0
+    for sid in data.service_ids:
+        svc = services_map.get(sid)
+        if not svc:
+            raise HTTPException(status_code=400, detail=f"Service {sid} not found in this workshop")
+        selected.append(svc)
+        svc_names.append(svc["name"])
+        raw_total += svc["price"]
+
+    # Preserve any original booking discounts, capped to new total
+    ref_disc  = min(b.get("referral_discount", 0.0), raw_total)
+    promo_disc = min(b.get("promotion_discount", 0.0), raw_total - ref_disc)
+    loyal_disc = min(b.get("loyalty_discount", 0.0), raw_total - ref_disc - promo_disc)
+    new_total = round(max(raw_total - ref_disc - promo_disc - loyal_disc, 0), 2)
+
+    now = datetime.utcnow()
+    await db.bookings.update_one(
+        {"_id": booking_id},
+        {"$set": {
+            "services": selected,
+            "total_price": new_total,
+            "referral_discount": ref_disc,
+            "promotion_discount": promo_disc,
+            "loyalty_discount": loyal_disc,
+            "updated_at": now,
+        }},
+    )
+    updated = await db.bookings.find_one({"_id": booking_id})
+
+    await emit_to_user(b["workshop_owner_id"], "booking_status_updated", serialize_booking(updated))
+    await push_notification(
+        db, b["workshop_owner_id"], "booking_services_updated",
+        "Customer Updated Services 📋",
+        f"{b['customer_name']} adjusted their service selection: {', '.join(svc_names)}.",
+        {"booking_id": booking_id},
+    )
+    return serialize_booking(updated)
 

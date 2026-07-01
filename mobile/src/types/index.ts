@@ -102,6 +102,32 @@ export type BookingStatus =
 
 export type PaymentStatus = 'unpaid' | 'paid';
 
+export interface QuotationItem {
+  name: string;
+  description?: string;
+  price: number;
+  quantity: number;
+}
+
+export interface Quotation {
+  _id: string;
+  type: 'initial' | 'additional';
+  items: QuotationItem[];
+  subtotal: number;
+  note?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  customer_response_note?: string | null;
+  created_at: string;
+  responded_at?: string | null;
+  promotion_discount?: number;
+  promotion_title?: string | null;
+  loyalty_points_used?: number;
+  loyalty_discount?: number;
+  final_amount?: number;
+  original_discount_offset?: number;
+  net_contribution?: number;
+}
+
 export interface Booking {
   id: string;
   customer_id: string;
@@ -121,6 +147,9 @@ export interface Booking {
   total_price: number;
   services_total?: number;
   products_total?: number;
+  quotation_total?: number;
+  original_total_price?: number;
+  quotations?: Quotation[];
   referral_discount?: number;
   promotion_discount?: number;
   promotion_title?: string;
@@ -132,6 +161,8 @@ export interface Booking {
   completion_notes?: string;
   next_service_months?: number;
   station_id?: string;
+  mechanic_id?: string;
+  mechanic_name?: string;
   has_review?: boolean;
   created_at: string;
   updated_at: string;

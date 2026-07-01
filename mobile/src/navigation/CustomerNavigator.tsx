@@ -28,6 +28,7 @@ import { CorporateRegistrationScreen } from '../screens/customer/CorporateRegist
 import { CorporateManagementScreen } from '../screens/customer/CorporateManagementScreen';
 import { LoyaltyScreen } from '../screens/customer/LoyaltyScreen';
 import { QueueStatusScreen } from '../screens/customer/QueueStatusScreen';
+import { PriceEstimatorScreen } from '../screens/customer/PriceEstimatorScreen';
 import { Colors } from '../utils/theme';
 import { ENIGMA_FOOTER_HEIGHT } from '../../App';
 
@@ -61,6 +62,7 @@ function HomeStackScreen() {
       <HomeStack.Screen name="Payment" component={PaymentScreen} />
       <HomeStack.Screen name="Review" component={ReviewScreen} />
       <HomeStack.Screen name="QueueStatus" component={QueueStatusScreen} />
+      <HomeStack.Screen name="PriceEstimator" component={PriceEstimatorScreen} />
     </HomeStack.Navigator>
   );
 }

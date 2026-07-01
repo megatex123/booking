@@ -82,6 +82,29 @@ class InsuranceClaimStatusUpdate(BaseModel):
     claim_note: Optional[str] = None
 
 
+class QuotationItem(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    price: float
+    quantity: float = 1
+
+
+class QuotationCreate(BaseModel):
+    items: List[QuotationItem]
+    note: Optional[str] = ""
+
+
+class QuotationRespond(BaseModel):
+    action: str = Field(..., pattern="^(approve|reject)$")
+    reason: Optional[str] = None
+    promotion_id: Optional[str] = None
+    loyalty_points_used: Optional[int] = 0
+
+
+class BookingServiceUpdate(BaseModel):
+    service_ids: List[str]
+
+
 class BookingResponse(BaseModel):
     id: str
     customer_id: str

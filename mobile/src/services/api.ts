@@ -101,9 +101,17 @@ export const bookingAPI = {
     api.patch(`/bookings/${id}/station`, { station_id }),
   downloadInvoice: (id: string) =>
     api.get(`/bookings/${id}/invoice`, { responseType: 'blob' }),
+  downloadQuotation: (id: string, quotationId: string) =>
+    api.get(`/bookings/${id}/quotations/${quotationId}/pdf`, { responseType: 'blob' }),
   submitInsuranceClaim: (id: string, data: object) => api.patch(`/bookings/${id}/insurance`, data),
   updateInsuranceStatus: (id: string, data: object) => api.patch(`/bookings/${id}/insurance-status`, data),
   getVehicleHealth: () => api.get('/bookings/vehicle-health'),
+  createQuotation: (id: string, items: { name: string; description?: string; price: number; quantity: number }[], note?: string) =>
+    api.post(`/bookings/${id}/quotations`, { items, note }),
+  respondToQuotation: (id: string, quotationId: string, action: 'approve' | 'reject', reason?: string, promotion_id?: string, loyalty_points_used?: number) =>
+    api.patch(`/bookings/${id}/quotations/${quotationId}/respond`, { action, reason, promotion_id, loyalty_points_used }),
+  updateServices: (id: string, service_ids: string[]) =>
+    api.patch(`/bookings/${id}/services`, { service_ids }),
 };
 
 export const chatAPI = {
@@ -217,6 +225,12 @@ export const adminAPI = {
     api.get(`/admin/users/${userId}/flags`),
   setUserFlag: (userId: string, key: string, enabled: boolean | null) =>
     api.patch(`/admin/users/${userId}/flags/${key}`, { enabled }),
+};
+
+export const priceEstimatorAPI = {
+  getSymptoms: () => api.get('/price-estimator/symptoms'),
+  estimate: (symptomIds: string[], latitude: number, longitude: number, radiusKm = 30) =>
+    api.post('/price-estimator/estimate', { symptom_ids: symptomIds, latitude, longitude, radius_km: radiusKm }),
 };
 
 export const uploadAPI = {
