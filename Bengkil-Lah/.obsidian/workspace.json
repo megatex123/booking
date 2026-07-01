@@ -11,10 +11,14 @@
             "id": "e6ca0058c9ff781b",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "🏠 Home.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "🏠 Home"
             }
           }
         ],
@@ -193,17 +197,18 @@
       "smart-connections:Smart Connections: Open random connection": false
     }
   },
-  "active": "e6ca0058c9ff781b",
+  "active": "20d128b054999273",
   "lastOpenFiles": [
+    "API Reference.md",
+    "Future Features.md",
+    "🏠 Home.md",
     "claude-api.md",
     "🏠 Home.md.tmp.502.eb2b1c41dc16",
     "claude-api.md.tmp.502.c0056fbcd370",
-    "Future Features.md",
     "Backend.md",
     "Finance.md",
     "Realtime.md",
     "Data Models.md",
-    "🏠 Home.md",
     "Backend.md.tmp.502.8e5a977820a9",
     "Backend.md.tmp.502.83d5bd9f8b45",
     "Frontend.md.tmp.502.58c5588f407a",
@@ -216,7 +221,6 @@
     "Booking Flow.md",
     "Features.md",
     "Dev Setup.md",
-    "API Reference.md",
     "Welcome.md",
     "Frontend.md",
     "create a link.md"
