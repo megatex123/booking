@@ -23,5 +23,13 @@ else
 fi
 
 # Resurrect pm2 saved processes
-$NODE $PM2 resurrect >> "$LOG" 2>&1
+# Run inside the VSCode Flatpak sandbox so Python services use Python 3.13 (which has torch/numpy)
+# If flatpak is not available, fall back to direct host context (Python 3.14, no transcription)
+if command -v flatpak > /dev/null 2>&1 && flatpak info com.visualstudio.code > /dev/null 2>&1; then
+    echo "[$(date)] Using Flatpak context (Python 3.13) for pm2" >> "$LOG"
+    flatpak run --command=/bin/bash com.visualstudio.code -- -c "$NODE $PM2 resurrect" >> "$LOG" 2>&1
+else
+    echo "[$(date)] Flatpak not available, using host context (Python 3.14)" >> "$LOG"
+    $NODE $PM2 resurrect >> "$LOG" 2>&1
+fi
 echo "[$(date)] pm2 resurrect done" >> "$LOG"

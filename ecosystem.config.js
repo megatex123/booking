@@ -19,8 +19,7 @@ module.exports = {
       interpreter: "none",
       env: {
         PYTHONUNBUFFERED: "1",
-        PYTHONUSERBASE: "/var/data/python",
-        PYTHONPATH: "/var/data/python/lib/python3.13/site-packages:/app/lib/python3.13/site-packages"
+        PYTHONUSERBASE: "/var/data/python"
       }
     },
     {
@@ -32,7 +31,6 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: "1",
         PYTHONUSERBASE: "/var/data/python",
-        PYTHONPATH: "/home/penyahpepijat/py314-packages",
         PORT: "5000"
       }
     },
@@ -45,7 +43,6 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: "1",
         PYTHONUSERBASE: "/var/data/python",
-        PYTHONPATH: "/home/penyahpepijat/py314-packages",
         PORT: "5002"
       }
     },
@@ -58,7 +55,6 @@ module.exports = {
       env: {
         PYTHONUNBUFFERED: "1",
         PYTHONUSERBASE: "/var/data/python",
-        PYTHONPATH: "/home/penyahpepijat/py314-packages",
         TZ: "Asia/Kuala_Lumpur"
       }
     },
